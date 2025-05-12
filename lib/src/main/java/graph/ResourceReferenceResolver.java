@@ -27,6 +27,9 @@ public class ResourceReferenceResolver {
             type.validate(path);
         } catch (InvalidReferenceException e) {
             //TODO: log invalid reference
+            System.out.println("Invalid reference");
+            System.out.println(e.getMessage());
+            System.out.println(path.toString());
             return Stream.empty();
         }
 
@@ -52,17 +55,23 @@ public class ResourceReferenceResolver {
 
     Stream<GraphNode> resolveDirectory(Path path) {
         Path kustomization = path.resolve("kustomization.yaml");
+        Stream<? extends GraphNode> nodes;
+
         if (Files.exists(kustomization)) {
-            return builder.buildKustomization(kustomization)
-                    .map(k -> (GraphNode) k);
+            nodes = Stream.of(builder.buildKustomization(kustomization));
+        } else {
+            File directory = new File(path.toAbsolutePath().toString());
+            nodes = Arrays.stream(Objects.requireNonNull(directory.list()))
+                    .map(path::resolve)
+                    .map(builder::buildKustomFile);
         }
 
-        File directory = new File(path.toAbsolutePath().toString());
+        return cleanse(nodes);
+    }
 
-        return Arrays.stream(Objects.requireNonNull(directory.list()))
-                .map(path::resolve)
-                .map(builder::buildKustomFile)
+    private Stream<GraphNode> cleanse(Stream<? extends GraphNode> nodes) {
+        return nodes
                 .filter(Objects::nonNull)
-                .map(file ->  (GraphNode) file);
+                .map(node ->  (GraphNode) node);
     }
 }

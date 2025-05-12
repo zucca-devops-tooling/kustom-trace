@@ -17,7 +17,9 @@ public class GraphNodeResolver {
         Stream<String> parseableExtensions = Stream.of(".yml", ".yaml", ".json");
 
         KustomFile file = new KustomFile(path);
-        if (parseableExtensions.anyMatch(path::endsWith)) {
+        String fileName = path.getFileName().toString();
+
+        if (parseableExtensions.anyMatch(fileName::endsWith)) {
             try {
                 YamlParser.parseFile(path)
                         .stream()

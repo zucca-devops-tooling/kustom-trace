@@ -28,7 +28,7 @@ public class KustomGraphBuilder {
         return graph;
     }
 
-    Stream<Kustomization> buildKustomization(Path path) {
+    Kustomization buildKustomization(Path path) {
         if (!graph.containsNode(path)) {
             try {
                 Kustomization k = GraphNodeResolver.resolveKustomization(path);
@@ -38,11 +38,11 @@ public class KustomGraphBuilder {
                         .forEach(reference -> setMutualReference(k, reference));
             } catch (InvalidContentException e) {
                 // TODO: log invalid kustomization.yaml content
-                return Stream.empty();
+                return null;
             }
         }
 
-        return Stream.of((Kustomization) graph.getNode(path));
+        return (Kustomization) graph.getNode(path);
     }
 
     KustomFile buildKustomFile(Path path) {

@@ -33,7 +33,8 @@ public enum ReferenceType {
     }
 
     public Stream<Path> extract(Object yamlValue, Path baseDir) {
-        return extractor.extract(yamlValue, baseDir);
+        Object value = ((Map<String, Object>)yamlValue).get(this.yamlKey);
+        return extractor.extract(value, baseDir).peek(System.out::println);
     }
 
     public void validate(Path path) throws InvalidReferenceException {
