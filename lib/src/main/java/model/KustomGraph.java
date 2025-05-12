@@ -42,7 +42,7 @@ public class KustomGraph {
         throw new UnreferencedFileException(normalizedPath);
     }
 
-    public List<Path> getAppDependencies(Path path) throws KustomException {
+    public List<Path> getAllAppFiles(Path path) throws KustomException {
         Path normalizedPath = path.toAbsolutePath().normalize();
 
         if (nodeIndex.containsKey(normalizedPath)) {

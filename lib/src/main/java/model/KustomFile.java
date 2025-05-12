@@ -33,6 +33,10 @@ public class KustomFile extends GraphNode {
         return resources.stream().findAny().orElseGet(() -> new KustomResource("Undefined", "Undefined", this));
     }
 
+    public List<KustomResource> getResources() {
+        return resources;
+    }
+
     public void addResource(KustomResource resource) {
         resources.add(resource);
     }

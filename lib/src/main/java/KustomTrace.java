@@ -30,7 +30,7 @@ public class KustomTrace {
     }
 
     public List<Path> getDependenciesFor(Path app) throws KustomException {
-        return graph.getAppDependencies(app);
+        return graph.getAllAppFiles(app);
     }
 
     public KustomGraph getGraph() {
