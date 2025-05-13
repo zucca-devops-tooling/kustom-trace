@@ -4,14 +4,10 @@ plugins {
 }
 
 group = "dev.zucca-ops"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
-}
-
-dependencies {
-
 }
 
 subprojects {
@@ -26,6 +22,23 @@ subprojects {
         format("testJava") {
             target("src/test/java/**/*.java")
             java{ }
+        }
+    }
+}
+
+tasks.register("tagRelease") {
+    group = "release"
+    description = "Tags the current version from build.gradle.kts in Git"
+
+    doLast {
+        val version = project.version.toString()
+        val tagName = "v$version"
+
+        exec {
+            commandLine("git", "tag", "-a", tagName, "-m", "Release $tagName")
+        }
+        exec {
+            commandLine("git", "push", "origin", tagName)
         }
     }
 }
