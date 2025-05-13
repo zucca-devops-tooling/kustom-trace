@@ -46,5 +46,5 @@ publisher {
         passwordProperty = "githubPackagesPassword"
         sign = false
     }
-
+    gitFolder = "../"
 }
