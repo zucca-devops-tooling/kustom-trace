@@ -50,7 +50,7 @@ pipeline {
                 script {
                     setStatus('test','NEUTRAL','Running tests...')
                     try {
-                        sh './gradlew :lib:test --no-daemon'
+                        sh './gradlew :kustomtrace:test --no-daemon'
                         setStatus('test','SUCCESS','Tests passed')
                     } catch (Exception e) {
                         setStatus('test','FAILURE','Tests failed')
@@ -73,7 +73,7 @@ pipeline {
 
                         export GPG_ASC_ARMOR="$(cat $GPG_KEY_PATH)"
 
-                        ./gradlew :lib:publish --info --no-daemon \
+                        ./gradlew :kustomtrace:publish --info --no-daemon \
                             -Psigning.keyId=$GPG_KEY_ID \
                             -Psigning.password=$GPG_KEY_PASS \
                             -Psigning.secretKeyRingFile=$GPG_KEY_PATH \
