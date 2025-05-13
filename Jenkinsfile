@@ -13,6 +13,11 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Fix permissions') {
+            steps {
+                sh 'chmod +x gradlew'
+            }
+        }
         stage('Build') {
             steps {
                 script {
