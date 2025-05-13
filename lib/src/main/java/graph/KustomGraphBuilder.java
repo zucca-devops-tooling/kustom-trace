@@ -17,6 +17,9 @@ package graph;
 
 import exceptions.InvalidContentException;
 import model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +30,7 @@ public class KustomGraphBuilder {
     private final Path appsDir;
     private final KustomGraph graph;
     private final ResourceReferenceResolver dependencyResolver;
+    private static final Logger logger = LoggerFactory.getLogger(KustomGraphBuilder.class);
 
     public KustomGraphBuilder(Path appsDir) {
         this.appsDir = appsDir;
@@ -53,6 +57,7 @@ public class KustomGraphBuilder {
                         .forEach(reference -> setMutualReference(k, reference));
             } catch (InvalidContentException e) {
                 // TODO: log invalid kustomization.yaml content
+                logger.warn(e.getMessage());
                 return null;
             }
         }
