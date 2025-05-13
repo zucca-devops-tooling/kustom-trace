@@ -1,9 +1,10 @@
 plugins {
     id("java")
+    id("dev.zucca-ops.gradle-publisher") version "1.0.4"
 }
 
 group = "dev.zucca-ops"
-version = "1.0-SNAPSHOT"
+version = rootProject.version
 
 repositories {
     mavenCentral()
@@ -28,4 +29,22 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publisher {
+    prod {
+        //target = "mavenCentral"
+        //usernameProperty = "mavenCentralUsername"
+        //passwordProperty = "mavenCentralPassword"
+        target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
+        usernameProperty = "githubPackagesUsername"
+        passwordProperty = "githubPackagesPassword"
+    }
+    dev {
+        target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
+        usernameProperty = "githubPackagesUsername"
+        passwordProperty = "githubPackagesPassword"
+        sign = false
+    }
+
 }
