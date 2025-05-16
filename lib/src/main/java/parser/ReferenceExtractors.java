@@ -15,6 +15,9 @@
  */
 package parser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,20 +25,28 @@ import java.util.stream.Stream;
 
 public class ReferenceExtractors {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReferenceExtractors.class);
+
     public static ReferenceExtractor simpleList() {
         return (value, baseDir) -> {
-            if (!(value instanceof List<?> references)) return Stream.empty();
+            logger.debug("Applying simpleList reference extractor with baseDir: {}", baseDir);
+            if (!(value instanceof List<?> references)) {
+                logger.trace("Input value is not a List, returning empty stream.");
+                return Stream.empty();
+            }
 
             return references.stream()
                     .filter(String.class::isInstance)
                     .map(Object::toString)
                     .filter(ref -> !ref.contains("\n"))
+                    .peek(ref -> logger.trace("Found simple list reference: {}", ref))
                     .map(ref -> baseDir.resolve(ref).normalize());
         };
     }
 
     public static ReferenceExtractor inlinePathList(String pathField) {
         return (value, baseDir) -> {
+            logger.debug("Applying inlinePathList reference extractor with pathField '{}' and baseDir: {}", pathField, baseDir);
             if (value instanceof List<?> list) {
                 return list.stream()
                         .filter(Map.class::isInstance)
@@ -43,15 +54,22 @@ public class ReferenceExtractors {
                         .map(m -> m.get(pathField))
                         .filter(Objects::nonNull)
                         .map(Object::toString)
+                        .peek(path -> logger.trace("Found inline path reference: {}", path))
                         .map(path -> baseDir.resolve(path).normalize());
+            } else {
+                logger.trace("Input value is not a List, returning empty stream.");
+                return Stream.empty();
             }
-            return Stream.empty();
         };
     }
 
     public static ReferenceExtractor configMapGeneratorFiles() {
         return (value, baseDir) -> {
-            if (!(value instanceof List<?> references)) return Stream.empty();
+            logger.debug("Applying configMapGeneratorFiles reference extractor with baseDir: {}", baseDir);
+            if (!(value instanceof List<?> references)) {
+                logger.trace("Input value is not a List, returning empty stream.");
+                return Stream.empty();
+            }
 
             return references.stream()
                     .filter(Map.class::isInstance)
@@ -59,11 +77,13 @@ public class ReferenceExtractors {
                     .flatMap(ref -> {
                         Stream<String> envs = ref.containsKey("envs")
                                 ? ((List<String>) ref.get("envs")).stream()
+                                .peek(env -> logger.trace("Found env reference: {}", env))
                                 : Stream.empty();
 
                         Stream<String> files = ref.containsKey("files")
                                 ? ((List<String>) ref.get("files")).stream()
                                 .map(f -> f.contains("=") ? f.substring(f.indexOf("=") + 1) : f)
+                                .peek(file -> logger.trace("Found file reference: {}", file))
                                 : Stream.empty();
 
                         return Stream.concat(envs, files);

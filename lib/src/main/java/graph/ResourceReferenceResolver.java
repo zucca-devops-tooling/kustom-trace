@@ -20,6 +20,8 @@ import model.GraphNode;
 import model.Kustomization;
 import model.ResourceReference;
 import parser.ReferenceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -31,6 +33,7 @@ import java.util.stream.Stream;
 
 public class ResourceReferenceResolver {
 
+    private static final Logger logger = LoggerFactory.getLogger(ResourceReferenceResolver.class);
     KustomGraphBuilder builder;
 
     public ResourceReferenceResolver(KustomGraphBuilder builder) {
@@ -38,46 +41,53 @@ public class ResourceReferenceResolver {
     }
 
     Stream<ResourceReference> resolveDependency(ReferenceType type, Path path) {
+        logger.debug("Resolving dependency of type '{}' at path: {}", type, path);
         try {
             type.validate(path);
         } catch (InvalidReferenceException e) {
-            //TODO: log invalid reference
-            System.out.println("Invalid reference");
-            System.out.println(e.getMessage());
-            System.out.println(path.toString());
+            logger.warn("Invalid reference found for type '{}' at path: {}", type, path, e);
             return Stream.empty();
         }
 
         if (Files.isDirectory(path)) {
+            logger.debug("Path is a directory, resolving directory: {}", path);
             return resolveDirectory(path)
                     .map(node -> new ResourceReference(type, node));
         }
 
+        logger.debug("Path is a file, building KustomFile: {}", path);
         return Stream.of(new ResourceReference(type, builder.buildKustomFile(path)));
     }
 
     Stream<ResourceReference> resolveDependencies(Kustomization kustomization) {
+        logger.debug("Resolving dependencies for Kustomization: {}", kustomization.getPath());
         Map<String, Object> fileContent = kustomization.getContent();
 
         return fileContent.keySet().stream()
-            .filter(ReferenceType::isReference)
-            .map(ReferenceType::fromYamlKey)
-            .flatMap(referenceType ->
-                    referenceType.extract(fileContent, kustomization.getPath().getParent())
-                            .flatMap(dependency -> resolveDependency(referenceType, dependency))
-            );
+                .filter(ReferenceType::isReference)
+                .map(ReferenceType::fromYamlKey)
+                .peek(referenceType -> logger.debug("Processing reference type: {}", referenceType))
+                .flatMap(referenceType ->
+                        referenceType.extract(fileContent, kustomization.getPath().getParent())
+                                .peek(dependencyPath -> logger.debug("Extracted dependency path: {}", dependencyPath))
+                                .flatMap(dependency -> resolveDependency(referenceType, dependency))
+                );
     }
 
     Stream<GraphNode> resolveDirectory(Path path) {
+        logger.debug("Resolving directory: {}", path);
         Path kustomization = path.resolve("kustomization.yaml");
         Stream<? extends GraphNode> nodes;
 
         if (Files.exists(kustomization)) {
+            logger.debug("Found kustomization.yaml, building Kustomization from: {}", kustomization);
             nodes = Stream.of(builder.buildKustomization(kustomization));
         } else {
+            logger.debug("kustomization.yaml not found, listing files in directory: {}", path);
             File directory = new File(path.toAbsolutePath().toString());
             nodes = Arrays.stream(Objects.requireNonNull(directory.list()))
                     .map(path::resolve)
+                    .peek(resolvedPath -> logger.trace("Found file in directory: {}", resolvedPath))
                     .map(builder::buildKustomFile);
         }
 
@@ -87,6 +97,7 @@ public class ResourceReferenceResolver {
     private Stream<GraphNode> cleanse(Stream<? extends GraphNode> nodes) {
         return nodes
                 .filter(Objects::nonNull)
-                .map(node ->  (GraphNode) node);
+                .peek(node -> logger.trace("Cleansed node: {}", node.getPath()))
+                .map(node -> (GraphNode) node);
     }
 }

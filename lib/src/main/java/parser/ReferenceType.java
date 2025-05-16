@@ -16,6 +16,8 @@
 package parser;
 
 import exceptions.InvalidReferenceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ public enum ReferenceType {
     private final String yamlKey;
     private final ReferenceExtractor extractor;
     private final ReferenceValidator validator;
+    private static final Logger logger = LoggerFactory.getLogger(ReferenceType.class);
 
     ReferenceType(String yamlKey, ReferenceExtractor extractor, ReferenceValidator validator) {
         this.yamlKey = yamlKey;
@@ -48,12 +51,21 @@ public enum ReferenceType {
     }
 
     public Stream<Path> extract(Object yamlValue, Path baseDir) {
-        Object value = ((Map<String, Object>)yamlValue).get(this.yamlKey);
-        return extractor.extract(value, baseDir).peek(System.out::println);
+        logger.debug("Extracting references for type '{}' with baseDir: {}", this, baseDir);
+        Object value = ((Map<String, Object>) yamlValue).get(this.yamlKey);
+        return extractor.extract(value, baseDir)
+                .peek(path -> logger.trace("Extracted path '{}' for type '{}'.", path, this));
     }
 
     public void validate(Path path) throws InvalidReferenceException {
-        validator.validate(path);
+        logger.debug("Validating path '{}' for type '{}'.", path, this);
+        try {
+            validator.validate(path);
+            logger.trace("Path '{}' is valid for type '{}'.", path, this);
+        } catch (InvalidReferenceException e) {
+            logger.warn("Validation failed for path '{}' and type '{}': {}", path, this, e.getMessage());
+            throw e;
+        }
     }
 
     // Static lookup map for YAML key → enum
@@ -61,10 +73,20 @@ public enum ReferenceType {
             .collect(Collectors.toMap(ReferenceType::getYamlKey, Function.identity()));
 
     public static ReferenceType fromYamlKey(String key) {
-        return byKey.get(key);
+        logger.debug("Looking up ReferenceType for YAML key: '{}'", key);
+        ReferenceType type = byKey.get(key);
+        if (type != null) {
+            logger.trace("Found ReferenceType '{}' for key '{}'.", type, key);
+        } else {
+            logger.trace("No ReferenceType found for key '{}'.", key);
+        }
+        return type;
     }
 
     public static Boolean isReference(String key) {
-        return byKey.containsKey(key);
+        logger.debug("Checking if YAML key '{}' corresponds to a ReferenceType.", key);
+        boolean isRef = byKey.containsKey(key);
+        logger.trace("Key '{}' is a reference type: {}", key, isRef);
+        return isRef;
     }
 }

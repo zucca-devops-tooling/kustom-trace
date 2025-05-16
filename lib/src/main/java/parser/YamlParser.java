@@ -15,57 +15,72 @@
  */
 package parser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class YamlParser {
 
+    private static final Logger logger = LoggerFactory.getLogger(YamlParser.class);
+
     public static List<Map<String, Object>> parseFile(Path path) throws FileNotFoundException {
+        logger.debug("Starting to parse YAML file: {}", path.toAbsolutePath());
         Yaml parser = new Yaml();
         List<Map<String, Object>> documents = new ArrayList<>();
 
         try (InputStream inputStream = new FileInputStream(path.toAbsolutePath().toString())) {
             Iterable<Object> parsed = parser.loadAll(inputStream);
+            int documentCount = 0;
 
             for (Object doc : parsed) {
                 if (Objects.isNull(doc)) {
-                    // TODO: Log null document
+                    logger.warn("Found a null YAML document in: {}", path);
                     continue;
                 }
 
                 if (doc instanceof Map<?, ?> map) {
                     //noinspection unchecked
                     documents.add((Map<String, Object>) map);
+                    documentCount++;
                 } else {
-                    throw new IllegalArgumentException(
+                    IllegalArgumentException e = new IllegalArgumentException(
                             "Unsupported YAML document type in file " + path + ": " + doc.getClass().getSimpleName()
                     );
+                    logger.error("Error parsing YAML document type", e);
+                    throw e;
                 }
             }
 
+            logger.debug("Processed {} documents from: {}", documentCount, path);
             return documents;
-
         } catch (IOException e) {
+            logger.error("Error reading YAML file: {}", path, e);
             throw new FileNotFoundException("Could not read YAML file: " + path);
         }
     }
 
     public static Map<String, Object> parseKustomizationFile(Path path) {
+        logger.debug("Attempting to parse kustomization file: {}", path);
         try {
             List<Map<String, Object>> fileContent = YamlParser.parseFile(path);
 
-            if (fileContent.size() == 1) {
-                return fileContent.get(0);
+            if (fileContent == null || fileContent.isEmpty()) {
+                logger.warn("kustomization.yaml at {} is empty or contains no documents.", path);
+                return null;
             }
 
-            // TODO: Log incorrect amount of documents in kustomization.yaml
-            return null;
+            if (fileContent.size() > 1) {
+                logger.error("kustomization.yaml at {} contains {} documents, expected one.", path, fileContent.size());
+                return null;
+            }
+
+            return fileContent.get(0);
         } catch (FileNotFoundException e) {
-            //TODO: log kustomization file not found
+            logger.warn("kustomization.yaml not found at: {}", path);
             return null;
         }
     }
