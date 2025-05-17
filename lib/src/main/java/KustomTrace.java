@@ -18,37 +18,49 @@ import exceptions.UnreferencedFileException;
 import graph.KustomGraphBuilder;
 import model.KustomGraph;
 import model.Kustomization;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public class KustomTrace {
+public class KustomTrace { // Class name 'KustomTrace' doesn't match package 'parser'
 
+    private static final Logger logger = LoggerFactory.getLogger(KustomTrace.class);
     private final KustomGraph graph;
 
     private KustomTrace(KustomGraph graph) {
         this.graph = graph;
+        logger.debug("KustomTrace instance created.");
     }
 
     public static KustomTrace fromDirectory(Path appsDir) throws IOException {
+        logger.info("Creating KustomTrace from directory: {}", appsDir);
         KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
-        return new KustomTrace(builder.build());
+        logger.debug("KustomGraphBuilder created for: {}", appsDir);
+        KustomGraph graph = builder.build();
+        logger.info("Kustom graph built successfully.");
+        return new KustomTrace(graph);
     }
 
     public List<Kustomization> getApps() {
+        logger.debug("Getting all applications from the graph.");
         return graph.getApps();
     }
 
     public List<Kustomization> getAppsWith(Path file) throws UnreferencedFileException {
+        logger.debug("Getting applications referencing file: {}", file);
         return graph.getAppsWith(file);
     }
 
     public List<Path> getDependenciesFor(Path app) throws KustomException {
+        logger.debug("Getting dependencies for application at: {}", app);
         return graph.getAllAppFiles(app);
     }
 
     public KustomGraph getGraph() {
+        logger.debug("Getting the underlying KustomGraph.");
         return graph;
     }
 }
