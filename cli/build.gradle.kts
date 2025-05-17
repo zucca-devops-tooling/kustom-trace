@@ -10,6 +10,10 @@ repositories {
 }
 
 dependencies {
+    implementation("info.picocli:picocli:4.7.7")
+    implementation(project(":kustomtrace"))
+    implementation("ch.qos.logback:logback-classic:1.5.3")
+
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
