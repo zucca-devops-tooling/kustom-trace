@@ -26,7 +26,7 @@
         </if>
     </root>
 
-    <logger name="com.yourpackage.cli" level="DEBUG" additivity="false">
+    <logger name="dev.zucca-ops.kustomtrace-cli" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT" />
         <if condition='property("LOG_FILE").exists()'>
             <then>
@@ -35,7 +35,7 @@
         </if>
     </logger>
 
-    <logger name="com.yourpackage.lib" level="WARN" additivity="false">
+    <logger name="dev.zucca-ops.kustomtrace" level="WARN" additivity="false">
         <appender-ref ref="STDOUT" />
         <if condition='property("LOG_FILE").exists()'>
             <then>
