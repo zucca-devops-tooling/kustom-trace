@@ -1,0 +1,10 @@
+resources:
+  - deployment.yaml
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: my-nginx
+    path: patch1.yaml
+  - path: patch2.yaml

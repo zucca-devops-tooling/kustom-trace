@@ -1,0 +1,5 @@
+resources:
+  - service.yml
+patchesStrategicMerge:
+  - patch-merge1.yaml
+  - patch-merge2.yaml

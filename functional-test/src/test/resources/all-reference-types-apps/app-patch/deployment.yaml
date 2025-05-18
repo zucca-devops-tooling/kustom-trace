@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-patched-deployment
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: my-container
+          image: original-image:latest
+  selector:
+    matchLabels:
+      app: my-patched

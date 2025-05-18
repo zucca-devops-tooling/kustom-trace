@@ -1,0 +1,4 @@
+resources:
+  - my-resource.yaml
+  - another-resource.yaml
+  - ./
