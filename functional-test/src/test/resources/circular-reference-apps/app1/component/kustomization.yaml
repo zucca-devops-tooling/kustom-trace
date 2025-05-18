@@ -1,0 +1,4 @@
+resources:
+  - component1-resource.yaml
+components:
+  - ../../app2/kustomization.yaml

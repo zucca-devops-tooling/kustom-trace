@@ -1,0 +1,4 @@
+resources:
+  - app1-resource.yaml
+components:
+  - component
