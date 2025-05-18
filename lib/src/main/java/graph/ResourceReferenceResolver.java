@@ -22,6 +22,7 @@ import model.ResourceReference;
 import parser.ReferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import parser.YamlParser;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -55,6 +56,13 @@ public class ResourceReferenceResolver {
                     .map(node -> new ResourceReference(type, node));
         }
 
+        if (YamlParser.isValidKustomizationFile(path)) {
+            Path parent = path.getParent();
+            logger.debug("Path is a kustomization.yaml reference, resolving directory: {}", parent);
+            return resolveDirectory(parent)
+                    .map(node -> new ResourceReference(type, node));
+        }
+
         logger.debug("Path is a file, building KustomFile: {}", path);
         return Stream.of(new ResourceReference(type, builder.buildKustomFile(path)));
     }
@@ -76,14 +84,18 @@ public class ResourceReferenceResolver {
 
     Stream<GraphNode> resolveDirectory(Path path) {
         logger.debug("Resolving directory: {}", path);
-        Path kustomization = path.resolve("kustomization.yaml");
+        Path kustomizationYaml = path.resolve("kustomization.yaml");
+        Path kustomizationYml = path.resolve("kustomization.yml");
         Stream<? extends GraphNode> nodes;
 
-        if (Files.exists(kustomization)) {
-            logger.debug("Found kustomization.yaml, building Kustomization from: {}", kustomization);
-            nodes = Stream.of(builder.buildKustomization(kustomization));
+        if (Files.exists(kustomizationYaml)) {
+            logger.debug("Found kustomization.yaml, building Kustomization from: {}", kustomizationYaml);
+            nodes = Stream.of(builder.buildKustomization(kustomizationYaml));
+        } else if (Files.exists(kustomizationYml)) {
+            logger.debug("Found kustomization.yml, building Kustomization from: {}", kustomizationYml);
+            nodes = Stream.of(builder.buildKustomization(kustomizationYml));
         } else {
-            logger.debug("kustomization.yaml not found, listing files in directory: {}", path);
+            logger.debug("kustomization.yaml or kustomization.yml not found, listing files in directory: {}", path);
             File directory = new File(path.toAbsolutePath().toString());
             nodes = Arrays.stream(Objects.requireNonNull(directory.list()))
                     .map(path::resolve)

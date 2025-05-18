@@ -22,6 +22,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class YamlParser {
 
@@ -83,5 +84,10 @@ public class YamlParser {
             logger.warn("kustomization.yaml not found at: {}", path);
             return null;
         }
+    }
+
+    public static boolean isValidKustomizationFile(Path path) {
+        return Stream.of("kustomization.yaml", "kustomization.yml")
+                .anyMatch(path.getFileName().toString()::endsWith);
     }
 }

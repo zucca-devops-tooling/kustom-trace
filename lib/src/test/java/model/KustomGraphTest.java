@@ -9,6 +9,7 @@ import parser.ReferenceType;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -122,5 +123,10 @@ public class KustomGraphTest {
         @Override public Stream<Kustomization> getApps() { return Stream.empty(); }
         @Override public Boolean isRoot() { return true; }
         @Override public Stream<Path> getDependencies() { return Stream.of(path); }
+
+        @Override
+        Stream<Path> getDependencies(Set<GraphNode> visited) {
+            return null;
+        }
     }
 }

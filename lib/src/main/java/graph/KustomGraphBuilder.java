@@ -19,6 +19,7 @@ import exceptions.InvalidContentException;
 import model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import parser.YamlParser;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,7 +45,7 @@ public class KustomGraphBuilder {
         logger.info("Starting to build Kustom Graph from: {}", appsDir);
         AtomicInteger kustomizationCount = new AtomicInteger(0);
         try (Stream<Path> stream = Files.walk(appsDir)) {
-            stream.filter(path -> path.getFileName().toString().equals("kustomization.yaml"))
+            stream.filter(YamlParser::isValidKustomizationFile)
                     .parallel()
                     .forEach(path -> {
                         buildKustomization(path);

@@ -29,8 +29,8 @@ import java.util.stream.Stream;
 public enum ReferenceType {
 
     RESOURCE("resources", ReferenceExtractors.simpleList(), ReferenceValidators.optionalDirectoryOrFile()),
-    BASE("bases", ReferenceExtractors.simpleList(), ReferenceValidators.optionalDirectoryOrFile()),
-    COMPONENT("components", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeDirectoryWithKustomizationYaml()),
+    BASE("bases", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
+    COMPONENT("components", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
     PATCH("patches", ReferenceExtractors.inlinePathList("path"), ReferenceValidators.mustBeFile()),
     PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeFile()),
     CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles(), ReferenceValidators.mustBeFile());

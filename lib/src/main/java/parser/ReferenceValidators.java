@@ -37,19 +37,31 @@ public class ReferenceValidators {
         };
     }
 
-    public static ReferenceValidator mustBeDirectoryWithKustomizationYaml() {
+    public static ReferenceValidator mustBeDirectoryOrKustomizationFile() {
         return path -> {
-            logger.debug("Validating if path '{}' is a directory with kustomization.yaml.", path);
-            if (!Files.isDirectory(path)) {
-                logger.warn("Validation failed: Expected a directory at '{}'.", path);
-                throw new InvalidReferenceException("Expected a directory", path);
+            logger.debug("Validating if path '{}' is a directory with kustomization or a kustomization file.", path);
+            if (Files.isDirectory(path)) {
+                Path kustomizationYaml = path.resolve("kustomization.yaml");
+                Path kustomizationYml = path.resolve("kustomization.yml");
+                if (!Files.exists(kustomizationYaml) && !Files.exists(kustomizationYml)) {
+                    logger.warn("Validation failed: Expected a kustomization.yaml or kustomization.yml inside directory '{}'.", path);
+                    throw new InvalidReferenceException("Expected a kustomization.yaml or kustomization.yml inside directory", path);
+                }
+                logger.trace("Path '{}' is a valid directory containing a kustomization file.", path);
+                return;
             }
-            Path kustomization = path.resolve("kustomization.yaml");
-            if (!Files.exists(kustomization)) {
-                logger.warn("Validation failed: Expected a kustomization.yaml inside directory '{}'.", path);
-                throw new InvalidReferenceException("Expected a kustomization.yaml inside directory", path);
+            if (Files.isRegularFile(path)) {
+                String fileName = path.getFileName().toString();
+                if (fileName.equals("kustomization.yaml") || fileName.equals("kustomization.yml")) {
+                    logger.trace("Path '{}' is a valid kustomization file.", path);
+                    return;
+                } else {
+                    logger.warn("Validation failed: Expected a kustomization.yaml or kustomization.yml file at '{}'.", path);
+                    throw new InvalidReferenceException("Expected a directory or a kustomization.yaml/yml file", path);
+                }
             }
-            logger.trace("Path '{}' is a valid directory with kustomization.yaml.", path);
+            logger.warn("Validation failed: Path '{}' is not a directory or a kustomization.yaml/yml file.", path);
+            throw new InvalidReferenceException("Expected a directory or a kustomization.yaml/yml file", path);
         };
     }
 

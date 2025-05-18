@@ -33,33 +33,72 @@ public class ReferenceValidatorsTest {
     }
 
     @Test
-    void mustBeDirectoryWithKustomizationYaml_acceptsValidDirectory() throws IOException {
+    void acceptsValidDirectoryWithKustomizationYaml() throws IOException {
         Path dir = Files.createDirectory(tempDir.resolve("component"));
         Files.createFile(dir.resolve("kustomization.yaml"));
 
         assertDoesNotThrow(() ->
-                ReferenceValidators.mustBeDirectoryWithKustomizationYaml().validate(dir)
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(dir)
         );
     }
 
     @Test
-    void mustBeDirectoryWithKustomizationYaml_rejectsIfNotDirectory() throws IOException {
+    void acceptsValidDirectoryWithKustomizationYml() throws IOException {
+        Path dir = Files.createDirectory(tempDir.resolve("component"));
+        Files.createFile(dir.resolve("kustomization.yml"));
+
+        assertDoesNotThrow(() ->
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(dir)
+        );
+    }
+
+    @Test
+    void acceptsValidKustomizationYamlFile() throws IOException {
         Path file = Files.createFile(tempDir.resolve("kustomization.yaml"));
 
-        InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () ->
-                ReferenceValidators.mustBeDirectoryWithKustomizationYaml().validate(file)
+        assertDoesNotThrow(() ->
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(file)
         );
-        assertTrue(ex.getMessage().contains("Expected a directory"));
     }
 
     @Test
-    void mustBeDirectoryWithKustomizationYaml_rejectsIfMissingKustomizationYaml() throws IOException {
+    void acceptsValidKustomizationYmlFile() throws IOException {
+        Path file = Files.createFile(tempDir.resolve("kustomization.yml"));
+
+        assertDoesNotThrow(() ->
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(file)
+        );
+    }
+
+    @Test
+    void rejectsIfNotDirectoryOrKustomizationFile() throws IOException {
+        Path file = Files.createFile(tempDir.resolve("other-file.txt"));
+
+        InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () ->
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(file)
+        );
+        assertTrue(ex.getMessage().contains("Expected a directory or a kustomization.yaml/yml file"));
+    }
+
+    @Test
+    void rejectsDirectoryIfMissingKustomizationFile() throws IOException {
         Path dir = Files.createDirectory(tempDir.resolve("component"));
 
         InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () ->
-                ReferenceValidators.mustBeDirectoryWithKustomizationYaml().validate(dir)
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(dir)
         );
-        assertTrue(ex.getMessage().contains("Expected a kustomization.yaml inside directory"));
+        assertTrue(ex.getMessage().contains("Expected a kustomization.yaml or kustomization.yml inside directory"));
+    }
+
+    @Test
+    void rejectsDirectoryIfMissingBothKustomizationYamlAndYml() throws IOException {
+        Path dir = Files.createDirectory(tempDir.resolve("component"));
+        Files.createFile(dir.resolve("some-other-file.txt"));
+
+        InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () ->
+                ReferenceValidators.mustBeDirectoryOrKustomizationFile().validate(dir)
+        );
+        assertTrue(ex.getMessage().contains("Expected a kustomization.yaml or kustomization.yml inside directory"));
     }
 
     @Test
