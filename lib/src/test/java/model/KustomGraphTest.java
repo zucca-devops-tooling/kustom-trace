@@ -126,7 +126,7 @@ public class KustomGraphTest {
 
         @Override
         Stream<Path> getDependencies(Set<GraphNode> visited) {
-            return null;
+            return Stream.of(path);
         }
     }
 }
