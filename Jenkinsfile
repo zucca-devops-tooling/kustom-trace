@@ -58,6 +58,19 @@ pipeline {
                 }
             }
         }
+        stage('Functional tests') {
+            steps {
+                script {
+                    setStatus('test','NEUTRAL','Running tests...')
+                    try {
+                        sh './gradlew :functional-test:test --no-daemon'
+                        setStatus('test','SUCCESS','Tests passed')
+                    } catch (Exception e) {
+                        setStatus('test','FAILURE','Tests failed')
+                    }
+                }
+            }
+        }
         stage('Publish to Maven repository') {
             environment {
                 GPG_KEY_ID    = credentials('GPG_KEY_ID')
