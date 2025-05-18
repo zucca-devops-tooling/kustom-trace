@@ -18,6 +18,7 @@ package model;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class GraphNode {
@@ -38,7 +39,8 @@ public abstract class GraphNode {
 
     abstract Stream<Kustomization> getApps();
     abstract Boolean isRoot();
-    abstract Stream<Path> getDependencies();
+    public abstract Stream<Path> getDependencies();
+    abstract Stream<Path> getDependencies(Set<GraphNode> visited);
 
     public void addDependent(Kustomization dependent) {
         dependents.add(dependent);

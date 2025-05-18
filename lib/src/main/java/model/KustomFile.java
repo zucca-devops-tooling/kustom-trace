@@ -18,6 +18,7 @@ package model;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class KustomFile extends GraphNode {
@@ -40,8 +41,13 @@ public class KustomFile extends GraphNode {
     }
 
     @Override
-    Stream<Path> getDependencies() {
+    public Stream<Path> getDependencies() {
         return Stream.of(path);
+    }
+
+    @Override
+    Stream<Path> getDependencies(Set<GraphNode> visited) {
+        return getDependencies();
     }
 
     public KustomResource getResource() {

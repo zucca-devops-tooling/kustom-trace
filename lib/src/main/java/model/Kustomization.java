@@ -15,17 +15,18 @@
  */
 package model;
 
-import parser.ReferenceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class Kustomization extends GraphNode {
     private final List<ResourceReference> references = new ArrayList<>();
     private final Map<String, Object> content;
+
+    private static final Logger logger = LoggerFactory.getLogger(Kustomization.class);
 
     public Kustomization(Path path, Map<String, Object> content) {
         this.path = path;
@@ -44,16 +45,6 @@ public class Kustomization extends GraphNode {
         return references;
     }
 
-    @Override
-    public Stream<Kustomization> getApps() {
-        if (this.isRoot()) {
-            return Stream.of(this);
-        }
-
-        return getDependents().stream()
-                .flatMap(Kustomization::getApps);
-    }
-
     public String getKind() {
         return "Kustomization";
     }
@@ -68,11 +59,37 @@ public class Kustomization extends GraphNode {
     }
 
     @Override
-    Stream<Path> getDependencies() {
-        Stream<Path> dependencies =  references.stream()
+    Stream<Path> getDependencies(Set<GraphNode> visited) {
+        if (!visited.add(this)) {
+            logger.warn("Circular dependency detected while getting dependencies for kustomization: {}", this.getPath());
+            return Stream.empty();
+        }
+        Stream<Path> dependencies = references.stream()
                 .map(ResourceReference::resource)
-                .flatMap(GraphNode::getDependencies);
+                .flatMap(resource -> resource.getDependencies(visited));
 
         return Stream.concat(dependencies, Stream.of(path));
+    }
+
+    @Override
+    public Stream<Path> getDependencies() {
+        return getDependencies(new HashSet<>());
+    }
+
+    private Stream<Kustomization> getApps(Set<GraphNode> visited) {
+        if (!visited.add(this)) {
+            logger.warn("Circular dependency detected while getting apps for kustomization: {}", this.getPath());
+            return Stream.empty();
+        }
+        if (this.isRoot()) {
+            return Stream.of(this);
+        }
+        return getDependents().stream()
+                .flatMap(dependent -> dependent.getApps(visited));
+    }
+
+    @Override
+    public Stream<Kustomization> getApps() {
+        return getApps(new HashSet<>());
     }
 }
