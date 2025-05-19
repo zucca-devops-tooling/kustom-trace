@@ -128,5 +128,15 @@ public class KustomGraphTest {
         Stream<Path> getDependencies(Set<GraphNode> visited) {
             return Stream.of(path);
         }
+
+        @Override
+        public boolean isKustomization() {
+            return false;
+        }
+
+        @Override
+        public boolean isKustomFile() {
+            return true;
+        }
     }
 }

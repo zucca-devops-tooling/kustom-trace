@@ -26,143 +26,74 @@ public class ResourceReferenceResolverTest {
     Path tempDir;
 
     @Test
-    void resolveDependency_wrapsResolveDirectory_forDirectory() {
-        // Directory layout:
-        // tempDir/
-        //   kustomization.yaml  (the app)
-        //   component1/          (dependency)
-        //   component2/
-
-        // Prepare fake kustomization.yaml content
-        Map<String, Object> yaml = Map.of(
-                "components", List.of("component1", "component2"),
-                "namePrefix", "dev-"  // this should be ignored
-        );
-
+    void resolveDependency_buildsKustomization_forValidKustomizationFile() throws IOException {
         Path kustomPath = tempDir.resolve("kustomization.yaml");
-        Path dep1 = tempDir.resolve("component1");
-        Path dep2 = tempDir.resolve("component2");
+        Files.createFile(kustomPath);
 
-        Kustomization root = new Kustomization(kustomPath, yaml);
-        Kustomization c1 = new Kustomization(dep1.resolve("kustomization.yaml"), Map.of());
-        Kustomization c2 = new Kustomization(dep2.resolve("kustomization.yaml"), Map.of());
+        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
+        Kustomization expectedKustomization = new Kustomization(kustomPath, Map.of());
+        when(builder.buildKustomization(kustomPath)).thenReturn(expectedKustomization);
 
-        ResourceReference ref1 = new ResourceReference(ReferenceType.COMPONENT, c1);
-        ResourceReference ref2 = new ResourceReference(ReferenceType.COMPONENT, c2);
+        ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
+        ResourceReference result = resolver.resolveDependency(ReferenceType.BASE, kustomPath);
 
-        // Spy resolver to fake resolveDependency() responses
-        ResourceReferenceResolver resolver = spy(new ResourceReferenceResolver(null));
-        doReturn(Stream.of(ref1)).when(resolver).resolveDependency(ReferenceType.COMPONENT, dep1);
-        doReturn(Stream.of(ref2)).when(resolver).resolveDependency(ReferenceType.COMPONENT, dep2);
-
-        // Run
-        Stream<ResourceReference> stream = resolver.resolveDependencies(root);
-        List<ResourceReference> results = stream.toList();
-
-        // Verify
-        assertEquals(2, results.size());
-        assertTrue(results.contains(ref1));
-        assertTrue(results.contains(ref2));
+        assertEquals(expectedKustomization, result.resource());
+        assertEquals(ReferenceType.BASE, result.referenceType());
+        verify(builder).buildKustomization(kustomPath);
+        verify(builder, never()).buildKustomFile(any());
     }
 
     @Test
-    void resolveDependency_returnsEmptyStream_whenValidationFails() throws InvalidReferenceException {
-        ReferenceType type = spy(ReferenceType.PATCH); // any type works
-
-        // force validate() to throw
-        doThrow(new InvalidReferenceException("Expected a file", tempDir)).when(type).validate(tempDir);
-
-        ResourceReferenceResolver resolver = new ResourceReferenceResolver(null);
-        Stream<ResourceReference> result = resolver.resolveDependency(type, tempDir);
-
-        assertTrue(result.toList().isEmpty());
-    }
-
-    @Test
-    void resolveDependency_wrapsBuildKustomFile_forFile() throws IOException {
+    void resolveDependency_buildsKustomFile_forNonKustomizationFile() throws IOException {
         Path filePath = tempDir.resolve("config.yaml");
         Files.writeString(filePath, "kind: ConfigMap");
 
-        KustomFile file = new KustomFile(filePath);
-
-        // mock builder
         KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        when(builder.buildKustomFile(filePath)).thenReturn(file);
+        KustomFile expectedFile = new KustomFile(filePath);
+        when(builder.buildKustomFile(filePath)).thenReturn(expectedFile);
 
         ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
+        ResourceReference result = resolver.resolveDependency(ReferenceType.RESOURCE, filePath);
 
-        Stream<ResourceReference> result = resolver.resolveDependency(ReferenceType.RESOURCE, filePath);
-        ResourceReference ref = result.findFirst().orElseThrow();
-
-        assertEquals(filePath, ref.resource().getPath());
-        assertEquals(ReferenceType.RESOURCE, ref.referenceType());
+        assertEquals(expectedFile, result.resource());
+        assertEquals(ReferenceType.RESOURCE, result.referenceType());
+        verify(builder).buildKustomFile(filePath);
+        verify(builder, never()).buildKustomization(any());
     }
 
     @Test
-    void resolveDependencies_resolvesMultipleComponentReferences() throws IOException {
-        Path dirPath = tempDir.resolve("base");
-        Files.createDirectory(dirPath);
-        Files.createFile(dirPath.resolve("kustomization.yaml"));
+    void resolveDependencies_processesValidReferences() throws IOException {
+        Path kustomPath = tempDir.resolve("kustomization.yaml");
+        Files.writeString(kustomPath, "components:\n  - component1\nresources:\n  - resource.yaml");
 
-        Kustomization node = new Kustomization(dirPath.resolve("kustomization.yaml"), Map.of());
+        Path componentDir = tempDir.resolve("component1");
+        Files.createDirectory(componentDir);
+        Path componentKustomizationPath = componentDir.resolve("kustomization.yaml");
+        Files.createFile(componentKustomizationPath); // Create the component's kustomization file
 
-        ResourceReferenceResolver resolver = spy(new ResourceReferenceResolver(null));
-        doReturn(Stream.of(node)).when(resolver).resolveDirectory(dirPath);
+        Path resourcePath = tempDir.resolve("resource.yaml");
+        Files.createFile(resourcePath); // Create the resource file
 
-        Stream<ResourceReference> result = resolver.resolveDependency(ReferenceType.COMPONENT, dirPath);
-        ResourceReference ref = result.findFirst().orElseThrow();
-
-        assertEquals(node, ref.resource());
-        assertEquals(ReferenceType.COMPONENT, ref.referenceType());
-    }
-
-
-    @Test
-    void resolveDirectory_returnsKustomization_ifPresent() throws IOException {
-        Path dir = tempDir.resolve("with-kustomization");
-        Files.createDirectory(dir);
-        Path kustomPath = dir.resolve("kustomization.yaml");
-        Files.createFile(kustomPath);
-
-        Kustomization expected = new Kustomization(kustomPath, Map.of());
-        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        when(builder.buildKustomization(kustomPath)).thenReturn(expected);
-
-        ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
-        Stream<GraphNode> result = resolver.resolveDirectory(dir);
-
-        assertEquals(expected, result.findFirst().orElseThrow());
-    }
-
-    @Test
-    void resolveDirectory_buildsFiles_ifNoKustomization() throws IOException {
-        Path dir = tempDir.resolve("only-files");
-        Files.createDirectory(dir);
-        Path file1 = Files.createFile(dir.resolve("a.yaml"));
-        Path file2 = Files.createFile(dir.resolve("b.yaml"));
-
-        KustomFile f1 = new KustomFile(file1);
-        KustomFile f2 = new KustomFile(file2);
-
-        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        when(builder.buildKustomFile(file1)).thenReturn(f1);
-        when(builder.buildKustomFile(file2)).thenReturn(f2);
-
-        ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
-        Stream<GraphNode> result = resolver.resolveDirectory(dir);
-
-        assertTrue(result.toList().containsAll(Stream.of(f1, f2).toList()));
-    }
-
-    @Test
-    void resolveDirectory_returnsEmptyStream_forEmptyDir() throws IOException {
-        Path dir = tempDir.resolve("empty");
-        Files.createDirectory(dir);
-
+        Kustomization root = new Kustomization(kustomPath, Map.of("components", List.of("component1"), "resources", List.of("resource.yaml")));
         KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
         ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
 
-        Stream<GraphNode> result = resolver.resolveDirectory(dir);
-        assertTrue(result.toList().isEmpty());
+        Kustomization componentNode = new Kustomization(componentKustomizationPath, Map.of());
+        KustomFile resourceNode = new KustomFile(resourcePath);
+
+        when(builder.buildKustomization(componentKustomizationPath)).thenReturn(componentNode);
+        when(builder.buildKustomFile(resourcePath)).thenReturn(resourceNode);
+
+        Stream<ResourceReference> result = resolver.resolveDependencies(root);
+        List<ResourceReference> references = result.toList();
+
+        assertEquals(2, references.size());
+        assertEquals(ReferenceType.COMPONENT, references.get(0).referenceType());
+        assertEquals(componentNode, references.get(0).resource());
+        assertEquals(ReferenceType.RESOURCE, references.get(1).referenceType());
+        assertEquals(resourceNode, references.get(1).resource());
+
+        verify(builder).buildKustomization(componentKustomizationPath);
+        verify(builder).buildKustomFile(resourcePath);
     }
 }

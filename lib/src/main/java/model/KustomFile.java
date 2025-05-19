@@ -41,13 +41,23 @@ public class KustomFile extends GraphNode {
     }
 
     @Override
-    public Stream<Path> getDependencies() {
+    Stream<Path> getDependencies() {
         return Stream.of(path);
     }
 
     @Override
     Stream<Path> getDependencies(Set<GraphNode> visited) {
         return getDependencies();
+    }
+
+    @Override
+    public boolean isKustomization() {
+        return false;
+    }
+
+    @Override
+    public boolean isKustomFile() {
+        return true;
     }
 
     public KustomResource getResource() {

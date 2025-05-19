@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,11 +29,11 @@ import java.util.stream.Stream;
 
 public enum ReferenceType {
 
-    RESOURCE("resources", ReferenceExtractors.simpleList(), ReferenceValidators.optionalDirectoryOrFile()),
-    BASE("bases", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
-    COMPONENT("components", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
-    PATCH("patches", ReferenceExtractors.inlinePathList("path"), ReferenceValidators.mustBeFile()),
-    PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.simpleList(), ReferenceValidators.mustBeFile()),
+    RESOURCE("resources", ReferenceExtractors.resource(), ReferenceValidators.mustBeKubernetesResource()),
+    BASE("bases", ReferenceExtractors.kustomizationFile(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
+    COMPONENT("components", ReferenceExtractors.kustomizationFile(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
+    PATCH("patches", ReferenceExtractors.inlinePathValue("path"), ReferenceValidators.mustBeFile()),
+    PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.resource(), ReferenceValidators.mustBeKubernetesResource()),
     CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles(), ReferenceValidators.mustBeFile());
 
     private final String yamlKey;
@@ -52,19 +53,30 @@ public enum ReferenceType {
 
     public Stream<Path> extract(Object yamlValue, Path baseDir) {
         logger.debug("Extracting references for type '{}' with baseDir: {}", this, baseDir);
-        Object value = ((Map<String, Object>) yamlValue).get(this.yamlKey);
-        return extractor.extract(value, baseDir)
+        return extractor.extract(yamlValue, baseDir)
                 .peek(path -> logger.trace("Extracted path '{}' for type '{}'.", path, this));
     }
 
-    public void validate(Path path) throws InvalidReferenceException {
+    public Stream<Object> getRawReferences(Object yamlValue) {
+        logger.debug("Extracting references for type '{}'", this);
+        Object value = ((Map<String, Object>) yamlValue).get(this.yamlKey);
+        if (!(value instanceof List<?> references)) {
+            logger.trace("Input value is not a List, returning empty stream.");
+            return Stream.empty();
+        }
+
+        return (Stream<Object>) references.stream();
+    }
+
+    public boolean validate(Path path) {
         logger.debug("Validating path '{}' for type '{}'.", path, this);
         try {
             validator.validate(path);
             logger.trace("Path '{}' is valid for type '{}'.", path, this);
+            return true;
         } catch (InvalidReferenceException e) {
             logger.warn("Validation failed for path '{}' and type '{}': {}", path, this, e.getMessage());
-            throw e;
+            return false;
         }
     }
 

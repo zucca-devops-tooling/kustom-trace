@@ -30,10 +30,28 @@ public class ReferenceValidators {
         return path -> {
             logger.debug("Validating if path '{}' is a file.", path);
             if (!Files.exists(path) || !Files.isRegularFile(path)) {
-                logger.warn("Validation failed: Expected a file at '{}'.", path);
                 throw new InvalidReferenceException("Expected a file", path);
             }
             logger.trace("Path '{}' is a valid file.", path);
+        };
+    }
+
+    public static ReferenceValidator mustBeKubernetesResource() {
+        return path -> {
+            logger.debug("Validating if path '{}' is a Kubernetes resource file or directory.", path);
+            if (Files.isDirectory(path)) {
+                logger.trace("Path '{}' is a directory.", path);
+                return; // Directories are valid for resources
+            }
+            if (Files.isRegularFile(path)) {
+                if (YamlParser.isValidKubernetesResource(path)) {
+                    logger.trace("Path '{}' is a valid Kubernetes resource file.", path);
+                    return;
+                } else {
+                    throw new InvalidReferenceException("Expected a .yaml, .yml, or .json file", path);
+                }
+            }
+            throw new InvalidReferenceException("Expected a directory or a .yaml, .yml, or .json file", path);
         };
     }
 
@@ -44,35 +62,20 @@ public class ReferenceValidators {
                 Path kustomizationYaml = path.resolve("kustomization.yaml");
                 Path kustomizationYml = path.resolve("kustomization.yml");
                 if (!Files.exists(kustomizationYaml) && !Files.exists(kustomizationYml)) {
-                    logger.warn("Validation failed: Expected a kustomization.yaml or kustomization.yml inside directory '{}'.", path);
                     throw new InvalidReferenceException("Expected a kustomization.yaml or kustomization.yml inside directory", path);
                 }
                 logger.trace("Path '{}' is a valid directory containing a kustomization file.", path);
                 return;
             }
             if (Files.isRegularFile(path)) {
-                String fileName = path.getFileName().toString();
-                if (fileName.equals("kustomization.yaml") || fileName.equals("kustomization.yml")) {
+                if (YamlParser.isValidKustomizationFile(path)) {
                     logger.trace("Path '{}' is a valid kustomization file.", path);
                     return;
                 } else {
-                    logger.warn("Validation failed: Expected a kustomization.yaml or kustomization.yml file at '{}'.", path);
-                    throw new InvalidReferenceException("Expected a directory or a kustomization.yaml/yml file", path);
+                    throw new InvalidReferenceException("Expected a kustomization.yaml/yml file", path);
                 }
             }
-            logger.warn("Validation failed: Path '{}' is not a directory or a kustomization.yaml/yml file.", path);
             throw new InvalidReferenceException("Expected a directory or a kustomization.yaml/yml file", path);
-        };
-    }
-
-    public static ReferenceValidator optionalDirectoryOrFile() {
-        return path -> {
-            logger.debug("Validating if path '{}' exists (optional directory or file).", path);
-            if (!Files.exists(path)) {
-                logger.warn("Validation failed: Path '{}' does not exist.", path);
-                throw new InvalidReferenceException("Path does not exist", path);
-            }
-            logger.trace("Path '{}' exists.", path);
         };
     }
 }

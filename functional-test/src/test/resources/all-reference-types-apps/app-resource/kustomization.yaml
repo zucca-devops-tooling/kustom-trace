@@ -1,4 +1,4 @@
 resources:
-  - my-resource.yaml
-  - another-resource.yaml
   - ./
+  - more-resources/extra-resource.yml
+  - more-resources/extra-resource.json

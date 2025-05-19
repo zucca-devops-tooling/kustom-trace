@@ -1,10 +1,8 @@
 configMapGenerator:
   - name: my-configmap1
-    files:
+    envs:
       - configmap1.env
   - name: my-configmap2
     files:
       - configmap2=configmap2.env
-  - name: my-plain-text-config
-    files:
       - plain-text-file.txt

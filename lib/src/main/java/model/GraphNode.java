@@ -39,10 +39,12 @@ public abstract class GraphNode {
 
     abstract Stream<Kustomization> getApps();
     abstract Boolean isRoot();
-    public abstract Stream<Path> getDependencies();
+    abstract Stream<Path> getDependencies();
     abstract Stream<Path> getDependencies(Set<GraphNode> visited);
 
     public void addDependent(Kustomization dependent) {
         dependents.add(dependent);
     }
+    public abstract boolean isKustomization();
+    public abstract boolean isKustomFile();
 }

@@ -23,7 +23,7 @@ public class CircularDependencyTest {
     private static final Logger logger = (Logger) LoggerFactory.getLogger(Kustomization.class);
 
     private Path getTestResourcePath(String subDirectory) {
-        return Paths.get("src", "test", "resources", "circular-reference-apps", subDirectory);
+        return Paths.get("src", "test", "resources", "circular-dependency-apps", subDirectory);
     }
 
     @Test
@@ -34,7 +34,6 @@ public class CircularDependencyTest {
         logger.addAppender(listAppender);
 
         Path appsDir = getTestResourcePath("");
-        System.out.println("Attempting to load apps from: " + appsDir.toAbsolutePath());
         KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
         KustomGraph graph = builder.build();
 

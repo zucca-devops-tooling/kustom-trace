@@ -15,8 +15,6 @@
  */
 package graph;
 
-import exceptions.InvalidReferenceException;
-import model.GraphNode;
 import model.Kustomization;
 import model.ResourceReference;
 import parser.ReferenceType;
@@ -24,12 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.YamlParser;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ResourceReferenceResolver {
@@ -41,30 +35,16 @@ public class ResourceReferenceResolver {
         this.builder = builder;
     }
 
-    Stream<ResourceReference> resolveDependency(ReferenceType type, Path path) {
+    ResourceReference resolveDependency(ReferenceType type, Path path) {
         logger.debug("Resolving dependency of type '{}' at path: {}", type, path);
-        try {
-            type.validate(path);
-        } catch (InvalidReferenceException e) {
-            logger.warn("Invalid reference found for type '{}' at path: {}", type, path, e);
-            return Stream.empty();
-        }
-
-        if (Files.isDirectory(path)) {
-            logger.debug("Path is a directory, resolving directory: {}", path);
-            return resolveDirectory(path)
-                    .map(node -> new ResourceReference(type, node));
-        }
 
         if (YamlParser.isValidKustomizationFile(path)) {
-            Path parent = path.getParent();
-            logger.debug("Path is a kustomization.yaml reference, resolving directory: {}", parent);
-            return resolveDirectory(parent)
-                    .map(node -> new ResourceReference(type, node));
+            logger.debug("Building Kustomization: {}", path);
+            return new ResourceReference(type, builder.buildKustomization(path));
         }
 
-        logger.debug("Path is a file, building KustomFile: {}", path);
-        return Stream.of(new ResourceReference(type, builder.buildKustomFile(path)));
+        logger.debug("Building KustomFile: {}", path);
+        return new ResourceReference(type, builder.buildKustomFile(path));
     }
 
     Stream<ResourceReference> resolveDependencies(Kustomization kustomization) {
@@ -76,40 +56,11 @@ public class ResourceReferenceResolver {
                 .map(ReferenceType::fromYamlKey)
                 .peek(referenceType -> logger.debug("Processing reference type: {}", referenceType))
                 .flatMap(referenceType ->
-                        referenceType.extract(fileContent, kustomization.getPath().getParent())
-                                .peek(dependencyPath -> logger.debug("Extracted dependency path: {}", dependencyPath))
-                                .flatMap(dependency -> resolveDependency(referenceType, dependency))
+                        referenceType
+                                .getRawReferences(fileContent)
+                                .flatMap(reference -> referenceType.extract(reference, kustomization.getPath().getParent()))
+                                .filter(referenceType::validate)
+                                .map(reference -> resolveDependency(referenceType, reference))
                 );
-    }
-
-    Stream<GraphNode> resolveDirectory(Path path) {
-        logger.debug("Resolving directory: {}", path);
-        Path kustomizationYaml = path.resolve("kustomization.yaml");
-        Path kustomizationYml = path.resolve("kustomization.yml");
-        Stream<? extends GraphNode> nodes;
-
-        if (Files.exists(kustomizationYaml)) {
-            logger.debug("Found kustomization.yaml, building Kustomization from: {}", kustomizationYaml);
-            nodes = Stream.of(builder.buildKustomization(kustomizationYaml));
-        } else if (Files.exists(kustomizationYml)) {
-            logger.debug("Found kustomization.yml, building Kustomization from: {}", kustomizationYml);
-            nodes = Stream.of(builder.buildKustomization(kustomizationYml));
-        } else {
-            logger.debug("kustomization.yaml or kustomization.yml not found, listing files in directory: {}", path);
-            File directory = new File(path.toAbsolutePath().toString());
-            nodes = Arrays.stream(Objects.requireNonNull(directory.list()))
-                    .map(path::resolve)
-                    .peek(resolvedPath -> logger.trace("Found file in directory: {}", resolvedPath))
-                    .map(builder::buildKustomFile);
-        }
-
-        return cleanse(nodes);
-    }
-
-    private Stream<GraphNode> cleanse(Stream<? extends GraphNode> nodes) {
-        return nodes
-                .filter(Objects::nonNull)
-                .peek(node -> logger.trace("Cleansed node: {}", node.getPath()))
-                .map(node -> (GraphNode) node);
     }
 }

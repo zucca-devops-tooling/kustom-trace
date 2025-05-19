@@ -76,7 +76,7 @@ public class KustomGraphBuilder {
             logger.debug("Kustomization node already exists for: {}", path);
         }
 
-        return (Kustomization) graph.getNode(path);
+        return graph.getKustomization(path);
     }
 
     KustomFile buildKustomFile(Path path) {
@@ -90,7 +90,7 @@ public class KustomGraphBuilder {
             logger.debug("KustomFile node already exists for: {}", path);
         }
 
-        return (KustomFile) graph.getNode(path);
+        return graph.getKustomFile(path);
     }
 
     private void setMutualReference(Kustomization dependent, ResourceReference reference) {

@@ -72,6 +72,16 @@ public class Kustomization extends GraphNode {
     }
 
     @Override
+    public boolean isKustomization() {
+        return true;
+    }
+
+    @Override
+    public boolean isKustomFile() {
+        return false;
+    }
+
+    @Override
     public Stream<Path> getDependencies() {
         return getDependencies(new HashSet<>());
     }

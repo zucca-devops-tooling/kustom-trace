@@ -71,4 +71,24 @@ public class KustomGraph {
 
         throw new UnreferencedFileException(normalizedPath);
     }
+
+    public KustomFile getKustomFile(Path path) {
+        GraphNode node = getNode(path);
+
+        if (node.isKustomFile()) {
+            return (KustomFile) node;
+        }
+
+        return null;
+    }
+
+    public Kustomization getKustomization(Path path) {
+        GraphNode node = getNode(path);
+
+        if (node.isKustomization()) {
+            return (Kustomization) node;
+        }
+
+        return null;
+    }
 }
