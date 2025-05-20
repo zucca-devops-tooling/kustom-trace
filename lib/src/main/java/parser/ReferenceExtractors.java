@@ -73,6 +73,10 @@ public class ReferenceExtractors {
         return (referenceValue, baseDir) -> {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
+            if (path.equals(baseDir)) {
+                throw new InvalidReferenceException("Self reference " + referenceValue, path, true);
+            }
+
             if (Files.isDirectory(path)) {
                 Path kustomizationYaml = path.resolve("kustomization.yaml");
                 Path kustomizationYml = path.resolve("kustomization.yml");

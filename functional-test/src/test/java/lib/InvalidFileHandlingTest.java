@@ -10,6 +10,7 @@ import graph.KustomGraphBuilder;
 import graph.ResourceReferenceResolver;
 import model.KustomGraph;
 import model.Kustomization;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,12 @@ public class InvalidFileHandlingTest {
         Path appPath = appsDir.resolve("kustomization.yaml");
         app = graph.getKustomization(appPath);
         assertNotNull(app,  "kustomization should exist");
+    }
+
+    @AfterAll
+    static void tearDown() {
+        // Clean up the appender
+        logger.detachAppender(listAppender);
     }
 
     @Test

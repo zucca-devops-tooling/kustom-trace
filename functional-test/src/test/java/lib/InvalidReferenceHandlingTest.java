@@ -7,6 +7,7 @@ import ch.qos.logback.core.read.ListAppender;
 import graph.KustomGraphBuilder;
 import model.KustomGraph;
 import model.Kustomization;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,13 @@ public class InvalidReferenceHandlingTest {
                     apps.put(referenceFolder, app);
                 });
     }
+
+    @AfterAll
+    static void tearDown() {
+        // Clean up the appender
+        logger.detachAppender(listAppender);
+    }
+
 
     @Test
     void testInvalidBaseReferences() {
