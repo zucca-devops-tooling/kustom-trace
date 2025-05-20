@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class GraphNodeResolver {
     private static final Logger logger = LoggerFactory.getLogger(GraphNodeResolver.class);
 
-    static KustomFile resolveKustomFile(Path path) {
+    static KustomFile resolveKustomFile(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Resolving KustomFile: {}", path);
         Stream<String> parseableExtensions = Stream.of(".yml", ".yaml", ".json");
 
@@ -40,18 +40,14 @@ public class GraphNodeResolver {
 
         if (parseableExtensions.anyMatch(fileName::endsWith)) {
             logger.debug("Parsing parseable file: {}", path);
-            try {
-                YamlParser.parseFile(path)
-                        .stream()
-                        .map(GraphNodeResolver::resolveResource)
-                        .forEach(resource -> {
-                            file.addResource(resource);
-                            resource.setFile(file);
-                        });
-                logger.debug("Finished processing resources in: {}", path);
-            } catch (FileNotFoundException e) {
-                logger.error("Could not find file: {}", path, e);
-            }
+            YamlParser.parseFile(path)
+                    .stream()
+                    .map(GraphNodeResolver::resolveResource)
+                    .forEach(resource -> {
+                        file.addResource(resource);
+                        resource.setFile(file);
+                    });
+            logger.debug("Finished processing resources in: {}", path);
         } else {
             logger.debug("Skipping non-parseable file: {}", path);
         }
@@ -83,7 +79,7 @@ public class GraphNodeResolver {
         return resource;
     }
 
-    static Kustomization resolveKustomization(Path path) throws InvalidContentException {
+    static Kustomization resolveKustomization(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Resolving Kustomization from: {}", path);
         Map<String, Object> fileContent = YamlParser.parseKustomizationFile(path);
 

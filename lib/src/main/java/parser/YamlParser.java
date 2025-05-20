@@ -15,6 +15,7 @@
  */
 package parser;
 
+import exceptions.InvalidContentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -28,7 +29,7 @@ public class YamlParser {
 
     private static final Logger logger = LoggerFactory.getLogger(YamlParser.class);
 
-    public static List<Map<String, Object>> parseFile(Path path) throws FileNotFoundException {
+    public static List<Map<String, Object>> parseFile(Path path) throws FileNotFoundException, InvalidContentException {
         logger.debug("Starting to parse YAML file: {}", path.toAbsolutePath());
         Yaml parser = new Yaml();
         List<Map<String, Object>> documents = new ArrayList<>();
@@ -48,11 +49,7 @@ public class YamlParser {
                     documents.add((Map<String, Object>) map);
                     documentCount++;
                 } else {
-                    IllegalArgumentException e = new IllegalArgumentException(
-                            "Unsupported YAML document type in file " + path + ": " + doc.getClass().getSimpleName()
-                    );
-                    logger.error("Error parsing YAML document type", e);
-                    throw e;
+                    throw new InvalidContentException(path);
                 }
             }
 
@@ -64,26 +61,22 @@ public class YamlParser {
         }
     }
 
-    public static Map<String, Object> parseKustomizationFile(Path path) {
+    public static Map<String, Object> parseKustomizationFile(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Attempting to parse kustomization file: {}", path);
-        try {
-            List<Map<String, Object>> fileContent = YamlParser.parseFile(path);
 
-            if (fileContent == null || fileContent.isEmpty()) {
-                logger.warn("kustomization.yaml at {} is empty or contains no documents.", path);
-                return null;
-            }
+        List<Map<String, Object>> fileContent = YamlParser.parseFile(path);
 
-            if (fileContent.size() > 1) {
-                logger.error("kustomization.yaml at {} contains {} documents, expected one.", path, fileContent.size());
-                return null;
-            }
-
-            return fileContent.get(0);
-        } catch (FileNotFoundException e) {
-            logger.warn("kustomization.yaml not found at: {}", path);
+        if (fileContent == null || fileContent.isEmpty()) {
+            logger.warn("kustomization.yaml at {} is empty or contains no documents.", path);
             return null;
         }
+
+        if (fileContent.size() > 1) {
+            logger.error("kustomization.yaml at {} contains {} documents, expected one.", path, fileContent.size());
+            return null;
+        }
+
+        return fileContent.get(0);
     }
 
     public static boolean isValidKustomizationFile(Path path) {

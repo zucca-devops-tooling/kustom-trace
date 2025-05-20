@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import parser.YamlParser;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +22,7 @@ public class GraphNodeResolverTest {
     Path tempDir;
 
     @Test
-    void parsesMultipleYamlDocuments() throws IOException {
+    void parsesMultipleYamlDocuments() throws IOException, InvalidContentException {
         Path filePath = tempDir.resolve("multi.yaml");
 
         String yaml = """
@@ -52,23 +53,12 @@ public class GraphNodeResolverTest {
     }
 
     @Test
-    void returnsEmptyResourcesIfNonYamlExtension() throws IOException {
+    void returnsEmptyResourcesIfNonYamlExtension() throws IOException, InvalidContentException {
         Path filePath = tempDir.resolve("script.sh");
         Files.writeString(filePath, "echo hello");
 
         KustomFile file = GraphNodeResolver.resolveKustomFile(filePath);
 
-        assertTrue(file.getResources().isEmpty());
-    }
-
-    @Test
-    void ignoresMissingFile() {
-        Path filePath = tempDir.resolve("missing.yaml");
-
-        // Do not create the file
-        KustomFile file = GraphNodeResolver.resolveKustomFile(filePath);
-
-        assertEquals(filePath, file.getPath());
         assertTrue(file.getResources().isEmpty());
     }
 

@@ -15,6 +15,7 @@
  */
 package graph;
 
+import exceptions.InvalidContentException;
 import model.Kustomization;
 import model.ResourceReference;
 import parser.ReferenceType;
@@ -22,8 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.YamlParser;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class ResourceReferenceResolver {
@@ -37,14 +40,21 @@ public class ResourceReferenceResolver {
 
     ResourceReference resolveDependency(ReferenceType type, Path path) {
         logger.debug("Resolving dependency of type '{}' at path: {}", type, path);
+        try {
+            if (YamlParser.isValidKustomizationFile(path)) {
+                logger.debug("Building Kustomization: {}", path);
+                return new ResourceReference(type, builder.buildKustomization(path));
+            }
 
-        if (YamlParser.isValidKustomizationFile(path)) {
-            logger.debug("Building Kustomization: {}", path);
-            return new ResourceReference(type, builder.buildKustomization(path));
+            logger.debug("Building KustomFile: {}", path);
+            return new ResourceReference(type, builder.buildKustomFile(path));
+        } catch (InvalidContentException e) {
+            logger.error("Error while trying to parse dependency %s at %s, invalid yaml/json content".formatted(type, path));
+            return null;
+        } catch (FileNotFoundException e) {
+            logger.error("Error while trying to parse dependency %s at %s, file not found".formatted(type, path));
+            return null;
         }
-
-        logger.debug("Building KustomFile: {}", path);
-        return new ResourceReference(type, builder.buildKustomFile(path));
     }
 
     Stream<ResourceReference> resolveDependencies(Kustomization kustomization) {
@@ -60,6 +70,7 @@ public class ResourceReferenceResolver {
                                 .getRawReferences(fileContent)
                                 .flatMap(reference -> referenceType.extract(reference, kustomization.getPath().getParent()))
                                 .map(reference -> resolveDependency(referenceType, reference))
+                                .filter(Objects::nonNull)
                 );
     }
 }

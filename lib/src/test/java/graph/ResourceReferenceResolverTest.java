@@ -1,5 +1,6 @@
 package graph;
 
+import exceptions.InvalidContentException;
 import exceptions.InvalidReferenceException;
 import model.GraphNode;
 import model.KustomFile;
@@ -7,8 +8,11 @@ import model.Kustomization;
 import model.ResourceReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedStatic;
 import parser.ReferenceType;
+import parser.YamlParser;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ResourceReferenceResolverTest {
@@ -26,7 +29,7 @@ public class ResourceReferenceResolverTest {
     Path tempDir;
 
     @Test
-    void resolveDependency_buildsKustomization_forValidKustomizationFile() throws IOException {
+    void resolveDependency_buildsKustomization_forValidKustomizationFile() throws IOException, InvalidContentException {
         Path kustomPath = tempDir.resolve("kustomization.yaml");
         Files.createFile(kustomPath);
 
@@ -44,7 +47,7 @@ public class ResourceReferenceResolverTest {
     }
 
     @Test
-    void resolveDependency_buildsKustomFile_forNonKustomizationFile() throws IOException {
+    void resolveDependency_buildsKustomFile_forNonKustomizationFile() throws IOException, InvalidContentException {
         Path filePath = tempDir.resolve("config.yaml");
         Files.writeString(filePath, "kind: ConfigMap");
 
@@ -62,7 +65,7 @@ public class ResourceReferenceResolverTest {
     }
 
     @Test
-    void resolveDependencies_processesValidReferences() throws IOException {
+    void resolveDependencies_processesValidReferences() throws IOException, InvalidContentException {
         Path kustomPath = tempDir.resolve("kustomization.yaml");
         Files.writeString(kustomPath, "components:\n  - component1\nresources:\n  - resource.yaml");
 
@@ -95,5 +98,33 @@ public class ResourceReferenceResolverTest {
 
         verify(builder).buildKustomization(componentKustomizationPath);
         verify(builder).buildKustomFile(resourcePath);
+    }
+
+    @Test
+    void returnsNullOnInvalidContent() throws InvalidContentException, FileNotFoundException {
+        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
+        try (MockedStatic<YamlParser> mocked = mockStatic(YamlParser.class)) {
+            mocked.when(() -> YamlParser.isValidKustomizationFile(any())).thenReturn(true);
+            when(builder.buildKustomization(any())).thenThrow(new InvalidContentException(Path.of("any")));
+
+            ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
+            ResourceReference result = resolver.resolveDependency(ReferenceType.RESOURCE, mock());
+
+            assertNull(result);
+        }
+    }
+
+    @Test
+    void returnsNullOnFileNotFound() throws InvalidContentException, FileNotFoundException {
+        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
+        try (MockedStatic<YamlParser> mocked = mockStatic(YamlParser.class)) {
+            mocked.when(() -> YamlParser.isValidKustomizationFile(any())).thenReturn(true);
+            when(builder.buildKustomization(any())).thenThrow(new FileNotFoundException("any"));
+
+            ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
+            ResourceReference result = resolver.resolveDependency(ReferenceType.RESOURCE, mock());
+
+            assertNull(result);
+        }
     }
 }

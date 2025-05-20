@@ -10,6 +10,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import parser.ReferenceType;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,22 +53,7 @@ public class KustomGraphBuilderTest {
     }
 
     @Test
-    void returnsNullOnInvalidContent() {
-        when(graph.containsNode(rootPath)).thenReturn(false);
-
-        try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
-            mocked.when(() -> GraphNodeResolver.resolveKustomization(rootPath))
-                    .thenThrow(new InvalidContentException(rootPath));
-
-            Kustomization result = builder.buildKustomization(rootPath);
-
-            assertNull(result);
-            verify(graph, never()).addNode(any());
-        }
-    }
-
-    @Test
-    void buildsNewKustomizationIfNotPresent_andSetsMutualReferences() {
+    void buildsNewKustomizationIfNotPresent_andSetsMutualReferences() throws InvalidContentException, FileNotFoundException {
         when(graph.containsNode(rootPath)).thenReturn(false);
 
         Kustomization root = new Kustomization(rootPath, Map.of());
@@ -100,7 +86,7 @@ public class KustomGraphBuilderTest {
     }
 
     @Test
-    void returnsExistingKustomizationIfAlreadyInGraph() {
+    void returnsExistingKustomizationIfAlreadyInGraph() throws InvalidContentException, FileNotFoundException {
         Kustomization existing = new Kustomization(rootPath, Map.of());
 
         when(graph.containsNode(rootPath)).thenReturn(true);
@@ -113,7 +99,7 @@ public class KustomGraphBuilderTest {
     }
 
     @Test
-    void returnsExistingKustomFileIfAlreadyInGraph() {
+    void returnsExistingKustomFileIfAlreadyInGraph() throws InvalidContentException, FileNotFoundException {
         KustomFile existing = new KustomFile(filePath);
 
         when(graph.containsNode(filePath)).thenReturn(true);
@@ -126,7 +112,7 @@ public class KustomGraphBuilderTest {
     }
 
     @Test
-    void buildsNewKustomFileIfNotInGraph() {
+    void buildsNewKustomFileIfNotInGraph() throws InvalidContentException, FileNotFoundException {
         KustomFile parsed = new KustomFile(filePath);
 
         when(graph.containsNode(filePath)).thenReturn(false);

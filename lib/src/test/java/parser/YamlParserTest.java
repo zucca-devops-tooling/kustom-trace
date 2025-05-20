@@ -1,8 +1,10 @@
 package parser;
 
+import exceptions.InvalidContentException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ public class YamlParserTest {
     Path tempDir;
 
     @Test
-    void parseFile_returnsSingleMap() throws IOException {
+    void parseFile_returnsSingleMap() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("single.yaml");
         Files.writeString(path, "kind: ConfigMap\nmetadata:\n  name: my-config");
 
@@ -27,7 +29,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseFile_parsesMultipleDocuments() throws IOException {
+    void parseFile_parsesMultipleDocuments() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("multi.yaml");
         Files.writeString(path, """
             kind: ConfigMap
@@ -46,7 +48,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseFile_skipsNullDocuments() throws IOException {
+    void parseFile_skipsNullDocuments() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("nulls.yaml");
         Files.writeString(path, "---\n---\nkind: ConfigMap");
 
@@ -60,10 +62,10 @@ public class YamlParserTest {
         Path path = tempDir.resolve("list.yaml");
         Files.writeString(path, "- item1\n- item2");
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+        InvalidContentException ex = assertThrows(InvalidContentException.class, () -> {
             YamlParser.parseFile(path);
         });
-        assertTrue(ex.getMessage().contains("Unsupported YAML document type"));
+        assertTrue(ex.getMessage().contains(path.toString()));
     }
 
     @Test
@@ -76,7 +78,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_returnsSingleDocument() throws IOException {
+    void parseKustomizationFile_returnsSingleDocument() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("kustomization.yaml");
         Files.writeString(path, "resources:\n  - base");
 
@@ -86,7 +88,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_returnsNullIfMultipleDocuments() throws IOException {
+    void parseKustomizationFile_returnsNullIfMultipleDocuments() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("invalid.yaml");
         Files.writeString(path, """
             resources:
@@ -100,7 +102,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_returnsNullIfFileMissing() {
+    void parseKustomizationFile_returnsNullIfFileMissing() throws InvalidContentException, FileNotFoundException {
         Path path = tempDir.resolve("nonexistent.yaml");
 
         Map<String, Object> result = YamlParser.parseKustomizationFile(path);
@@ -108,7 +110,7 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseFile_skipsTrailingNullDocument() throws IOException {
+    void parseFile_skipsTrailingNullDocument() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("trailing-null.yaml");
         Files.writeString(path, """
         resources:

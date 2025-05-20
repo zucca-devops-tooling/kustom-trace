@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parser.YamlParser;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,7 +49,12 @@ public class KustomGraphBuilder {
             stream.filter(YamlParser::isValidKustomizationFile)
                     .parallel()
                     .forEach(path -> {
-                        buildKustomization(path);
+                        try {
+                            buildKustomization(path);
+                        } catch (InvalidContentException | FileNotFoundException e) {
+                            logger.error("Invalid kustomization found at " + path);
+                            return;
+                        }
                         kustomizationCount.incrementAndGet();
                     });
         }
@@ -56,22 +62,17 @@ public class KustomGraphBuilder {
         return graph;
     }
 
-    Kustomization buildKustomization(Path path) {
+    Kustomization buildKustomization(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Building Kustomization for: {}", path);
         if (!graph.containsNode(path)) {
             logger.debug("Resolving Kustomization using GraphNodeResolver for: {}", path);
-            try {
-                Kustomization k = GraphNodeResolver.resolveKustomization(path);
-                logger.debug("Adding Kustomization node to graph: {}", k.getPath());
-                graph.addNode(k);
-                logger.debug("Resolving dependencies for Kustomization: {}", k.getPath());
+            Kustomization k = GraphNodeResolver.resolveKustomization(path);
+            logger.debug("Adding Kustomization node to graph: {}", k.getPath());
+            graph.addNode(k);
+            logger.debug("Resolving dependencies for Kustomization: {}", k.getPath());
 
-                dependencyResolver.resolveDependencies(k)
-                        .forEach(reference -> setMutualReference(k, reference));
-            } catch (InvalidContentException e) {
-                logger.warn("Invalid content in file {}: {}", path, e.getMessage());
-                return null;
-            }
+            dependencyResolver.resolveDependencies(k)
+                    .forEach(reference -> setMutualReference(k, reference));
         } else {
             logger.debug("Kustomization node already exists for: {}", path);
         }
@@ -79,7 +80,7 @@ public class KustomGraphBuilder {
         return graph.getKustomization(path);
     }
 
-    KustomFile buildKustomFile(Path path) {
+    KustomFile buildKustomFile(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Building KustomFile for: {}", path);
         if (!graph.containsNode(path)) {
             logger.debug("Resolving KustomFile using GraphNodeResolver for: {}", path);
