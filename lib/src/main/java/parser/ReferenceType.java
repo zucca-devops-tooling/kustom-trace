@@ -29,22 +29,20 @@ import java.util.stream.Stream;
 
 public enum ReferenceType {
 
-    RESOURCE("resources", ReferenceExtractors.resource(), ReferenceValidators.mustBeKubernetesResource()),
-    BASE("bases", ReferenceExtractors.kustomizationFile(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
-    COMPONENT("components", ReferenceExtractors.kustomizationFile(), ReferenceValidators.mustBeDirectoryOrKustomizationFile()),
-    PATCH("patches", ReferenceExtractors.inlinePathValue("path"), ReferenceValidators.mustBeFile()),
-    PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.resource(), ReferenceValidators.mustBeKubernetesResource()),
-    CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles(), ReferenceValidators.mustBeFile());
+    RESOURCE("resources", ReferenceExtractors.resourceOrDirectory()),
+    BASE("bases", ReferenceExtractors.kustomizationFile()),
+    COMPONENT("components", ReferenceExtractors.kustomizationFile()),
+    PATCH("patches", ReferenceExtractors.inlinePathValue("path")),
+    PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.resource()),
+    CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles());
 
     private final String yamlKey;
     private final ReferenceExtractor extractor;
-    private final ReferenceValidator validator;
     private static final Logger logger = LoggerFactory.getLogger(ReferenceType.class);
 
-    ReferenceType(String yamlKey, ReferenceExtractor extractor, ReferenceValidator validator) {
+    ReferenceType(String yamlKey, ReferenceExtractor extractor) {
         this.yamlKey = yamlKey;
         this.extractor = extractor;
-        this.validator = validator;
     }
 
     public String getYamlKey() {
@@ -53,8 +51,18 @@ public enum ReferenceType {
 
     public Stream<Path> extract(Object yamlValue, Path baseDir) {
         logger.debug("Extracting references for type '{}' with baseDir: {}", this, baseDir);
-        return extractor.extract(yamlValue, baseDir)
-                .peek(path -> logger.trace("Extracted path '{}' for type '{}'.", path, this));
+
+        try {
+            return extractor.extract(yamlValue, baseDir);
+        } catch (InvalidReferenceException e) {
+            String errorMessage = "Extraction failed for path '%s' and type '%s': %s: %s".formatted(baseDir, this, e.getMessage(), e.getPath().getFileName());
+            if (e.isError()) {
+                logger.error(errorMessage);
+            } else {
+                logger.warn(errorMessage);
+            }
+            return Stream.empty();
+        }
     }
 
     public Stream<Object> getRawReferences(Object yamlValue) {
@@ -66,18 +74,6 @@ public enum ReferenceType {
         }
 
         return (Stream<Object>) references.stream();
-    }
-
-    public boolean validate(Path path) {
-        logger.debug("Validating path '{}' for type '{}'.", path, this);
-        try {
-            validator.validate(path);
-            logger.trace("Path '{}' is valid for type '{}'.", path, this);
-            return true;
-        } catch (InvalidReferenceException e) {
-            logger.warn("Validation failed for path '{}' and type '{}': {}", path, this, e.getMessage());
-            return false;
-        }
     }
 
     // Static lookup map for YAML key → enum

@@ -2,3 +2,9 @@ resources:
   - ./
   - more-resources/extra-resource.yml
   - more-resources/extra-resource.json
+  - invalid-directory/kustomization.yaml
+  - more-resources/non-existing-resource.yaml
+  - |
+    ignored
+    multiline
+    string

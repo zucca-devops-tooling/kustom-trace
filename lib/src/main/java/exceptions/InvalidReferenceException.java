@@ -18,7 +18,18 @@ package exceptions;
 import java.nio.file.Path;
 
 public class InvalidReferenceException extends KustomException {
+    private boolean isError = false;
+
     public InvalidReferenceException(String message, Path path) {
         super(message, path);
+    }
+
+    public InvalidReferenceException(String message, Path path, Boolean isError) {
+        super(message, path);
+        this.isError = isError;
+    }
+
+    public boolean isError() {
+        return isError;
     }
 }

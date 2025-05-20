@@ -24,4 +24,8 @@ public abstract class KustomException extends Exception {
         super(message);
         this.path = path;
     }
+
+    public Path getPath() {
+        return path;
+    }
 }

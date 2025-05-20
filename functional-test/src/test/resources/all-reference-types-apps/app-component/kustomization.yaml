@@ -1,3 +1,5 @@
 components:
   - component-directory-reference
   - ./
+  - non-existing-component
+  -

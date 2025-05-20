@@ -3,3 +3,5 @@ resources:
 patchesStrategicMerge:
   - patch-merge1.yaml
   - patch-merge2.yaml
+  - invalid-directory/kustomization.yaml
+  - invalid-directory

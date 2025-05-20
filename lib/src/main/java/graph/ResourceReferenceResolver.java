@@ -59,7 +59,6 @@ public class ResourceReferenceResolver {
                         referenceType
                                 .getRawReferences(fileContent)
                                 .flatMap(reference -> referenceType.extract(reference, kustomization.getPath().getParent()))
-                                .filter(referenceType::validate)
                                 .map(reference -> resolveDependency(referenceType, reference))
                 );
     }

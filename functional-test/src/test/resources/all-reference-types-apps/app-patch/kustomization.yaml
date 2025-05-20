@@ -8,3 +8,10 @@ patches:
       name: my-nginx
     path: patch1.yaml
   - path: patch2.yaml
+  - path: invalid-directory
+  - path: non-existing-patch.yaml
+  - |
+    multiline
+    string
+  - target:
+      group: no-path

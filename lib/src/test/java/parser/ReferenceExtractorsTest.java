@@ -1,5 +1,6 @@
 package parser;
 
+import exceptions.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -10,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class ReferenceExtractorsTest {
@@ -20,79 +20,72 @@ public class ReferenceExtractorsTest {
     Path baseDir;
 
     @Test
-    void kustomizationFile_resolvesValidKustomizationYaml() throws IOException {
+    void kustomizationFile_resolvesValidKustomizationYaml() throws IOException, InvalidReferenceException {
         Path kustomizationYaml = baseDir.resolve("kustomization.yaml");
         Files.createFile(kustomizationYaml);
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract("kustomization.yaml", baseDir);
-        assertEquals(kustomizationYaml, result.findFirst().orElse(null));
+        assertEquals(kustomizationYaml, extractor.extract("kustomization.yaml", baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void kustomizationFile_resolvesValidKustomizationYml() throws IOException {
+    void kustomizationFile_resolvesValidKustomizationYml() throws IOException, InvalidReferenceException {
         Path kustomizationYml = baseDir.resolve("kustomization.yml");
         Files.createFile(kustomizationYml);
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract("kustomization.yml", baseDir);
-        assertEquals(kustomizationYml, result.findFirst().orElse(null));
+        assertEquals(kustomizationYml, extractor.extract("kustomization.yml", baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void kustomizationFile_resolvesDirectoryWithKustomizationYaml() throws IOException {
+    void kustomizationFile_resolvesDirectoryWithKustomizationYaml() throws IOException, InvalidReferenceException {
         Path componentDir = baseDir.resolve("component");
         Files.createDirectory(componentDir);
         Path kustomizationYaml = componentDir.resolve("kustomization.yaml");
         Files.createFile(kustomizationYaml);
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract("component", baseDir);
-        assertEquals(kustomizationYaml, result.findFirst().orElse(null));
+        assertEquals(kustomizationYaml, extractor.extract("component", baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void kustomizationFile_resolvesDirectoryWithKustomizationYml() throws IOException {
+    void kustomizationFile_resolvesDirectoryWithKustomizationYml() throws IOException, InvalidReferenceException {
         Path componentDir = baseDir.resolve("component");
         Files.createDirectory(componentDir);
         Path kustomizationYml = componentDir.resolve("kustomization.yml");
         Files.createFile(kustomizationYml);
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract("component", baseDir);
-        assertEquals(kustomizationYml, result.findFirst().orElse(null));
+        assertEquals(kustomizationYml, extractor.extract("component", baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void kustomizationFile_returnsEmptyForNonKustomizationFile() throws IOException {
+    void kustomizationFile_throwsForNonKustomizationFile() throws IOException {
         Path otherFile = baseDir.resolve("other.yaml");
         Files.createFile(otherFile);
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract("other.yaml", baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        assertThrows(InvalidReferenceException.class, () -> extractor.extract("other.yaml", baseDir).findFirst());
     }
 
     @Test
-    void kustomizationFile_returnsEmptyForNonString() {
+    void kustomizationFile_throwsForNonString() {
         var extractor = ReferenceExtractors.kustomizationFile();
-        Stream<Path> result = extractor.extract(Map.of(), baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        assertThrows(InvalidReferenceException.class, () -> extractor.extract(Map.of(), baseDir).findFirst());
     }
 
     @Test
-    void resource_resolvesValidResourceFile() throws IOException {
+    void resourceOrDirectory_resolvesValidResourceFile() throws IOException, InvalidReferenceException {
         Path resourceFile = baseDir.resolve("resource.yaml");
         Files.createFile(resourceFile);
-        var extractor = ReferenceExtractors.resource();
-        Stream<Path> result = extractor.extract("resource.yaml", baseDir);
-        assertEquals(resourceFile, result.findFirst().orElse(null));
+        var extractor = ReferenceExtractors.resourceOrDirectory();
+        assertEquals(resourceFile, extractor.extract("resource.yaml", baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void resource_resolvesDirectoryContainingResourceFiles() throws IOException {
+    void resourceOrDirectory_resolvesDirectoryContainingResourceFiles() throws IOException, InvalidReferenceException {
         Path resourceDir = baseDir.resolve("resources");
         Files.createDirectory(resourceDir);
         Path resourceYaml = resourceDir.resolve("data.yaml");
         Path resourceJson = resourceDir.resolve("data.json");
         Files.createFile(resourceYaml);
         Files.createFile(resourceJson);
-        var extractor = ReferenceExtractors.resource();
+        var extractor = ReferenceExtractors.resourceOrDirectory();
         List<Path> result = extractor.extract("resources", baseDir).toList();
         assertTrue(result.contains(resourceYaml));
         assertTrue(result.contains(resourceJson));
@@ -100,48 +93,55 @@ public class ReferenceExtractorsTest {
     }
 
     @Test
-    void resource_returnsEmptyForKustomizationFile() throws IOException {
+    void resourceOrDirectory_throwsForKustomizationFile() throws IOException {
         Path kustomizationYaml = baseDir.resolve("kustomization.yaml");
         Files.createFile(kustomizationYaml);
-        var extractor = ReferenceExtractors.resource();
-        Stream<Path> result = extractor.extract("kustomization.yaml", baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        var extractor = ReferenceExtractors.resourceOrDirectory();
+        assertThrows(InvalidReferenceException.class, () -> extractor.extract("kustomization.yaml", baseDir).findFirst());
     }
 
     @Test
-    void resource_returnsEmptyForNonString() {
-        var extractor = ReferenceExtractors.resource();
-        Stream<Path> result = extractor.extract(List.of(), baseDir);
-        assertTrue(result.findFirst().isEmpty());
+    void resourceOrDirectory_throwsForNonString() {
+        var extractor = ReferenceExtractors.resourceOrDirectory();
+        assertThrows(InvalidReferenceException.class, () -> extractor.extract(List.of(), baseDir).findFirst());
     }
 
     @Test
-    void inlinePathValue_extractsSpecifiedField() {
+    void inlinePathValue_extractsSpecifiedField() throws IOException, InvalidReferenceException {
+        Path patchFile = baseDir.resolve("patch1.yaml");
+        Files.createFile(patchFile);
         var extractor = ReferenceExtractors.inlinePathValue("path");
-
-        List<Map<String, Object>> input = List.of(
-                Map.of("path", "patch1.yaml"),
-                Map.of("path", "patch2.yaml"),
-                Map.of("nope", "ignored")
-        );
-
-        Stream<Path> result = extractor.extract(input.get(0), baseDir);
-        assertEquals(baseDir.resolve("patch1.yaml").normalize(), result.findFirst().orElse(null));
-
-        result = extractor.extract(input.get(2), baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        Map<String, Object> input = Map.of("path", "patch1.yaml");
+        assertEquals(baseDir.resolve("patch1.yaml").normalize(), extractor.extract(input, baseDir).findFirst().orElse(null));
     }
 
     @Test
-    void inlinePathValue_returnsEmptyForNonMap() {
+    void inlinePathValue_throwsForNonKubernetesResourceFile() {
         var extractor = ReferenceExtractors.inlinePathValue("path");
-        Stream<Path> result = extractor.extract("not a map", baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        Map<String, Object> input = Map.of("path", "other.txt");
+        assertThrows(InvalidReferenceException.class, () -> extractor.extract(input, baseDir).findFirst());
     }
 
     @Test
-    void configMapGeneratorFiles_extractsEnvsAndFiles() {
+    void inlinePathValue_returnsEmptyForNonMap() throws InvalidReferenceException {
+        var extractor = ReferenceExtractors.inlinePathValue("path");
+        assertTrue(extractor.extract("not a map", baseDir).findFirst().isEmpty());
+    }
+
+    @Test
+    void configMapGeneratorFiles_extractsEnvsAndFiles() throws InvalidReferenceException, IOException {
         var extractor = ReferenceExtractors.configMapGeneratorFiles();
+        Path file1 = baseDir.resolve("a.yaml").normalize();
+        Path path2 = baseDir.resolve("path/to").normalize();
+        Path file2 = path2.resolve("b.yaml").normalize();
+        Path file3 = baseDir.resolve("env1").normalize();
+        Path file4 = baseDir.resolve("env2").normalize();
+
+        Files.createFile(file1);
+        Files.createDirectories(path2);
+        Files.createFile(file2);
+        Files.createFile(file3);
+        Files.createFile(file4);
 
         Map<String, Object> input = Map.of(
                 "files", List.of("a.yaml", "key1=path/to/b.yaml"),
@@ -151,16 +151,15 @@ public class ReferenceExtractorsTest {
         List<Path> result = extractor.extract(input, baseDir).toList();
 
         assertEquals(4, result.size());
-        assertTrue(result.contains(baseDir.resolve("a.yaml").normalize()));
-        assertTrue(result.contains(baseDir.resolve("path/to/b.yaml").normalize()));
-        assertTrue(result.contains(baseDir.resolve("env1").normalize()));
-        assertTrue(result.contains(baseDir.resolve("env2").normalize()));
+        assertTrue(result.contains(file1));
+        assertTrue(result.contains(file2));
+        assertTrue(result.contains(file3));
+        assertTrue(result.contains(file4));
     }
 
     @Test
-    void configMapGeneratorFiles_returnsEmptyForNonMap() {
+    void configMapGeneratorFiles_returnsEmptyForNonMap() throws InvalidReferenceException {
         var extractor = ReferenceExtractors.configMapGeneratorFiles();
-        Stream<Path> result = extractor.extract(List.of(), baseDir);
-        assertTrue(result.findFirst().isEmpty());
+        assertTrue(extractor.extract(List.of(), baseDir).findFirst().isEmpty());
     }
 }

@@ -92,7 +92,7 @@ public class YamlParser {
     }
 
     public static boolean isValidKubernetesResource(Path path) {
-        return Stream.of(".yaml", ".yml", ".json")
+        return !isValidKustomizationFile(path) && Stream.of(".yaml", ".yml", ".json")
                 .anyMatch(path.getFileName().toString().toLowerCase()::endsWith);
     }
 }

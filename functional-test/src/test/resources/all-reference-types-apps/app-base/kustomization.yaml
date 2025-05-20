@@ -1,3 +1,5 @@
 bases:
   - base-kustomization-reference/kustomization.yaml  # Referencing the kustomization file directly
   - base-directory-reference                      # Referencing the directory (should pick up kustomization.yaml inside)
+  - non-existing-base
+  - invalid-reference.yaml

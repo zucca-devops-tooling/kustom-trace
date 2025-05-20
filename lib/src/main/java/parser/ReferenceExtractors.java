@@ -18,6 +18,7 @@ package parser;
 import exceptions.InvalidReferenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -32,66 +33,104 @@ public class ReferenceExtractors {
 
     private static final Logger logger = LoggerFactory.getLogger(ReferenceExtractors.class);
 
-    public static ReferenceExtractor kustomizationFile() {
-        return (referenceValue, baseDir) -> {
-            if (referenceValue instanceof String) {
-                String value = referenceValue.toString();
+    private static Boolean isValidFile(Path path) {
+        if (Files.exists(path) && Files.isRegularFile(path) && !YamlParser.isValidKustomizationFile(path)) {
+            return true;
+        }
+        logger.warn("Invalid reference " + path);
+        return false;
+    }
 
-                if (value.contains("\n")) {
-                    logger.trace("Multiline value");
-                    return Stream.empty();
-                }
+    private static String validateNonMultilineString(Object referenceValue) throws InvalidReferenceException {
+        Path invalid = Path.of("invalid");
+        if (!(referenceValue instanceof String)) {
+            throw new InvalidReferenceException("Non string value found", invalid);
+        }
 
-                Path path = baseDir.resolve(value).normalize();
+        String value = referenceValue.toString();
 
-                if (Files.isDirectory(path)) {
-                    Path kustomizationYaml = path.resolve("kustomization.yaml");
-                    Path kustomizationYml = path.resolve("kustomization.yml");
-                    logger.trace("Path '{}' is a valid directory containing a kustomization file.", path);
+        if (value.contains("\n")) {
+            throw new InvalidReferenceException("Multiline value found", invalid);
+        }
 
-                    return Stream.of(Files.exists(kustomizationYaml) ? kustomizationYaml : kustomizationYml);
-                }
+        return value;
+    }
 
-                if (YamlParser.isValidKustomizationFile(path)) {
-                    logger.trace("Found kustomization yaml: {}", path);
-                    return Stream.of(path);
-                }
+    private static Path validateKubernetesResource(Path path) throws InvalidReferenceException {
+        if (YamlParser.isValidKubernetesResource(path)) {
+            if (!Files.exists(path) || !Files.isRegularFile(path)) {
+                throw new InvalidReferenceException("Non-Existing file referenced", path, true);
             }
 
-            logger.trace("Non string value");
-            return Stream.empty();
+            logger.trace("Found file reference: {}", path);
+            return path;
+        }
+
+        throw new InvalidReferenceException("Not a valid kubernetes resource", path);
+    }
+
+    public static ReferenceExtractor kustomizationFile() {
+        return (referenceValue, baseDir) -> {
+            Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
+
+            if (Files.isDirectory(path)) {
+                Path kustomizationYaml = path.resolve("kustomization.yaml");
+                Path kustomizationYml = path.resolve("kustomization.yml");
+
+                if (Files.exists(kustomizationYaml)) {
+                    logger.trace("Path '{}' contains a kustomization.yaml file", path);
+                    return Stream.of(kustomizationYaml);
+                }
+
+                if (Files.exists(kustomizationYml)) {
+                    logger.trace("Path '{}' contains a kustomization.yml file", path);
+                    return Stream.of(kustomizationYml);
+                }
+
+                throw new InvalidReferenceException("Expected a valid kustomization file", path, true);
+            }
+
+            if (YamlParser.isValidKustomizationFile(path)) {
+                if (!Files.exists(path) || !Files.isRegularFile(path)) {
+                    throw new InvalidReferenceException("Non-Existing file referenced", path, true);
+                }
+
+                logger.trace("Found kustomization file: {}", path);
+                return Stream.of(path);
+            }
+
+            throw new InvalidReferenceException("Invalid directory or kustomization file", path);
+        };
+    }
+
+    public static ReferenceExtractor resourceOrDirectory() {
+        return (referenceValue, baseDir) -> {
+            Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
+
+            if (Files.isDirectory(path)) {
+                logger.trace("Path '{}' is a valid directory containing a kustomization file.", path);
+
+                String[] directory = new File(path.toAbsolutePath().toString()).list();
+
+                if (directory == null || directory.length == 0) {
+                    throw new InvalidReferenceException("Empty directory found", path);
+                }
+
+                return Arrays.stream(Objects.requireNonNull(directory))
+                        .map(path::resolve)
+                        .filter(YamlParser::isValidKubernetesResource)
+                        .peek(resolvedPath -> logger.trace("Found file in directory: {}", resolvedPath));
+            }
+
+            return Stream.of(validateKubernetesResource(path));
         };
     }
 
     public static ReferenceExtractor resource() {
         return (referenceValue, baseDir) -> {
-            if (referenceValue instanceof String) {
-                String value = referenceValue.toString();
+            Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
-                if (value.contains("\n")) {
-                    logger.trace("Multiline value");
-                    return Stream.empty();
-                }
-
-                Path path = baseDir.resolve(value).normalize();
-
-                if (Files.isDirectory(path)) {
-                    logger.trace("Path '{}' is a valid directory containing a kustomization file.", path);
-
-                    File directory = new File(path.toAbsolutePath().toString());
-                    return Arrays.stream(Objects.requireNonNull(directory.list()))
-                            .map(path::resolve)
-                            .peek(resolvedPath -> logger.trace("Found file in directory: {}", resolvedPath));
-                }
-
-                if (!YamlParser.isValidKustomizationFile(path)) {
-                    logger.trace("Found file reference: {}", path);
-                    return Stream.of(path);
-                }
-            }
-
-            logger.trace("Non string value");
-            return Stream.empty();
+            return Stream.of(validateKubernetesResource(path));
         };
     }
 
@@ -101,22 +140,20 @@ public class ReferenceExtractors {
 
             if (referenceValue instanceof Map) {
                 Map<String, Object> valueMap = ((Map<String, Object>) referenceValue);
-                Object value = valueMap.get(pathField);
+                String value = validateNonMultilineString(valueMap.get(pathField));
 
-                if (value != null) {
-                    String path = value.toString();
-                    logger.trace("Found inline path reference: {}", path);
-                    return Stream.of(baseDir.resolve(path).normalize());
-                }
+                Path path = baseDir.resolve(value).normalize();
+
+                return Stream.of(validateKubernetesResource(path));
             }
 
             logger.trace("Invalid value");
-
             return Stream.empty();
         };
     }
 
     public static ReferenceExtractor configMapGeneratorFiles() {
+
         return (referenceValue, baseDir) -> {
             logger.debug("Applying configMapGeneratorFiles reference extractor with baseDir: {}", baseDir);
 
@@ -124,17 +161,16 @@ public class ReferenceExtractors {
                 Map<String, Object> valueMap = ((Map<String, Object>) referenceValue);
                 Stream<String> envs = valueMap.containsKey("envs")
                         ? ((List<String>) valueMap.get("envs")).stream()
-                        .peek(env -> logger.trace("Found env reference: {}", env))
                         : Stream.empty();
 
                 Stream<String> files = valueMap.containsKey("files")
                         ? ((List<String>) valueMap.get("files")).stream()
                         .map(f -> f.contains("=") ? f.substring(f.indexOf("=") + 1) : f)
-                        .peek(file -> logger.trace("Found file reference: {}", file))
                         : Stream.empty();
 
                 return Stream.concat(envs, files)
-                        .map(f -> baseDir.resolve(f).normalize());
+                        .map(f -> baseDir.resolve(f).normalize())
+                        .filter(ReferenceExtractors::isValidFile);
             }
 
             return Stream.empty();
