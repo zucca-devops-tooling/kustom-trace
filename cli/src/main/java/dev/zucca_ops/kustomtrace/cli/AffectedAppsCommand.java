@@ -114,13 +114,14 @@ public class AffectedAppsCommand implements Callable<Integer> {
                 Path modifiedFileFullPath = modifiedFile.toPath().toAbsolutePath().normalize();
                 String yamlKeyForModifiedFile;
 
-                // Determine the key for the YAML output:
-                // If the modified file is under the effectiveAppsDir, use its path relative to effectiveAppsDir.
-                // Otherwise (e.g., it's an absolute path specified by the user from elsewhere), use its filename.
-                if (modifiedFileFullPath.startsWith(appsDirPath)) { // appsDirPath is effectiveAppsDir.toPath()
+                if (modifiedFileFullPath.startsWith(appsDirPath.toAbsolutePath().normalize())) {
+                    // File is INSIDE appsDir: get path relative TO appsDir.
+                    // PathUtil.getRelativePath should normalize to forward slashes.
                     yamlKeyForModifiedFile = PathUtil.getRelativePath(modifiedFileFullPath, appsDirPath, effectiveLogFile);
                 } else {
-                    yamlKeyForModifiedFile = modifiedFileFullPath.getFileName().toString(); // Use just the filename
+                    // File is OUTSIDE appsDir: use the path string as originally provided by the user,
+                    // but normalize its separators to forward slashes.
+                    yamlKeyForModifiedFile = modifiedFile.getPath().replace(java.io.File.separator, "/");
                 }
 
                 List<String> relativeAffectedAppPathsForCurrentFile = new ArrayList<>();

@@ -61,7 +61,7 @@ public class Kustomization extends GraphNode {
     @Override
     Stream<Path> getDependencies(Set<GraphNode> visited) {
         if (!visited.add(this)) {
-            logger.warn("Circular dependency detected while getting dependencies for kustomization: {}", this.getPath());
+            logger.error("Circular dependency detected while getting dependencies for kustomization: {}", this.getPath());
             return Stream.empty();
         }
         Stream<Path> dependencies = references.stream()
@@ -88,7 +88,7 @@ public class Kustomization extends GraphNode {
 
     private Stream<Kustomization> getApps(Set<GraphNode> visited) {
         if (!visited.add(this)) {
-            logger.warn("Circular dependency detected while getting apps for kustomization: {}", this.getPath());
+            logger.error("Circular dependency detected while getting apps for kustomization: {}", this.getPath());
             return Stream.empty();
         }
         if (this.isRoot()) {

@@ -1,0 +1,4 @@
+affected-apps:
+  all-reference-types-apps/app-resource/more-resources/extra-resource.json:
+    - complex-apps/root-and-all-references/kustomization.yaml
+    - complex-apps/subset-with-circular/kustomization.yaml

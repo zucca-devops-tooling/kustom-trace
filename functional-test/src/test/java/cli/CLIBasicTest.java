@@ -1,6 +1,7 @@
 package cli;
 
 import cli.util.OutputResourceAssesor;
+import cli.util.WriterOutputStream;
 import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,17 +28,6 @@ class CLIBasicTest {
     private PrintStream originalOut;
     private PrintStream originalErr;
     private final OutputResourceAssesor outputResourceAssesor = new OutputResourceAssesor("basic-test");
-
-    // Helper for capturing System.out/err.
-    static class WriterOutputStream extends OutputStream {
-        private final Writer writer;
-        private final String encoding;
-        public WriterOutputStream(Writer writer, String encoding) { this.writer = writer; this.encoding = encoding; }
-        @Override public void write(byte[] b, int off, int len) throws IOException { writer.write(new String(b, off, len, encoding)); writer.flush(); }
-        @Override public void write(int b) throws IOException { write(new byte[]{(byte)b}, 0, 1); }
-        @Override public void flush() throws IOException { writer.flush(); }
-        @Override public void close() throws IOException { writer.close(); }
-    }
 
     @BeforeEach
     void setUp() {
@@ -78,8 +69,6 @@ class CLIBasicTest {
         Files.writeString(kustomizationPath, content.toString());
     }
 
-    // --- Test Cases (Adjusted for your CLIHelper) ---
-
     @Test
     void testErrorRedirection_AppFilesMissingAppPath_NoErrorFileSpecified(@TempDir Path tempDir) throws IOException {
         Path appsActualDir = Files.createDirectory(tempDir.resolve("apps"));
@@ -118,14 +107,11 @@ class CLIBasicTest {
 
         assertEquals(1, exitCode, "Exit code should be 1 (custom command error for invalid app path)");
         assertTrue(Files.exists(designatedLogFile), "Designated log file should be created.");
-        String logFileContent = readFileContent(designatedLogFile); // .trim() is important here
+        String logFileContent = readFileContent(designatedLogFile);
 
-        // Construct the EXACT expected message, including the "Error: " prefix from CLIHelper
-        // and the precise message from your AppFilesCommand's logic.
         String expectedFullErrorMessage = "Error: Invalid <app-path> (file does not exist or is not a file): " + nonExistentAppFile.toAbsolutePath();
 
-        assertTrue(logFileContent.equals(expectedFullErrorMessage), // Use .equals() for an exact match if it's the only line, or .contains() if other log lines might exist.
-                // If there could be other lines, .contains() is safer.
+        assertTrue(logFileContent.equals(expectedFullErrorMessage),
                 "Log file should contain the exact invalid app path error. " +
                         "\nExpected to find: '" + expectedFullErrorMessage + "'" +
                         "\nActual:           '" + logFileContent + "'");
@@ -163,13 +149,11 @@ class CLIBasicTest {
         assertTrue(getCapturedErr().isEmpty(), "Stderr should be empty on success. Actual: " + getCapturedErr());
         assertTrue(Files.exists(actualOutputFile), "Output YAML file should be created.");
 
-        // Use your new assessor to compare the YAML content
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFile);
 
         // System.out assertions (should be clean of command data)
         String capturedStdOut = getCapturedOut();
         assertFalse(capturedStdOut.contains("Files used by application at:"), "System.out should NOT contain verbose output header.");
-        // ... other System.out checks as before ...
     }
 
     @Test
@@ -217,8 +201,6 @@ class CLIBasicTest {
         assertFalse(capturedStdOut.contains("Affected apps by"), "System.out should NOT contain verbose 'Affected apps by' sub-headers.");
         assertFalse(capturedStdOut.contains("  - "), "System.out should NOT contain verbose item listing ('  - ').");
         assertFalse(capturedStdOut.contains("Output written to:"), "System.out should NOT contain 'Output written to:' message.");
-        // Note: capturedStdOut might still contain INFO logs if your logging framework defaults to console
-        // and --log-file was not used in this specific test run.
     }
 
     @Test
@@ -242,8 +224,6 @@ class CLIBasicTest {
                 "app-files", dummyAppPath.toString()
         );
         assertNotEquals(0, exitCode);
-        // This assertion should now work if your AppFilesCommand uses parentCLI.appsDir
-        // and its internal validation `!effectiveAppsDir.exists()` is reached.
         assertTrue(getCapturedErr().contains("Error: Invalid --apps-dir: " + nonExistentDir),
                 "Custom error for non-existent --apps-dir value expected. Actual stderr: " + getCapturedErr());
     }
@@ -265,27 +245,21 @@ class CLIBasicTest {
 
     @Test
     void testEmptyAppsDir_AffectedAppsCommand_WritesYaml(@TempDir Path tempDir) throws IOException {
-        Path emptyAppsDir = Files.createDirectory(tempDir.resolve("emptyApps"));
-        // Create a dummy modified file. Its name should match the key in your expected YAML.
-        Path dummyModifiedFile = Files.createFile(tempDir.resolve("some-change.yaml"));
+        Path emptyAppsDir = Paths.get( "src", "test", "resources", "app-with-no-kustomization");
+        Path modifiedFile = emptyAppsDir.resolve("deployment.yml");
 
         Path actualOutputFile = tempDir.resolve("empty-apps-affected-actual-output.yaml");
-        // Name of your expected YAML file in src/test/resources/cli-expected-outputs/
         String expectedResourceFileName = "unreferenced-file.yaml";
 
         int exitCode = cmd.execute(
                 "--apps-dir", emptyAppsDir.toString(),      // Pointing to an empty directory
                 "affected-apps",
-                dummyModifiedFile.toString(),               // The "modified file"
+                modifiedFile.toString(),               // The "modified file"
                 "--output", actualOutputFile.toString()
         );
 
         // 1. Basic Assertions
         assertEquals(0, exitCode, "Exit code should be 0. Stderr: " + getCapturedErr());
-        // If an UnreferencedFileException warning is logged to a --log-file (not used here)
-        // via CLIHelper.printWarning, and that helper defaults to System.err if no log file,
-        // then stderr might not be empty. Adjust if necessary.
-        // For now, assuming printWarning (if called for UnreferencedFile in YAML mode without log file) is silent on console.
         assertTrue(getCapturedErr().isEmpty(), "Stderr should be empty if warnings go to log file or are suppressed. Actual: " + getCapturedErr());
         assertTrue(Files.exists(actualOutputFile), "Output YAML file should be created.");
 
@@ -298,7 +272,5 @@ class CLIBasicTest {
         assertFalse(capturedStdOut.contains("Affected apps by"), "System.out should NOT contain verbose sub-headers.");
         assertFalse(capturedStdOut.contains("  - "), "System.out should NOT contain verbose item listing ('  - ').");
         assertFalse(capturedStdOut.contains("Output written to:"), "System.out should NOT contain 'Output written to:' message.");
-        // INFO logs might still be in capturedStdOut if your logging framework defaults to console
-        // and --log-file was not used in this specific test run.
     }
 }
