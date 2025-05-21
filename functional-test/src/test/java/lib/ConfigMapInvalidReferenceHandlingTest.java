@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import dev.zucca_ops.kustomtrace.KustomTrace;
-import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.Test;
@@ -42,10 +41,10 @@ public class ConfigMapInvalidReferenceHandlingTest {
     void testInvalidConfigmapReferences() throws IOException {
         Logger logger = (Logger) LoggerFactory.getLogger(ReferenceExtractors.class);
         Path appsDir = Paths.get( "src", "test", "resources", "all-reference-types-apps", "app-configmap");
-        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
-        KustomGraph graph = kustomTrace.getGraph();
         listAppender.start();
         logger.addAppender(listAppender);
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        KustomGraph graph = kustomTrace.getGraph();
 
         Path appPath = appsDir.resolve("kustomization.yaml");
         app = (Kustomization) graph.getNode(appPath);

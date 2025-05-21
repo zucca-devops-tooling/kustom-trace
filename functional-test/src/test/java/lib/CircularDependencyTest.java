@@ -81,7 +81,5 @@ public class CircularDependencyTest {
 
         // TODO: add graphsize method
         //assertEquals(8, graph.getNodeIndex().size()); // Check total number of nodes
-
-        // You can add more specific assertions about the graph structure and dependencies
     }
 }

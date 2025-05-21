@@ -33,12 +33,11 @@ public class InvalidFileHandlingTest {
     @BeforeAll
     static void buildGraphForAllReferenceTypes() throws IOException {
         appsDir = Paths.get( "src", "test", "resources", "app-with-unparseable-kustomization");
-
-        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
-        KustomGraph graph = kustomTrace.getGraph();
         listAppender = new ListAppender<>();
         listAppender.start();
         logger.addAppender(listAppender);
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        KustomGraph graph = kustomTrace.getGraph();
 
         Path appPath = appsDir.resolve("kustomization.yaml");
         app = graph.getKustomization(appPath);
