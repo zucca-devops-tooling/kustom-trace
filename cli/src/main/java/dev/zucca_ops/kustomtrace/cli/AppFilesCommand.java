@@ -84,7 +84,8 @@ public class AppFilesCommand implements Callable<Integer> {
 
             List<String> relativeDependencyPaths = dependencies.stream()
                     .map(p -> PathUtil.getRelativePath(p, appsDirPath, effectiveLogFile))
-                    .collect(Collectors.toList());
+                    .sorted()
+                    .toList();
 
             // 3. Conditional Output
             if (this.outputFile != null) {

@@ -136,6 +136,8 @@ public class AffectedAppsCommand implements Callable<Integer> {
                         relativeAffectedAppPathsForCurrentFile.add(PathUtil.getRelativePath(app.getPath(), appsDirPath, effectiveLogFile));
                     }
 
+                    Collections.sort(relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for consistent output
+
                     if (this.outputFile == null) { // Console output formatting for this file
                         consoleOutputLines.add("Affected apps by " + yamlKeyForModifiedFile + ":"); // Use yamlKeyForModifiedFile for console too
                         if (relativeAffectedAppPathsForCurrentFile.isEmpty()) {
