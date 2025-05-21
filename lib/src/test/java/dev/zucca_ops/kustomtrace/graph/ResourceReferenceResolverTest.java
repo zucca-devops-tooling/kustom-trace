@@ -64,6 +64,7 @@ public class ResourceReferenceResolverTest {
 
     @Test
     void resolveDependencies_processesValidReferences() throws IOException, InvalidContentException {
+        // 1. Setup Paths and Files
         Path kustomPath = tempDir.resolve("kustomization.yaml");
         Files.writeString(kustomPath, "components:\n  - component1\nresources:\n  - resource.yaml");
 
@@ -75,27 +76,51 @@ public class ResourceReferenceResolverTest {
         Path resourcePath = tempDir.resolve("resource.yaml");
         Files.createFile(resourcePath); // Create the resource file
 
+        // 2. Create Root Kustomization and Mock Collaborators
         Kustomization root = new Kustomization(kustomPath, Map.of("components", List.of("component1"), "resources", List.of("resource.yaml")));
-        KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
 
+        // Mock KustomGraphBuilder, as ResourceReferenceResolver depends on it
+        KustomGraphBuilder mockedBuilder = mock(KustomGraphBuilder.class);
+        ResourceReferenceResolver resolver = new ResourceReferenceResolver(mockedBuilder);
+
+        // Define the objects that the mocked builder should return
         Kustomization componentNode = new Kustomization(componentKustomizationPath, Map.of());
         KustomFile resourceNode = new KustomFile(resourcePath);
 
-        when(builder.buildKustomization(componentKustomizationPath)).thenReturn(componentNode);
-        when(builder.buildKustomFile(resourcePath)).thenReturn(resourceNode);
+        // Stub the builder's methods
+        when(mockedBuilder.buildKustomization(componentKustomizationPath)).thenReturn(componentNode);
+        when(mockedBuilder.buildKustomFile(resourcePath)).thenReturn(resourceNode);
 
-        Stream<ResourceReference> result = resolver.resolveDependencies(root);
-        List<ResourceReference> references = result.toList();
+        // 3. Execute the method under test
+        Stream<ResourceReference> resultStream = resolver.resolveDependencies(root);
+        List<ResourceReference> references = resultStream.toList();
 
-        assertEquals(2, references.size());
-        assertEquals(ReferenceType.COMPONENT, references.get(0).referenceType());
-        assertEquals(componentNode, references.get(0).resource());
-        assertEquals(ReferenceType.RESOURCE, references.get(1).referenceType());
-        assertEquals(resourceNode, references.get(1).resource());
+        // 4. Assertions (Order-Independent)
 
-        verify(builder).buildKustomization(componentKustomizationPath);
-        verify(builder).buildKustomFile(resourcePath);
+        // 4a. Assert the total number of references
+        assertEquals(2, references.size(), "Should have resolved exactly two references.");
+
+        // 4b. Verify that the expected COMPONENT reference is present
+        ReferenceType expectedComponentType = ReferenceType.COMPONENT;
+        Kustomization expectedComponentInstance = componentNode; // The exact instance from mock setup
+
+        long componentReferenceCount = references.stream()
+                .filter(ref -> ref.referenceType() == expectedComponentType && ref.resource() == expectedComponentInstance)
+                .count();
+        assertEquals(1, componentReferenceCount, "Exactly one COMPONENT reference to the expected component instance (" + componentKustomizationPath.getFileName() + ") should exist.");
+
+        // 4c. Verify that the expected RESOURCE reference is present
+        ReferenceType expectedResourceType = ReferenceType.RESOURCE;
+        KustomFile expectedResourceInstance = resourceNode; // The exact instance from mock setup
+
+        long resourceReferenceCount = references.stream()
+                .filter(ref -> ref.referenceType() == expectedResourceType && ref.resource() == expectedResourceInstance)
+                .count();
+        assertEquals(1, resourceReferenceCount, "Exactly one RESOURCE reference to the expected resource instance (" + resourcePath.getFileName() + ") should exist.");
+
+        // 5. Verify interactions with the mocked builder (these remain the same)
+        verify(mockedBuilder).buildKustomization(componentKustomizationPath);
+        verify(mockedBuilder).buildKustomFile(resourcePath);
     }
 
     @Test
