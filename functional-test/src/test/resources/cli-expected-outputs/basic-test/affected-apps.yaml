@@ -1,4 +1,4 @@
 affected-apps:
   base/common-base.yaml:
-    - app1/kustomization.yaml
-    - app2/kustomization.yaml
+    - app1
+    - app2

@@ -16,8 +16,8 @@
 package dev.zucca_ops.kustomtrace.model;
 
 import dev.zucca_ops.kustomtrace.exceptions.KustomException;
-import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
+import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -40,14 +40,14 @@ public class KustomGraph {
         return nodeIndex.containsKey(path.toAbsolutePath().normalize());
     }
 
-    public List<Kustomization> getApps() {
+    public List<Kustomization> getRootApps() {
         return nodeIndex.values().stream()
                 .filter(GraphNode::isRoot)
                 .map(node -> (Kustomization) node)
                 .toList();
     }
 
-    public List<Kustomization> getAppsWith(Path path) throws UnreferencedFileException {
+    public List<Kustomization> getRootAppsWithFile(Path path) throws UnreferencedFileException {
         Path normalizedPath = path.toAbsolutePath().normalize();
 
         if (nodeIndex.containsKey(normalizedPath)) {
@@ -58,15 +58,12 @@ public class KustomGraph {
     }
 
     public List<Path> getAllAppFiles(Path path) throws KustomException {
-        Path normalizedPath = path.toAbsolutePath().normalize();
+        Path normalizedPath = KustomizeFileUtil.getKustomizationFileFromAppDirectory(path).toAbsolutePath().normalize();
 
         if (nodeIndex.containsKey(normalizedPath)) {
             GraphNode app = nodeIndex.get(normalizedPath);
 
-            if (app.isRoot()) {
-                return app.getDependencies().toList();
-            }
-            throw new NotAnAppException(normalizedPath);
+            return app.getDependencies().toList();
         }
 
         throw new UnreferencedFileException(normalizedPath);

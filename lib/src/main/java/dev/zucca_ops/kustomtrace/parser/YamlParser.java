@@ -16,11 +16,13 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
+import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -77,15 +79,5 @@ public class YamlParser {
         }
 
         return fileContent.get(0);
-    }
-
-    public static boolean isValidKustomizationFile(Path path) {
-        return Stream.of("kustomization.yaml", "kustomization.yml")
-                .anyMatch(path.getFileName().toString()::endsWith);
-    }
-
-    public static boolean isValidKubernetesResource(Path path) {
-        return !isValidKustomizationFile(path) && Stream.of(".yaml", ".yml", ".json")
-                .anyMatch(path.getFileName().toString().toLowerCase()::endsWith);
     }
 }

@@ -31,7 +31,7 @@ public class ComplexAppsTest {
         appsDir = Paths.get( "src", "test", "resources", "complex-apps");
         KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
         graph = kustomTrace.getGraph();
-        assertThat(graph.getApps().size()).isEqualTo(2); // subset-with-circular and root-and-all-references
+        assertThat(graph.getRootApps().size()).isEqualTo(2); // subset-with-circular and root-and-all-references
     }
 
     private Path appResolve(Path path) {

@@ -61,7 +61,6 @@ public class InvalidFileHandlingTest {
     }
 
 
-
     @Test
     void testInvalidSubAppIsNotBuilt() {
         // Assert that no dependencies of app contain the invalid parts in their paths

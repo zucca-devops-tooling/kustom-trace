@@ -4,11 +4,11 @@ import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
 import dev.zucca_ops.kustomtrace.model.KustomFile;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.model.ResourceReference;
+import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import dev.zucca_ops.kustomtrace.parser.ReferenceType;
-import dev.zucca_ops.kustomtrace.parser.YamlParser;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -126,8 +126,8 @@ public class ResourceReferenceResolverTest {
     @Test
     void returnsNullOnInvalidContent() throws InvalidContentException, FileNotFoundException {
         KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        try (MockedStatic<YamlParser> mocked = mockStatic(YamlParser.class)) {
-            mocked.when(() -> YamlParser.isValidKustomizationFile(any())).thenReturn(true);
+        try (MockedStatic<KustomizeFileUtil> mocked = mockStatic(KustomizeFileUtil.class)) {
+            mocked.when(() -> KustomizeFileUtil.isKustomizationFileName(any())).thenReturn(true);
             when(builder.buildKustomization(any())).thenThrow(new InvalidContentException(Path.of("any")));
 
             ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);
@@ -140,8 +140,8 @@ public class ResourceReferenceResolverTest {
     @Test
     void returnsNullOnFileNotFound() throws InvalidContentException, FileNotFoundException {
         KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
-        try (MockedStatic<YamlParser> mocked = mockStatic(YamlParser.class)) {
-            mocked.when(() -> YamlParser.isValidKustomizationFile(any())).thenReturn(true);
+        try (MockedStatic<KustomizeFileUtil> mocked = mockStatic(KustomizeFileUtil.class)) {
+            mocked.when(() -> KustomizeFileUtil.isKustomizationFileName(any())).thenReturn(true);
             when(builder.buildKustomization(any())).thenThrow(new FileNotFoundException("any"));
 
             ResourceReferenceResolver resolver = new ResourceReferenceResolver(builder);

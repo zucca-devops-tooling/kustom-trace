@@ -18,8 +18,8 @@ package dev.zucca_ops.kustomtrace.graph;
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.model.ResourceReference;
+import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 import dev.zucca_ops.kustomtrace.parser.ReferenceType;
-import dev.zucca_ops.kustomtrace.parser.YamlParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ public class ResourceReferenceResolver {
     ResourceReference resolveDependency(ReferenceType type, Path path) {
         logger.debug("Resolving dependency of type '{}' at path: {}", type, path);
         try {
-            if (YamlParser.isValidKustomizationFile(path)) {
+            if (KustomizeFileUtil.isKustomizationFileName(path)) {
                 logger.debug("Building Kustomization: {}", path);
                 return new ResourceReference(type, builder.buildKustomization(path));
             }

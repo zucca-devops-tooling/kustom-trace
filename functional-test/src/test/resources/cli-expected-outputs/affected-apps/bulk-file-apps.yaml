@@ -1,7 +1,7 @@
 affected-apps:
   all-reference-types-apps/app-base/base-kustomization-reference/base-resource-one.yaml:
-    - complex-apps/root-and-all-references/kustomization.yaml
-    - complex-apps/subset-with-circular/kustomization.yaml
+    - complex-apps/root-and-all-references
+    - complex-apps/subset-with-circular
   app-with-unparseable-kustomization/valid-kustomization-base/base-resource-two.yml:
-    - complex-apps/root-and-all-references/kustomization.yaml
+    - complex-apps/root-and-all-references
   non-existing.yaml: []

@@ -18,7 +18,6 @@ import dev.zucca_ops.kustomtrace.KustomTrace;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
 import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
 import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
-import dev.zucca_ops.kustomtrace.model.Kustomization;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Option;
@@ -126,15 +125,15 @@ public class AffectedAppsCommand implements Callable<Integer> {
 
                 List<String> relativeAffectedAppPathsForCurrentFile = new ArrayList<>();
                 try {
-                    List<Kustomization> affectedKustomizations = kustomTrace.getAppsWith(modifiedFileFullPath);
+                    List<Path> affectedApps = kustomTrace.getAppsWith(modifiedFileFullPath);
 
-                    if (!affectedKustomizations.isEmpty()) {
+                    if (!affectedApps.isEmpty()) {
                         anyAppsAffectedOverall = true;
                     }
 
-                    for (Kustomization app : affectedKustomizations) {
+                    for (Path app : affectedApps) {
                         // PathUtil should correctly relativize app paths against appsDirPath
-                        relativeAffectedAppPathsForCurrentFile.add(PathUtil.getRelativePath(app.getPath(), appsDirPath, effectiveLogFile));
+                        relativeAffectedAppPathsForCurrentFile.add(PathUtil.getRelativePath(app, appsDirPath, effectiveLogFile));
                     }
 
                     Collections.sort(relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for consistent output

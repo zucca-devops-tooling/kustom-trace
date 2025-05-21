@@ -47,7 +47,7 @@ public class ConfigMapInvalidReferenceHandlingTest {
         KustomGraph graph = kustomTrace.getGraph();
 
         Path appPath = appsDir.resolve("kustomization.yaml");
-        app = (Kustomization) graph.getNode(appPath);
+        app = graph.getKustomization(appPath);
 
         assertInvalidReference("non-existing-configmap.yaml", "Invalid reference", Level.WARN);
         assertInvalidReference("invalid-directory", "Invalid reference", Level.WARN);

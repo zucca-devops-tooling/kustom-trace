@@ -1,7 +1,6 @@
 package lib;
 
 import dev.zucca_ops.kustomtrace.KustomTrace;
-import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,6 @@ public class NoKustomizationAppsTest {
         KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
         KustomGraph graph = kustomTrace.getGraph();
 
-        assertThat(graph.getApps().size()).isEqualTo(0);
+        assertThat(graph.getRootApps().size()).isEqualTo(0);
     }
 }

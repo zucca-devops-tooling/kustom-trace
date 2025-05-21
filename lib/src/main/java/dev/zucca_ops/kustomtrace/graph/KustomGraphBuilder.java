@@ -20,7 +20,7 @@ import dev.zucca_ops.kustomtrace.model.KustomFile;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.model.ResourceReference;
-import dev.zucca_ops.kustomtrace.parser.YamlParser;
+import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class KustomGraphBuilder {
         logger.info("Starting to build Kustom Graph from: {}", appsDir);
         AtomicInteger kustomizationCount = new AtomicInteger(0);
         try (Stream<Path> stream = Files.walk(appsDir)) {
-            stream.filter(YamlParser::isValidKustomizationFile)
+            stream.filter(KustomizeFileUtil::isKustomizationFileName)
                     .parallel()
                     .forEach(path -> {
                         try {

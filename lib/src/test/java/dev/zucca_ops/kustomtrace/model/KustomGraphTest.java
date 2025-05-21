@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import dev.zucca_ops.kustomtrace.parser.ReferenceType;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class KustomGraphTest {
         graph.addNode(root);
         graph.addNode(child);
 
-        List<Kustomization> apps = graph.getApps();
+        List<Kustomization> apps = graph.getRootApps();
 
         assertEquals(1, apps.size());
         assertSame(root, apps.get(0));
@@ -62,7 +63,7 @@ public class KustomGraphTest {
         KustomGraph graph = new KustomGraph();
         graph.addNode(app);
 
-        List<Kustomization> result = graph.getAppsWith(app.getPath());
+        List<Kustomization> result = graph.getRootAppsWithFile(app.getPath());
 
         assertEquals(1, result.size());
         assertSame(app, result.get(0));
@@ -73,17 +74,19 @@ public class KustomGraphTest {
         KustomGraph graph = new KustomGraph();
         Path path = tempDir.resolve("not-tracked.yaml");
 
-        assertThrows(UnreferencedFileException.class, () -> graph.getAppsWith(path));
+        assertThrows(UnreferencedFileException.class, () -> graph.getRootAppsWithFile(path));
     }
 
     @Test
     void getAllAppFiles_returnsAllInvolvedPaths() throws Exception {
-        Path rootPath = tempDir.resolve("root/kustomization.yaml");
-        Path dep1 = tempDir.resolve("base/a.yaml");
-        Path dep2 = tempDir.resolve("base/b.yaml");
+        Path rootPath = Files.createDirectory(tempDir.resolve("root"));
+        Path rootAppPath = Files.createFile(rootPath.resolve("kustomization.yaml"));
+        Path basePath = Files.createDirectory(tempDir.resolve("base"));
+        Path dep1 = Files.createFile(basePath.resolve("a.yaml"));
+        Path dep2 = Files.createFile(basePath.resolve("b.yaml"));
 
         // Set up root app
-        Kustomization root = new Kustomization(rootPath, Map.of());
+        Kustomization root = new Kustomization(rootAppPath, Map.of());
 
         // Add references (each with their own paths)
         root.addReference(new ResourceReference(ReferenceType.RESOURCE, new DummyNode(dep1)));
@@ -97,7 +100,7 @@ public class KustomGraphTest {
 
         // Expect all 3 paths: dep1, dep2, and rootPath
         assertEquals(3, result.size());
-        assertTrue(result.containsAll(List.of(dep1, dep2, rootPath)));
+        assertTrue(result.containsAll(List.of(dep1, dep2, rootAppPath)));
     }
 
     @Test

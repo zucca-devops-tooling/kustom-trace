@@ -1,6 +1,7 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
+import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -8,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 

@@ -228,6 +228,6 @@ public class AllReferenceTypesTest {
     @Test
     void testAppAmount() {
         // We expect 6 root apps in total (1 per type) and 3 isolated/bad referenced kustomization.yaml
-        assertThat(graph.getApps().size()).isEqualTo(9);
+        assertThat(graph.getRootApps().size()).isEqualTo(9);
     }
 }
