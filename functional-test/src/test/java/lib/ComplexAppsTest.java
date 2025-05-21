@@ -105,7 +105,7 @@ public class ComplexAppsTest {
 
         // Assert that a warning about circular dependency was logged
         List<ILoggingEvent> warnings = listAppender.list.stream()
-                .filter(event -> event.getLevel() == Level.WARN && event.getMessage().contains("Circular dependency detected"))
+                .filter(event -> event.getLevel() == Level.ERROR && event.getMessage().contains("Circular dependency detected"))
                 .toList();
         assertEquals(1, warnings.size(), "Should have logged a circular dependency warning.");
         assertThat(warnings).allMatch(warning -> warning.getMessage().contains("Circular"));

@@ -57,7 +57,7 @@ public class CircularDependencyTest {
 
         // Assert that a warning about circular dependency was logged
         List<ILoggingEvent> warnings = listAppender.list.stream()
-                .filter(event -> event.getLevel() == Level.WARN && event.getMessage().contains("Circular dependency detected"))
+                .filter(event -> event.getLevel() == Level.ERROR && event.getMessage().contains("Circular dependency detected"))
                 .toList();
         assertEquals(2, warnings.size(), "Should have logged two circular dependency warnings.");
         assertThat(warnings).allMatch(warning -> warning.getMessage().contains("Circular"));
