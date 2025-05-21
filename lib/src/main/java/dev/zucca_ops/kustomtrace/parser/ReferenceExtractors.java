@@ -33,6 +33,24 @@ public class ReferenceExtractors {
 
     private static final Logger logger = LoggerFactory.getLogger(ReferenceExtractors.class);
 
+    private static boolean isValidFile(Path path) {
+        // this method is just to apply logging
+        if (KustomizeFileUtil.isFile(path)) {
+            return true;
+        }
+        logger.warn("Invalid reference to non file " + path);
+        return false;
+    }
+
+    private static boolean isNotKustomizationFile(Path path) {
+        // this method is just to apply logging
+        if (KustomizeFileUtil.isKustomizationFileName(path)) {
+            logger.warn("Invalid reference to kustomization file " + path);
+            return false;
+        }
+        return true;
+    }
+
     private static String validateNonMultilineString(Object referenceValue) throws InvalidReferenceException {
         Path invalid = Path.of("invalid");
         if (!(referenceValue instanceof String)) {
@@ -144,8 +162,8 @@ public class ReferenceExtractors {
 
                 return Stream.concat(envs, files)
                         .map(f -> baseDir.resolve(f).normalize())
-                        .filter(KustomizeFileUtil::isFile)
-                        .filter(file -> !KustomizeFileUtil.isKustomizationFileName(file));
+                        .filter(ReferenceExtractors::isValidFile)
+                        .filter(ReferenceExtractors::isNotKustomizationFile);
             }
 
             return Stream.empty();
