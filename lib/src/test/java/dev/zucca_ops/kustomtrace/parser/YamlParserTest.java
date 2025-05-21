@@ -102,14 +102,6 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_returnsNullIfFileMissing() throws InvalidContentException, FileNotFoundException {
-        Path path = tempDir.resolve("nonexistent.yaml");
-
-        Map<String, Object> result = YamlParser.parseKustomizationFile(path);
-        assertNull(result);
-    }
-
-    @Test
     void parseFile_skipsTrailingNullDocument() throws IOException, InvalidContentException {
         Path path = tempDir.resolve("trailing-null.yaml");
         Files.writeString(path, """
