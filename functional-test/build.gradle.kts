@@ -17,6 +17,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("ch.qos.logback:logback-classic:1.5.18")
     testImplementation("org.assertj:assertj-core:3.26.0")
+    testImplementation("info.picocli:picocli:4.7.7")
+    testImplementation("org.yaml:snakeyaml:2.2")
 }
 
 tasks.test {

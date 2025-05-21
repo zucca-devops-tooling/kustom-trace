@@ -4,9 +4,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import graph.KustomGraphBuilder;
-import model.KustomGraph;
-import model.Kustomization;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -29,8 +29,8 @@ public class ComplexAppsTest {
     @BeforeAll
     static void buildGraphForAllReferenceTypes() throws IOException {
         appsDir = Paths.get( "src", "test", "resources", "complex-apps");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
-        graph = builder.build();
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        graph = kustomTrace.getGraph();
         assertThat(graph.getApps().size()).isEqualTo(2); // subset-with-circular and root-and-all-references
     }
 

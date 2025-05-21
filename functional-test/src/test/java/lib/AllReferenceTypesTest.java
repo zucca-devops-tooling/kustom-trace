@@ -1,9 +1,9 @@
 package lib;
 
-import graph.KustomGraphBuilder;
-import model.KustomFile;
-import model.KustomGraph;
-import model.Kustomization;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.model.KustomFile;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -37,8 +37,8 @@ public class AllReferenceTypesTest {
     @BeforeAll
     static void buildGraphForAllReferenceTypes() throws IOException {
         appsDir = Paths.get( "src", "test", "resources", "all-reference-types-apps");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
-        graph = builder.build();
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        graph = kustomTrace.getGraph();
 
         REFERENCE_FOLDERS
                 .forEach(referenceFolder -> {

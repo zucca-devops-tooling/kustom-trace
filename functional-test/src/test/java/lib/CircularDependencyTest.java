@@ -4,9 +4,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import graph.KustomGraphBuilder;
-import model.KustomGraph;
-import model.Kustomization;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,9 +34,8 @@ public class CircularDependencyTest {
         logger.addAppender(listAppender);
 
         Path appsDir = getTestResourcePath("");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
-        KustomGraph graph = builder.build();
-
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        KustomGraph graph = kustomTrace.getGraph();
         Path app1Path = appsDir.resolve("app1").resolve("kustomization.yaml");
         Path app2Path = appsDir.resolve("app2").resolve("kustomization.yaml");
         Path app1ComponentPath = appsDir.resolve("app1").resolve("component").resolve("kustomization.yaml");

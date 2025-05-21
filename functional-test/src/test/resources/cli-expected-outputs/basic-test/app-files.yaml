@@ -1,0 +1,5 @@
+app-files:
+  app1/kustomization.yaml:
+    - base/base-resource.yaml
+    - app1/app1-specific.yaml
+    - app1/kustomization.yaml

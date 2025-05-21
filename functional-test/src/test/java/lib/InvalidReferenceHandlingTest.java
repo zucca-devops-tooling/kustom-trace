@@ -4,14 +4,15 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import graph.KustomGraphBuilder;
-import model.KustomGraph;
-import model.Kustomization;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import parser.ReferenceType;
+import dev.zucca_ops.kustomtrace.parser.ReferenceType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static parser.ReferenceType.*;
+import static dev.zucca_ops.kustomtrace.parser.ReferenceType.*;
 
 public class InvalidReferenceHandlingTest {
 
@@ -62,11 +63,11 @@ public class InvalidReferenceHandlingTest {
     @BeforeAll
     static void buildGraphForAllReferenceTypes() throws IOException {
         appsDir = Paths.get( "src", "test", "resources", "all-reference-types-apps");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
         listAppender = new ListAppender<>();
         listAppender.start();
         logger.addAppender(listAppender);
-        graph = builder.build();
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        graph = kustomTrace.getGraph();
 
         REFERENCE_FOLDERS
                 .forEach(referenceFolder -> {

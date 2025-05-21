@@ -1,12 +1,9 @@
 package lib;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-import graph.KustomGraphBuilder;
-import model.KustomGraph;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,8 +15,9 @@ public class NoKustomizationAppsTest {
     @Test
     void testEmptyGraphIsReturned() throws IOException {
         Path appsDir = Paths.get("src", "test", "resources", "app-with-no-kustomization");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
-        KustomGraph graph = builder.build();
+
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        KustomGraph graph = kustomTrace.getGraph();
 
         assertThat(graph.getApps().size()).isEqualTo(0);
     }

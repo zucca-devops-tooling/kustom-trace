@@ -13,6 +13,7 @@ dependencies {
     implementation("info.picocli:picocli:4.7.7")
     implementation(project(":"+rootProject.name))
     implementation("ch.qos.logback:logback-classic:1.5.18")
+    implementation("org.yaml:snakeyaml:2.2")
 }
 
 tasks.test {

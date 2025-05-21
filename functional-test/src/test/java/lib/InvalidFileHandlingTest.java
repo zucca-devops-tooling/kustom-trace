@@ -4,12 +4,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import exceptions.InvalidContentException;
-import graph.GraphNodeResolver;
-import graph.KustomGraphBuilder;
-import graph.ResourceReferenceResolver;
-import model.KustomGraph;
-import model.Kustomization;
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
+import dev.zucca_ops.kustomtrace.graph.ResourceReferenceResolver;
+import dev.zucca_ops.kustomtrace.model.KustomGraph;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -34,11 +33,12 @@ public class InvalidFileHandlingTest {
     @BeforeAll
     static void buildGraphForAllReferenceTypes() throws IOException {
         appsDir = Paths.get( "src", "test", "resources", "app-with-unparseable-kustomization");
-        KustomGraphBuilder builder = new KustomGraphBuilder(appsDir);
+
+        KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
+        KustomGraph graph = kustomTrace.getGraph();
         listAppender = new ListAppender<>();
         listAppender.start();
         logger.addAppender(listAppender);
-        KustomGraph graph = builder.build();
 
         Path appPath = appsDir.resolve("kustomization.yaml");
         app = graph.getKustomization(appPath);
