@@ -69,7 +69,7 @@ public class KustomGraphBuilderTest {
         try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
             mocked.when(() -> GraphNodeResolver.resolveKustomization(rootPath)).thenReturn(root);
             when(dependencyResolver.resolveDependencies(root)).thenReturn(Stream.of(ref));
-            when(graph.getNode(rootPath)).thenReturn(root);
+            when(graph.getKustomization(rootPath)).thenReturn(root);
 
             Kustomization result = builder.buildKustomization(rootPath);
 
@@ -93,7 +93,7 @@ public class KustomGraphBuilderTest {
         Kustomization existing = new Kustomization(rootPath, Map.of());
 
         when(graph.containsNode(rootPath)).thenReturn(true);
-        when(graph.getNode(rootPath)).thenReturn(existing);
+        when(graph.getKustomization(rootPath)).thenReturn(existing);
 
         Kustomization result = builder.buildKustomization(rootPath);
 
@@ -106,7 +106,7 @@ public class KustomGraphBuilderTest {
         KustomFile existing = new KustomFile(filePath);
 
         when(graph.containsNode(filePath)).thenReturn(true);
-        when(graph.getNode(filePath)).thenReturn(existing);
+        when(graph.getKustomFile(filePath)).thenReturn(existing);
 
         KustomFile result = builder.buildKustomFile(filePath);
 
@@ -122,7 +122,7 @@ public class KustomGraphBuilderTest {
 
         try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
             mocked.when(() -> GraphNodeResolver.resolveKustomFile(filePath)).thenReturn(parsed);
-            when(graph.getNode(filePath)).thenReturn(parsed);
+            when(graph.getKustomFile(filePath)).thenReturn(parsed);
 
             KustomFile result = builder.buildKustomFile(filePath);
 
