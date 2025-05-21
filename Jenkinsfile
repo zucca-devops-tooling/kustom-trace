@@ -61,12 +61,12 @@ pipeline {
         stage('Functional tests') {
             steps {
                 script {
-                    setStatus('test','NEUTRAL','Running functional tests...')
+                    setStatus('functionalTest','NEUTRAL','Running functional tests...')
                     try {
                         sh './gradlew :functional-test:test --no-daemon'
-                        setStatus('test','SUCCESS','Functional test passed')
+                        setStatus('functionalTest','SUCCESS','Functional test passed')
                     } catch (Exception e) {
-                        setStatus('test','FAILURE','Functional test failed')
+                        setStatus('functionalTest','FAILURE','Functional test failed')
                     }
                 }
             }
