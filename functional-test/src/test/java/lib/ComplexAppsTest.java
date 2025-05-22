@@ -38,6 +38,10 @@ public class ComplexAppsTest {
         return path.resolve("kustomization.yaml").normalize();
     }
 
+    private Path resolveKustomization(Path path) {
+        return path.resolve("Kustomization").normalize();
+    }
+
     @Test
     void testAllReferences() {
         List<String> referenceFolders = List.of(
@@ -66,7 +70,7 @@ public class ComplexAppsTest {
 
         List<Path> dependencies = app.getDependencies().toList();
 
-        assertThat(dependencies).contains(appResolve(resourcesFolder.resolve("app-with-unparseable-kustomization")));
+        assertThat(dependencies).contains(resolveKustomization(resourcesFolder.resolve("app-with-unparseable-kustomization")));
         assertThat(dependencies).noneMatch(path -> path.toString().contains("app-with-no-kustomization")); // no kustomization available there
         assertThat(dependencies.size()).isEqualTo(4); // itself, the two kustomizations at unparseable folder and the yml resource of it
     }

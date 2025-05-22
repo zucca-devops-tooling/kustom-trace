@@ -109,7 +109,7 @@ class CLIBasicTest {
         assertTrue(Files.exists(designatedLogFile), "Designated log file should be created.");
         String logFileContent = readFileContent(designatedLogFile);
 
-        String expectedFullErrorMessage = "Error: Invalid <app-path> (file does not exist or is not a file): " + nonExistentAppFile.toAbsolutePath();
+        String expectedFullErrorMessage = "Error: Invalid <app-path> (path does not exist): " + nonExistentAppFile.toAbsolutePath();
 
         assertTrue(logFileContent.equals(expectedFullErrorMessage),
                 "Log file should contain the exact invalid app path error. " +
@@ -224,7 +224,7 @@ class CLIBasicTest {
                 "app-files", dummyAppPath.toString()
         );
         assertNotEquals(0, exitCode);
-        assertTrue(getCapturedErr().contains("Error: Invalid --apps-dir: " + nonExistentDir),
+        assertTrue(getCapturedErr().contains("Error: Invalid --apps-dir (not a directory or does not exist): " + nonExistentDir),
                 "Custom error for non-existent --apps-dir value expected. Actual stderr: " + getCapturedErr());
     }
 
@@ -239,7 +239,7 @@ class CLIBasicTest {
                 "app-files", dummyAppPath.toString()
         );
         assertNotEquals(0, exitCode);
-        assertTrue(getCapturedErr().contains("Error: Invalid --apps-dir: " + notADirectory),
+        assertTrue(getCapturedErr().contains("Error: Invalid --apps-dir (not a directory or does not exist): " + notADirectory),
                 "Custom error for non-directory --apps-dir value expected. Actual stderr: " + getCapturedErr());
     }
 
