@@ -85,7 +85,7 @@ public class YamlParser {
             throw new FileNotFoundException("Could not read YAML file: " + path.toAbsolutePath() + ". Reason: " + e.getMessage());
         } catch (Exception e) { // Catch potential SnakeYAML runtime parsing exceptions (e.g., YAMLException)
             logger.error("Error parsing YAML content in file: {}", path.toAbsolutePath(), e);
-            throw new InvalidContentException(path);
+            throw new InvalidContentException(path, e);
         }
     }
 

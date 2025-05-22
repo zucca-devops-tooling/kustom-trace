@@ -17,10 +17,32 @@ package dev.zucca_ops.kustomtrace.exceptions;
 
 import java.nio.file.Path;
 
+/**
+ * Exception thrown when a given path is expected to represent or lead to a
+ * Kustomize application (i.e., a kustomization file or a directory containing one),
+ * but cannot be resolved as such.
+ */
 public class NotAnAppException extends KustomException {
 
+    /**
+     * Constructs a NotAnAppException with a default message indicating the path
+     * is not a valid Kustomize application.
+     *
+     * @param path The file system {@link Path} that was determined not to be a Kustomize application.
+     * May be null if the context for the path is unavailable.
+     */
     public NotAnAppException(Path path) {
-        super("File with path " + path.toString() + " is not a root kustomization yaml", path);
-        this.path = path;
+        super("Path " + (path != null ? path : "unknown") + " does not resolve to a valid Kustomization.", path);
+    }
+
+
+    /**
+     * Constructs a NotAnAppException with a cause.
+     *
+     * @param path    The file system {@link Path} related to the exception. May be null.
+     * @param cause   The underlying cause of this exception.
+     */
+    public NotAnAppException(Path path, Throwable cause) {
+        super("Path " + (path != null ? path : "unknown") + " does not resolve to a valid Kustomization.", path, cause);
     }
 }

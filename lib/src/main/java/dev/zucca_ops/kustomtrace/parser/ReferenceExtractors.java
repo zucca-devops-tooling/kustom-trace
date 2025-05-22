@@ -130,7 +130,7 @@ public class ReferenceExtractors {
                 return Stream.of(KustomizeFileUtil.getKustomizationFileFromAppDirectory(path));
             } catch (NotAnAppException e) {
                 logger.warn("Failed to resolve kustomization reference '{}' from baseDir '{}': {}", referenceValue, baseDir, e.getMessage());
-                throw new InvalidReferenceException("Invalid directory or kustomization file referenced: " + path, path); // Chain NotAnAppException
+                throw new InvalidReferenceException("Invalid directory or kustomization file referenced: " + path, path, e);
             }
         };
     }
