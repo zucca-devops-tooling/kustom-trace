@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AppFilesTest {
 
@@ -52,7 +53,7 @@ public class AppFilesTest {
     }
 
     @Test
-    void testConfigmapApps() {
+    void testConfigmapApp() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
         String expectedResourceFileName = "configmap-files.yaml";
         Path appsPath = resourcesDir.resolve("all-reference-types-apps");
@@ -68,7 +69,7 @@ public class AppFilesTest {
     }
 
     @Test
-    void testUnparseableApps() {
+    void testUnparseableApp() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
         String expectedResourceFileName = "app-with-unparseables.yaml";
         Path appsPath = resourcesDir.resolve("app-with-unparseable-kustomization");
@@ -83,15 +84,35 @@ public class AppFilesTest {
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
     }
 
-
     @Test
-    void testSubsetWithCircularApps() {
+    void testSubsetWithCircularApp() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
         String expectedResourceFileName = "subset-with-circular.yaml";
         Path appPath = resourcesDir.resolve("complex-apps").resolve("subset-with-circular");
 
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
+                "app-files", appPath.toString(),
+                "--output", actualOutputFile.toString()
+        );
+        assertEquals(0, exitCode);
+        assertTrue(getCapturedOut().contains("Circular dependency detected"),
+                "Error messages missmatch\n" +
+                        "Circular dependency detected \n" +
+                        "Actual: " + getCapturedOut());
+
+        outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
+    }
+
+    @Test
+    void testNotRootApp() {
+        Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
+        String expectedResourceFileName = "not-root-app.yaml";
+        Path appsPath = resourcesDir.resolve("complex-apps").resolve("root-and-all-references");
+        Path appPath = resourcesDir.resolve("all-reference-types-apps").resolve("app-base");
+
+        int exitCode = cmd.execute(
+                "--apps-dir", appsPath.toString(),
                 "app-files", appPath.toString(),
                 "--output", actualOutputFile.toString()
         );
