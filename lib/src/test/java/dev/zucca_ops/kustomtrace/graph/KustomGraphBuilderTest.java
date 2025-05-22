@@ -31,85 +31,70 @@ public class KustomGraphBuilderTest {
     @Mock
     ResourceReferenceResolver dependencyResolver;
 
-    Path relativeRootPath = Paths.get("app/kustomization.yaml");
-    Path relativeFilePathForKustomFile = Paths.get("apps/config.yaml");
-
-    Path absoluteRootPath;
-    Path absoluteFilePathForKustomFile;
+    Path rootPath = Paths.get("app/kustomization.yaml");
+    Path filePath = Paths.get("apps/config.yaml");
 
     KustomGraphBuilder builder;
 
     @BeforeEach
     void setup() {
-        Path appsDir = Paths.get(".");
-        builder = new KustomGraphBuilder(appsDir) {
+        builder = new KustomGraphBuilder(Paths.get(".")) {
             {
                 try {
                     Field graphField = KustomGraphBuilder.class.getDeclaredField("graph");
                     graphField.setAccessible(true);
-                    graphField.set(this, KustomGraphBuilderTest.this.graph);
+                    graphField.set(this, graph);
 
                     Field resolverField = KustomGraphBuilder.class.getDeclaredField("dependencyResolver");
                     resolverField.setAccessible(true);
-                    resolverField.set(this, KustomGraphBuilderTest.this.dependencyResolver);
-
+                    resolverField.set(this, dependencyResolver);
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to inject mocks into KustomGraphBuilder via reflection", e);
+                    throw new RuntimeException(e);
                 }
             }
         };
-
-        Path builderAppsDir = appsDir.toAbsolutePath().normalize();
-
-        absoluteRootPath = builderAppsDir.resolve(relativeRootPath).normalize();
-        absoluteFilePathForKustomFile = builderAppsDir.resolve(relativeFilePathForKustomFile).normalize();
     }
 
     @Test
     void buildsNewKustomizationIfNotPresent_andSetsMutualReferences() throws InvalidContentException, FileNotFoundException {
-        Path basePathForTest = Paths.get("").toAbsolutePath();
-        Path relativeRootPathForTest = Paths.get("app/kustomization.yaml"); // Path passed to buildKustomization
-        Path absoluteRootPath = basePathForTest.resolve(relativeRootPathForTest).normalize();
+        when(graph.containsNode(rootPath)).thenReturn(false);
 
-        Path contentFilePath = Paths.get("base/config.yaml");
-        Path absoluteDependencyPath = absoluteRootPath.getParent().resolve(contentFilePath).normalize();
+        Kustomization root = new Kustomization(rootPath, Map.of());
 
-        // --- Stubs ---
-        when(graph.containsNode(absoluteRootPath)).thenReturn(false); // This drives the logic path
+        Path filePath = Paths.get("base/config.yaml");
+        KustomFile file = new KustomFile(filePath);
 
-        Kustomization root = new Kustomization(absoluteRootPath, Map.of());
-        KustomFile file = new KustomFile(absoluteDependencyPath);
         ResourceReference ref = new ResourceReference(ReferenceType.RESOURCE, file);
 
-        try (MockedStatic<GraphNodeResolver> mockedGNR = mockStatic(GraphNodeResolver.class)) {
-            mockedGNR.when(() -> GraphNodeResolver.resolveKustomization(absoluteRootPath)).thenReturn(root);
+        try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
+            mocked.when(() -> GraphNodeResolver.resolveKustomization(rootPath)).thenReturn(root);
             when(dependencyResolver.resolveDependencies(root)).thenReturn(Stream.of(ref));
 
-            // --- Execute ---
-            Kustomization result = builder.buildKustomization(relativeRootPathForTest);
+            Kustomization result = builder.buildKustomization(rootPath);
 
-            // --- Assertions ---
             assertEquals(root, result);
-            verify(graph).addNode(root); // Verify addNode is called with the Kustomization object
+            verify(graph).addNode(root);
 
+            // Reference is registered in root
             assertEquals(1, root.getReferences().size());
             assertSame(ref, root.getReferences().get(0));
 
+            // root is registered as a dependent in file
             assertTrue(
                     file.hasDependent(root),
-                    "Root should appear as a dependent in the referenced file node"
+                    "Root should appear in apps stream of the referenced file node"
             );
         }
     }
 
     @Test
     void returnsExistingKustomizationIfAlreadyInGraph() throws InvalidContentException, FileNotFoundException {
-        Kustomization existing = new Kustomization(absoluteRootPath, Map.of());
+        Kustomization existing = new Kustomization(rootPath, Map.of());
 
-        when(graph.containsNode(absoluteRootPath)).thenReturn(true);
-        when(graph.getKustomization(absoluteRootPath)).thenReturn(existing);
+        when(graph.containsNode(rootPath)).thenReturn(true);
+        when(graph.getKustomization(rootPath)).thenReturn(existing);
 
-        Kustomization result = builder.buildKustomization(relativeRootPath); // Pass relative, builder normalizes
+        Kustomization result = builder.buildKustomization(rootPath);
 
         assertEquals(existing, result);
         verify(graph, never()).addNode(any());
@@ -117,12 +102,12 @@ public class KustomGraphBuilderTest {
 
     @Test
     void returnsExistingKustomFileIfAlreadyInGraph() throws InvalidContentException, FileNotFoundException {
-        KustomFile existing = new KustomFile(absoluteFilePathForKustomFile);
+        KustomFile existing = new KustomFile(filePath);
 
-        when(graph.containsNode(absoluteFilePathForKustomFile)).thenReturn(true);
-        when(graph.getKustomFile(absoluteFilePathForKustomFile)).thenReturn(existing);
+        when(graph.containsNode(filePath)).thenReturn(true);
+        when(graph.getKustomFile(filePath)).thenReturn(existing);
 
-        KustomFile result = builder.buildKustomFile(relativeFilePathForKustomFile); // Pass relative, builder normalizes
+        KustomFile result = builder.buildKustomFile(filePath);
 
         assertSame(existing, result);
         verify(graph, never()).addNode(any());
@@ -130,18 +115,15 @@ public class KustomGraphBuilderTest {
 
     @Test
     void buildsNewKustomFileIfNotInGraph() throws InvalidContentException, FileNotFoundException {
-        KustomFile parsed = new KustomFile(absoluteFilePathForKustomFile);
+        KustomFile parsed = new KustomFile(filePath);
 
-        // --- Stubs ---
-        when(graph.containsNode(absoluteFilePathForKustomFile)).thenReturn(false);
+        when(graph.containsNode(filePath)).thenReturn(false);
 
-        try (MockedStatic<GraphNodeResolver> mockedGNR = mockStatic(GraphNodeResolver.class)) {
-            mockedGNR.when(() -> GraphNodeResolver.resolveKustomFile(absoluteFilePathForKustomFile)).thenReturn(parsed);
+        try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
+            mocked.when(() -> GraphNodeResolver.resolveKustomFile(filePath)).thenReturn(parsed);
 
-            // --- Execute ---
-            KustomFile result = builder.buildKustomFile(relativeFilePathForKustomFile);
+            KustomFile result = builder.buildKustomFile(filePath);
 
-            // --- Assertions ---
             assertSame(parsed, result);
             verify(graph).addNode(parsed);
         }
