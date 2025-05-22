@@ -22,11 +22,25 @@ import java.util.stream.Stream;
 
 /**
  * A functional interface for strategies that extract and resolve file path references
- * from a given value (typically found within a Kustomization file's parsed content).
+ * from a given value, typically found within a Kustomization file's parsed content.
  * <p>
- * Implementations of this interface define how to interpret a specific field's value
- * (e.g., a string, a list of strings, or a map) from a Kustomization file and
- * convert it into a stream of resolved {@link Path} objects, relative to a base directory.
+ * **Implementation Responsibility:**
+ * Implementations of this interface are responsible for interpreting the {@code yamlFieldValue}
+ * and resolving it to a stream of concrete {@link Path}s.
+ * <p>
+ * If a Kustomize reference points to a directory (e.g., {@code resources: [../my-app-dir]}),
+ * the extractor for that reference type is responsible for:
+ * <ol>
+ * <li>Identifying that the reference targets a directory.</li>
+ * <li>Performing any necessary operations based on that directory, such as:
+ * <ul>
+ * <li>Listing files within the directory (e.g., for {@code resourceOrDirectory()}).</li>
+ * <li>Locating a specific kustomization definition file (e.g., "kustomization.yaml")
+ * within that directory (e.g., for {@code kustomizationFile()}).</li>
+ * </ul>
+ * </li>
+ * <li>Ultimately, streaming {@link Path} objects that point to the individual, resolved *files*.</li>
+ * </ol>
  */
 @FunctionalInterface
 public interface ReferenceExtractor {
@@ -37,9 +51,9 @@ public interface ReferenceExtractor {
      * (e.g., a String, List, or Map).
      * @param baseDir        The base directory against which relative paths in the
      * {@code yamlFieldValue} should be resolved.
-     * @return A {@link Stream} of resolved {@link Path} objects representing the
-     * extracted file references. Returns an empty stream if no valid
-     * references are found or if the input value is not applicable.
+     * @return A {@link Stream} of resolved {@link Path} objects, each pointing to a
+     * specific file. Returns an empty stream if no valid references are found
+     * or if the input value is not applicable.
      * @throws InvalidReferenceException If the {@code yamlFieldValue} is malformed,
      * contains invalid path strings, or refers to
      * resources that cannot be properly resolved
