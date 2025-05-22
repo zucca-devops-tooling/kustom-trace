@@ -120,11 +120,11 @@ public class KustomGraphTest {
     // Minimal stub node for testing references
     static class DummyNode extends GraphNode {
         DummyNode(Path path) {
-            this.path = path;
+            super(path);
         }
 
         @Override public Stream<Kustomization> getApps() { return Stream.empty(); }
-        @Override public Boolean isRoot() { return true; }
+        @Override public boolean isRoot() { return true; }
         @Override public Stream<Path> getDependencies() { return Stream.of(path); }
 
         @Override
