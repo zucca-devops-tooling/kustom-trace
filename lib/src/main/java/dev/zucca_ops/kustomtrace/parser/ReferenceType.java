@@ -82,8 +82,8 @@ public enum ReferenceType {
         try {
             return extractor.extract(yamlValue, baseDir);
         } catch (InvalidReferenceException e) {
-            String errorMessage = String.format("Extraction failed for reference type '%s' (key: '%s') with baseDir '%s'. Value: '%s'. Error: %s. Offending path (if any): %s",
-                    this.name(), this.yamlKey, baseDir, yamlValue, e.getMessage(), e.getPath() != null ? e.getPath().getFileName() : "N/A");
+            String errorMessage = "Extraction failed for path '%s' and type '%s': %s: %s".
+                    formatted(baseDir, this, e.getMessage(), e.getPath().getFileName());
             if (e.isError()) {
                 logger.error(errorMessage);
             } else {

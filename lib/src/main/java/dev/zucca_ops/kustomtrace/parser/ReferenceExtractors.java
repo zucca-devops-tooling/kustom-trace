@@ -77,13 +77,10 @@ public class ReferenceExtractors {
      */
     private static String validateNonMultilineString(Object referenceValue) throws InvalidReferenceException {
         if (!(referenceValue instanceof String valueString)) {
-            logger.warn("Invalid reference value type: expected String, got {}. Value: {}",
-                    (referenceValue == null ? "null" : referenceValue.getClass().getName()), referenceValue);
             throw new InvalidReferenceException("Non-string value found for reference.");
         }
 
         if (valueString.contains("\n")) {
-            logger.warn("Invalid reference value: multiline string found: '{}'", valueString);
             throw new InvalidReferenceException("Multiline value found in reference.");
         }
         return valueString;
@@ -99,12 +96,10 @@ public class ReferenceExtractors {
      */
     private static Path validateKubernetesResource(Path path) throws InvalidReferenceException {
         if (!KustomizeFileUtil.isValidKubernetesResource(path)) {
-            logger.warn("Path is not a valid Kubernetes resource name/type: {}", path);
-            throw new InvalidReferenceException("Not a valid Kubernetes resource file name or type.", path);
+            throw new InvalidReferenceException("Not a valid Kubernetes resource", path);
         }
         // isValidKubernetesResource only checks name patterns. Now check existence.
         if (!KustomizeFileUtil.isFile(path)) {
-            logger.warn("Referenced Kubernetes resource file does not exist or is not a regular file: {}", path);
             throw new InvalidReferenceException("Non-existing or non-regular file referenced as a Kubernetes resource.", path, true);
         }
         logger.trace("Found valid Kubernetes resource file reference: {}", path);
@@ -122,14 +117,12 @@ public class ReferenceExtractors {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
             if (path.equals(baseDir.normalize())) {
-                logger.warn("Kustomization self-reference detected and disallowed for value '{}' in baseDir '{}'", referenceValue, baseDir);
                 throw new InvalidReferenceException("Self reference to kustomization directory not allowed: " + referenceValue, path, true);
             }
 
             try {
                 return Stream.of(KustomizeFileUtil.getKustomizationFileFromAppDirectory(path));
             } catch (NotAnAppException e) {
-                logger.warn("Failed to resolve kustomization reference '{}' from baseDir '{}': {}", referenceValue, baseDir, e.getMessage());
                 throw new InvalidReferenceException("Invalid directory or kustomization file referenced: " + path, path, e);
             }
         };
@@ -152,7 +145,6 @@ public class ReferenceExtractors {
                 String[] directoryContents = new File(path.toAbsolutePath().toString()).list();
 
                 if (directoryContents == null) {
-                    logger.error("Could not list directory contents for path (may not be a directory or I/O error occurred): {}", path);
                     throw new InvalidReferenceException("Could not list directory contents (not a directory or I/O error).", path);
                 }
                 if (directoryContents.length == 0) {
@@ -210,8 +202,6 @@ public class ReferenceExtractors {
                 return Stream.of(validateKubernetesResource(path));
             }
 
-            logger.warn("Invalid reference value for inlinePathValue: expected Map, got {}. Value: {}",
-                    (referenceValue == null ? "null" : referenceValue.getClass().getName()), referenceValue);
             return Stream.empty();
         };
     }

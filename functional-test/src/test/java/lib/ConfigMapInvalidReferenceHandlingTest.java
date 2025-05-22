@@ -22,7 +22,7 @@ public class ConfigMapInvalidReferenceHandlingTest {
     ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
     Kustomization app;
 
-    private void assertInvalidReference(String file, String cause, Level level) {
+    private void assertInvalidReference(String file) {
         // Assert that no dependencies of app contain the invalid parts in their paths
         assertThat(app.getDependencies())
                 .noneMatch(path -> path.toString().contains(file));
@@ -30,9 +30,10 @@ public class ConfigMapInvalidReferenceHandlingTest {
         // Assert that invalid references were logged
         assertThat(listAppender.list)
                 .anySatisfy(event -> {
-                    assertThat(event.getLevel()).isEqualTo(level);
-                    assertThat(event.getMessage()).contains(cause);
-                    assertThat(event.getMessage()).contains(file);
+                    assertThat(event.getLevel()).isEqualTo(Level.WARN);
+                    String formattedEvent = event.getFormattedMessage();
+                    assertThat(formattedEvent).contains("Invalid reference");
+                    assertThat(formattedEvent).contains(file);
                 });
     }
 
@@ -49,8 +50,8 @@ public class ConfigMapInvalidReferenceHandlingTest {
         Path appPath = appsDir.resolve("kustomization.yaml");
         app = graph.getKustomization(appPath);
 
-        assertInvalidReference("non-existing-configmap.yaml", "Invalid reference", Level.WARN);
-        assertInvalidReference("invalid-directory", "Invalid reference", Level.WARN);
+        assertInvalidReference("non-existing-configmap.yaml");
+        assertInvalidReference("invalid-directory");
 
         assertThat(app.getDependencies())
                 .noneMatch(path -> path.toString().contains("ignored.yaml"));
