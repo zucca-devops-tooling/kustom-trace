@@ -24,93 +24,90 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Utility methods for Kustomize file and path conventions.
+ */
 public class KustomizeFileUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(KustomizeFileUtil.class);
 
-
     /**
-     * Checks if the given path points to a file that is a regular file and exists.
-     * @param path the path to check.
-     * @return true if the path exists and is a regular file, false otherwise.
+     * Checks if the path exists and is a regular file.
+     * @param path The path to check.
+     * @return {@code true} if the path exists and is a regular file, {@code false} otherwise.
      */
-    public static boolean isFile(Path path) { // Made public as it's a general utility
+    public static boolean isFile(Path path) {
         return Files.exists(path) && Files.isRegularFile(path);
     }
 
     /**
-     * Checks if the filename of the given path matches common Kustomization file names.
-     * (e.g., kustomization.yaml, kustomization.yml, Kustomization)
-     * Note: This method only checks the filename, not if the file exists or is a directory.
-     * @param path the path to check.
-     * @return true if the filename suggests it's a kustomization file.
+     * Checks if the path's filename is a standard Kustomization filename.
+     * (kustomization.yaml, kustomization.yml, or Kustomization).
+     * @param path The path to check.
+     * @return {@code true} if the filename matches a Kustomization name.
      */
     public static boolean isKustomizationFileName(Path path) {
-        Path fileName = path.getFileName();
-        if (fileName == null) {
+        Path fileNamePath = path.getFileName();
+        if (fileNamePath == null) {
             return false;
         }
-        String fileNameStr = fileName.toString();
+        String fileNameStr = fileNamePath.toString();
         return List.of("kustomization.yaml", "kustomization.yml", "Kustomization").contains(fileNameStr);
     }
 
-
     /**
-     * Checks if the given path likely represents a Kubernetes resource file
-     * (has a .yaml, .yml, or .json extension) and is NOT a kustomization file.
-     * @param path the path to check.
-     * @return true if it's likely a Kubernetes resource file.
+     * Checks if the path likely represents a Kubernetes resource file (by extension)
+     * and is not a Kustomization file by name.
+     * @param path The path to check.
+     * @return {@code true} if it's likely a Kubernetes resource file.
      */
     public static boolean isValidKubernetesResource(Path path) {
-        Path fileName = path.getFileName();
-        if (fileName == null) {
+        Path fileNamePath = path.getFileName();
+        if (fileNamePath == null) {
             return false;
         }
-        String fileNameStr = fileName.toString();
-        // It's a resource if it's NOT a kustomization file by name AND has a valid K8s extension.
-        return !isKustomizationFileName(path) && // Uses the local method
+        String fileNameStr = fileNamePath.toString();
+        return !isKustomizationFileName(path) &&
                 Stream.of(".yaml", ".yml", ".json")
                         .anyMatch(fileNameStr.toLowerCase()::endsWith);
     }
 
     /**
-     * Given a path (which could be a directory or a direct path to a kustomization file),
-     * this method finds and returns the actual Kustomization file path
-     * (kustomization.yaml, kustomization.yml, or Kustomization in that order of precedence).
-     * @param appPath The path representing the application (either a directory or a kustomization file itself).
-     * @return The resolved Path to the kustomization file.
-     * @throws NotAnAppException if no valid kustomization file can be found.
+     * Resolves an application path (directory or direct kustomization file path)
+     * to the actual Kustomization definition file.
+     * Searches for "kustomization.yaml", "kustomization.yml", "Kustomization" in order.
+     *
+     * @param appPath The application path (directory or kustomization file).
+     * @return The resolved {@link Path} to the kustomization file.
+     * @throws NotAnAppException if no valid kustomization file is found.
      */
     public static Path getKustomizationFileFromAppDirectory(Path appPath) throws NotAnAppException {
-        logger.debug("Finding kustomization file for app directory/path: {}", appPath);
+        Path absoluteAppPath = appPath.toAbsolutePath().normalize();
+        logger.debug("Finding kustomization file for app path: {}", absoluteAppPath);
 
-        // If the provided path itself is a kustomization file (by name) and it exists as a file
-        if (isKustomizationFileName(appPath)) {
-            if (isFile(appPath)) { // Check if it actually exists as a file
-                logger.trace("Provided path '{}' is an existing kustomization file.", appPath);
-                return appPath;
+        if (isKustomizationFileName(absoluteAppPath)) {
+            if (isFile(absoluteAppPath)) {
+                logger.trace("Provided path '{}' is an existing kustomization file.", absoluteAppPath);
+                return absoluteAppPath;
             } else {
-                // If name matches but it's not a file (e.g., doesn't exist, or is a dir),
-                // then we should treat appPath as a directory and search within it.
-                logger.trace("Provided path '{}' looks like a kustomization file by name but is not an existing file. Assuming it's a directory to check within.", appPath);
+                logger.trace("Path '{}' named like kustomization file, but not an existing file. Treating as directory.", absoluteAppPath);
             }
         }
 
-        // If appPath is a directory (or treated as one), look for kustomization files inside
-        Path[] potentialKustomizationFiles = {
-                appPath.resolve("kustomization.yaml"),
-                appPath.resolve("kustomization.yml"),
-                appPath.resolve("Kustomization")
+        Path[] potentialFiles = {
+                absoluteAppPath.resolve("kustomization.yaml"),
+                absoluteAppPath.resolve("kustomization.yml"),
+                absoluteAppPath.resolve("Kustomization")
         };
 
-        for (Path potentialFile : potentialKustomizationFiles) {
+        for (Path potentialFile : potentialFiles) {
             if (isFile(potentialFile)) {
-                logger.trace("Found kustomization file '{}' in app directory '{}'", potentialFile.getFileName(), appPath);
-                return potentialFile;
+                logger.trace("Found kustomization file '{}' in app directory '{}'", potentialFile.getFileName(), absoluteAppPath);
+                return potentialFile.toAbsolutePath().normalize();
             }
         }
 
-        logger.warn("No valid kustomization file found for app path: {}", appPath);
-        throw new NotAnAppException(appPath);
+        logger.warn("No valid kustomization file found for app path: {}", absoluteAppPath);
+        throw new NotAnAppException(absoluteAppPath);
     }
 }

@@ -58,6 +58,9 @@ public class KustomGraph {
     }
 
     public List<Path> getAllAppFiles(Path path) throws KustomException {
+        if (path == null) {
+            throw new IllegalArgumentException("Input path for getAllAppFiles cannot be null.");
+        }
         Path normalizedPath = KustomizeFileUtil.getKustomizationFileFromAppDirectory(path).toAbsolutePath().normalize();
 
         if (nodeIndex.containsKey(normalizedPath)) {

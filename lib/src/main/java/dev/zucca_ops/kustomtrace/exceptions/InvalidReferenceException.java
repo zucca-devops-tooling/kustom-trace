@@ -20,6 +20,10 @@ import java.nio.file.Path;
 public class InvalidReferenceException extends KustomException {
     private boolean isError = false;
 
+    public InvalidReferenceException(String message) {
+        super(message, Path.of("invalid"));
+    }
+
     public InvalidReferenceException(String message, Path path) {
         super(message, path);
     }

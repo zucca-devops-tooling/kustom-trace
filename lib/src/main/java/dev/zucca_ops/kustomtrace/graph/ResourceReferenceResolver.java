@@ -62,7 +62,7 @@ public class ResourceReferenceResolver {
         Map<String, Object> fileContent = kustomization.getContent();
 
         return fileContent.keySet().stream()
-                .filter(ReferenceType::isReference)
+                .filter(ReferenceType::isReferenceKey)
                 .map(ReferenceType::fromYamlKey)
                 .peek(referenceType -> logger.debug("Processing reference type: {}", referenceType))
                 .flatMap(referenceType ->
