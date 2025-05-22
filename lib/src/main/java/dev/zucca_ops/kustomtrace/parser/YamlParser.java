@@ -66,7 +66,6 @@ public class YamlParser {
                 }
 
                 if (doc instanceof Map<?, ?> map) {
-                    @SuppressWarnings("unchecked") // Safe due to instanceof check
                     Map<String, Object> typedMap = (Map<String, Object>) map;
                     documents.add(typedMap);
                     documentCount++;

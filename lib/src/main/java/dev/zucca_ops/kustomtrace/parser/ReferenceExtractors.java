@@ -193,10 +193,7 @@ public class ReferenceExtractors {
      * that holds the string value of the path to be resolved.
      * @return A stream containing the resolved {@link Path} to the Kubernetes resource,
      * or an empty stream if the pathField is not found or the referenceValue is not a map.
-     * @throws InvalidReferenceException if the resolved path is not a valid Kubernetes resource file
-     * or does not exist.
      */
-    @SuppressWarnings("unchecked") // For casting referenceValue to Map
     public static ReferenceExtractor inlinePathValue(String pathField) {
         return (referenceValue, baseDir) -> {
             logger.debug("Applying inlinePathValue extractor for field '{}', baseDir: {}", pathField, baseDir);
