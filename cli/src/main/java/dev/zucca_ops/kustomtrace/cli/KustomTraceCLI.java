@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package dev.zucca_ops.kustomtrace.cli;
+import dev.zucca_ops.kustomtrace.cli.commands.AffectedAppsCommand;
+import dev.zucca_ops.kustomtrace.cli.commands.AppFilesCommand;
+import dev.zucca_ops.kustomtrace.cli.commands.ListRootAppsCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -25,7 +28,8 @@ import java.util.concurrent.Callable;
         description = "Analyzes Kubernetes deployment repositories.",
         subcommands = {
                 AffectedAppsCommand.class,
-                AppFilesCommand.class
+                AppFilesCommand.class,
+                ListRootAppsCommand.class
         })
 public class KustomTraceCLI implements Callable<Integer> {
 
@@ -40,6 +44,14 @@ public class KustomTraceCLI implements Callable<Integer> {
 
         @Option(names = {"--log-file"}, paramLabel = "<file>", description = "Specify a file to write warnings and errors to.")
         File logFile;
+
+        public File getAppsDir() {
+                return appsDir;
+        }
+
+        public File getLogFile() {
+                return logFile;
+        }
 
         @Override
         public Integer call() {

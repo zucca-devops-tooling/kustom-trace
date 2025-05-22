@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.zucca_ops.kustomtrace.cli;
+package dev.zucca_ops.kustomtrace.cli.commands;
 import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
 import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
 import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
@@ -49,8 +50,8 @@ public class AffectedAppsCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        File effectiveAppsDir = parentCLI.appsDir;
-        File effectiveLogFile = parentCLI.logFile;
+        File effectiveAppsDir = parentCLI.getAppsDir();
+        File effectiveLogFile = parentCLI.getLogFile();
 
         // 1. Validations for appsDir (from parent)
         if (effectiveAppsDir == null) {

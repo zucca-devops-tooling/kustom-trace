@@ -24,14 +24,11 @@ public class AppFilesTest {
     private final OutputResourceAssesor outputResourceAssesor = new OutputResourceAssesor("app-files");
     private CommandLine cmd;
     private StringWriter swOut;
-    private StringWriter swErr;
 
     private PrintStream originalOut;
-    private PrintStream originalErr;
 
 
     private String getCapturedOut() { return swOut.toString().trim(); }
-    private String getCapturedErr() { return swErr.toString().trim(); }
 
     @TempDir
     Path tempDir;
