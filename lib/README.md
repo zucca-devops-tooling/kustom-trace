@@ -118,7 +118,7 @@ KustomGraph graph = kustomTrace.getGraph();
 ```xml
 <dependency>
     <groupId>dev.zucca_ops</groupId>
-    <artifactId>kustomtrace-lib</artifactId> <version>YOUR_PROJECT_VERSION</version>
+    <artifactId>kustomtrace</artifactId> <version>1.0.0</version>
 </dependency>
 ```
 

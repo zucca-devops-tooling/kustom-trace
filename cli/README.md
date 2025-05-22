@@ -40,18 +40,19 @@ Lists all root Kustomize applications found in the specified directory. A root a
 Root Applications:
 - path/to/app1-dir
 - another/app/dir
-  ```
-  If no root apps are found:
-  ```
-  No root applications found in: <appsDir_path>
-  ```
+```
+  
+If no root apps are found:
+```
+No root applications found in: <appsDir_path>
+```
 
 **YAML Output (`-o roots.yaml`):**
 ```yaml
 root-apps:
 - path/to/app1-dir # Paths are relative to --apps-dir
 - another/app/dir
-  ```
+```
 
 ### `app-files`
 Lists all unique files used by a given application (including its kustomization file and all resolved resources and bases).
@@ -71,7 +72,7 @@ Files used by application 'my-app':
 - deployment.yaml
 - kustomization.yaml
 - ../base/service.yaml
-  ```
+```
 
 **YAML Output (`-o my-app-files.yaml`):**
 ```yaml
@@ -104,7 +105,7 @@ Affected apps by common/base.yaml:
   Affected apps by services/service-patch.yaml:
 - app1/production
   Summary: No applications were found to be affected by the specified file(s). ```
-
+```
 **YAML Output (`-o impact.yaml`):**
 ```yaml
 affected-apps:

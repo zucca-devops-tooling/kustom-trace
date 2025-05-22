@@ -40,15 +40,15 @@ To use KustomTrace as a Java library, add it as a dependency to your project.
 **(Example - Maven)**
 ```xml
 <dependency>
-    <groupId>dev.zucca_ops</groupId>
-    <artifactId>kustomtrace-lib</artifactId> <version>YOUR_PROJECT_VERSION</version>
+    <groupId>dev.zucca-ops</groupId>
+    <artifactId>kustomtrace</artifactId> <version>1.0.0</version>
 </dependency>
 ```
 
 
 **(Example - Gradle)**
 ```gradle
-implementation 'dev.zucca_ops:kustomtrace-lib:YOUR_PROJECT_VERSION' // Ensure these coordinates match
+implementation 'dev.zucca-ops:kustomtrace:1.0.0'
 ```
 
 
