@@ -102,19 +102,17 @@ public class ResourceReferenceResolverTest {
 
         // 4b. Verify that the expected COMPONENT reference is present
         ReferenceType expectedComponentType = ReferenceType.COMPONENT;
-        Kustomization expectedComponentInstance = componentNode; // The exact instance from mock setup
 
         long componentReferenceCount = references.stream()
-                .filter(ref -> ref.referenceType() == expectedComponentType && ref.resource() == expectedComponentInstance)
+                .filter(ref -> ref.referenceType() == expectedComponentType && ref.resource() == componentNode)
                 .count();
         assertEquals(1, componentReferenceCount, "Exactly one COMPONENT reference to the expected component instance (" + componentKustomizationPath.getFileName() + ") should exist.");
 
         // 4c. Verify that the expected RESOURCE reference is present
         ReferenceType expectedResourceType = ReferenceType.RESOURCE;
-        KustomFile expectedResourceInstance = resourceNode; // The exact instance from mock setup
 
         long resourceReferenceCount = references.stream()
-                .filter(ref -> ref.referenceType() == expectedResourceType && ref.resource() == expectedResourceInstance)
+                .filter(ref -> ref.referenceType() == expectedResourceType && ref.resource() == resourceNode)
                 .count();
         assertEquals(1, resourceReferenceCount, "Exactly one RESOURCE reference to the expected resource instance (" + resourcePath.getFileName() + ") should exist.");
 
