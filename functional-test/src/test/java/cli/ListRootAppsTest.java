@@ -53,16 +53,17 @@ public class ListRootAppsTest {
     void testOverallResources() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
         String expectedResourceFileName = "overall.yaml";
-        Path appsPath = resourcesDir;
 
         int exitCode = cmd.execute(
-                "--apps-dir", appsPath.toString(),
+                "--apps-dir", resourcesDir.toString(),
                 "list-root-apps",
                 "--output", actualOutputFile.toString()
         );
         assertEquals(0, exitCode);
-        assertTrue(getCapturedOut().contains("ResourceReferenceResolver - Error while trying to parse dependency BASE"),
-                "Make sure at least one of the expected errors like ResourceReferenceResolver - Error while trying to parse dependency BASE is logged \n" +
+
+        String expectedError = "ResourceReferenceResolver - Error parsing content for dependency type 'BASE'";
+        assertTrue(getCapturedOut().contains(expectedError),
+                "Make sure at least one of the expected errors like " + expectedError + " is logged \n" +
                         "Actual: " + getCapturedOut());
 
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);

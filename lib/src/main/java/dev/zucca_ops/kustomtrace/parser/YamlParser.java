@@ -46,13 +46,13 @@ public class YamlParser {
      * (e.g., it's a list or a scalar at the root).
      */
     public static List<Map<String, Object>> parseFile(Path path) throws FileNotFoundException, InvalidContentException {
-        logger.debug("Starting to parse YAML file: {}", path.toAbsolutePath());
+        logger.debug("Starting to parse YAML file: {}", path);
         Yaml parser = new Yaml();
         List<Map<String, Object>> documents = new ArrayList<>();
 
         if (!Files.exists(path) || !Files.isRegularFile(path)) {
-            logger.error("YAML file does not exist or is not a regular file: {}", path.toAbsolutePath());
-            throw new FileNotFoundException("File not found or is not a regular file: " + path.toAbsolutePath());
+            logger.error("YAML file does not exist or is not a regular file: {}", path);
+            throw new FileNotFoundException("File not found or is not a regular file: " + path);
         }
 
         try (InputStream inputStream = new FileInputStream(path.toAbsolutePath().toFile())) { // Using toFile() for FileInputStream
@@ -61,7 +61,7 @@ public class YamlParser {
 
             for (Object doc : parsedDocs) {
                 if (Objects.isNull(doc)) {
-                    logger.warn("Found and skipped a null YAML document in: {}", path.toAbsolutePath());
+                    logger.warn("Found and skipped a null YAML document in: {}", path);
                     continue;
                 }
 
@@ -70,21 +70,21 @@ public class YamlParser {
                     documents.add(typedMap);
                     documentCount++;
                 } else {
-                    logger.error("Document in {} is not a Map (key-value structure), actual type: {}", path.toAbsolutePath(), doc.getClass().getName());
+                    logger.error("Document in {} is not a Map (key-value structure), actual type: {}", path, doc.getClass().getName());
                     throw new InvalidContentException(path);
                 }
             }
 
-            logger.debug("Successfully parsed {} YAML map document(s) from: {}", documentCount, path.toAbsolutePath());
+            logger.debug("Successfully parsed {} YAML map document(s) from: {}", documentCount, path);
             return documents;
         } catch (FileNotFoundException fnfe) { // Catch specific first if FileInputStream throws it due to concurrent deletion/permission change
-            logger.error("Error opening YAML file (FileNotFoundException): {}", path.toAbsolutePath(), fnfe);
+            logger.error("Error opening YAML file (FileNotFoundException): {}", path, fnfe);
             throw fnfe;
         } catch (IOException e) {
-            logger.error("Error reading YAML file: {}", path.toAbsolutePath(), e);
-            throw new FileNotFoundException("Could not read YAML file: " + path.toAbsolutePath() + ". Reason: " + e.getMessage());
+            logger.error("Error reading YAML file: {}", path, e);
+            throw new FileNotFoundException("Could not read YAML file: " + path + ". Reason: " + e.getMessage());
         } catch (Exception e) { // Catch potential SnakeYAML runtime parsing exceptions (e.g., YAMLException)
-            logger.error("Error parsing YAML content in file: {}", path.toAbsolutePath(), e);
+            logger.error("Error parsing YAML content in file: {}", path, e);
             throw new InvalidContentException(path, e);
         }
     }
@@ -100,7 +100,7 @@ public class YamlParser {
      * or if the document is not a map.
      */
     public static Map<String, Object> parseKustomizationFile(Path path) throws InvalidContentException, FileNotFoundException {
-        logger.debug("Attempting to parse kustomization file: {}", path.toAbsolutePath());
+        logger.debug("Attempting to parse kustomization file: {}", path);
 
         // parseFile will handle FileNotFoundException and issues with non-map documents.
         List<Map<String, Object>> fileContent = YamlParser.parseFile(path);
@@ -108,12 +108,12 @@ public class YamlParser {
         if (fileContent.isEmpty()) {
             // This case means parseFile returned an empty list (e.g., file was empty,
             // or only contained 'null' documents like "---").
-            logger.warn("Kustomization file at {} is effectively empty or contains no valid YAML map documents.", path.toAbsolutePath());
+            logger.warn("Kustomization file at {} is effectively empty or contains no valid YAML map documents.", path);
             throw new InvalidContentException(path);
         }
 
         if (fileContent.size() > 1) {
-            logger.error("Kustomization file at {} contains {} documents, but exactly one was expected.", path.toAbsolutePath(), fileContent.size());
+            logger.error("Kustomization file at {} contains {} documents, but exactly one was expected.", path, fileContent.size());
             throw new InvalidContentException(path);
         }
 

@@ -82,32 +82,31 @@ public class KustomizeFileUtil {
      * @throws NotAnAppException if no valid kustomization file is found.
      */
     public static Path getKustomizationFileFromAppDirectory(Path appPath) throws NotAnAppException {
-        Path absoluteAppPath = appPath.toAbsolutePath().normalize();
-        logger.debug("Finding kustomization file for app path: {}", absoluteAppPath);
+        logger.debug("Finding kustomization file for app path: {}", appPath);
 
-        if (isKustomizationFileName(absoluteAppPath)) {
-            if (isFile(absoluteAppPath)) {
-                logger.trace("Provided path '{}' is an existing kustomization file.", absoluteAppPath);
-                return absoluteAppPath;
+        if (isKustomizationFileName(appPath)) {
+            if (isFile(appPath)) {
+                logger.trace("Provided path '{}' is an existing kustomization file.", appPath);
+                return appPath;
             } else {
-                logger.trace("Path '{}' named like kustomization file, but not an existing file. Treating as directory.", absoluteAppPath);
+                logger.trace("Path '{}' named like kustomization file, but not an existing file. Treating as directory.", appPath);
             }
         }
 
         Path[] potentialFiles = {
-                absoluteAppPath.resolve("kustomization.yaml"),
-                absoluteAppPath.resolve("kustomization.yml"),
-                absoluteAppPath.resolve("Kustomization")
+                appPath.resolve("kustomization.yaml"),
+                appPath.resolve("kustomization.yml"),
+                appPath.resolve("Kustomization")
         };
 
         for (Path potentialFile : potentialFiles) {
             if (isFile(potentialFile)) {
-                logger.trace("Found kustomization file '{}' in app directory '{}'", potentialFile.getFileName(), absoluteAppPath);
-                return potentialFile.toAbsolutePath().normalize();
+                logger.trace("Found kustomization file '{}' in app directory '{}'", potentialFile.getFileName(), appPath);
+                return potentialFile;
             }
         }
 
-        logger.warn("No valid kustomization file found for app path: {}", absoluteAppPath);
-        throw new NotAnAppException(absoluteAppPath);
+        logger.warn("No valid kustomization file found for app path: {}", appPath);
+        throw new NotAnAppException(appPath);
     }
 }

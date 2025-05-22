@@ -71,13 +71,13 @@ public class ResourceReferenceResolver {
                 return new ResourceReference(type, builder.buildKustomFile(path));
             }
         } catch (InvalidContentException e) {
-            logger.error("Error parsing content for dependency type '{}' at {}: {}", type, path.toAbsolutePath(), e.getMessage());
+            logger.error("Error parsing content for dependency type '{}' at {}: {}", type, path, e.getMessage());
             return null;
         } catch (FileNotFoundException e) {
-            logger.error("File not found for dependency type '{}' at {}: {}", type, path.toAbsolutePath(), e.getMessage());
+            logger.error("File not found for dependency type '{}' at {}: {}", type, path, e.getMessage());
             return null;
         } catch (Exception e) {
-            logger.error("Unexpected error resolving dependency type '{}' at {}: {}", type, path.toAbsolutePath(), e.getMessage(), e);
+            logger.error("Unexpected error resolving dependency type '{}' at {}: {}", type, path, e.getMessage(), e);
             return null;
         }
     }
@@ -97,7 +97,7 @@ public class ResourceReferenceResolver {
             return Stream.empty();
         }
 
-        logger.debug("Resolving dependencies for Kustomization: {}", kustomization.getPath().toAbsolutePath());
+        logger.debug("Resolving dependencies for Kustomization: {}", kustomization.getPath());
         Map<String, Object> fileContent = kustomization.getContent();
         Path baseDir = kustomization.getPath().getParent();
         if (baseDir == null) {

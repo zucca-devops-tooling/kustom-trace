@@ -48,7 +48,7 @@ public class KustomGraphBuilder {
      * @param appsDir The root directory to scan for Kustomize applications.
      */
     public KustomGraphBuilder(Path appsDir) {
-        this.appsDir = appsDir.toAbsolutePath().normalize(); // Normalize upfront
+        this.appsDir = appsDir;
         this.graph = new KustomGraph();
         // Pass 'this' builder instance to the resolver, allowing the resolver to call
         // buildKustomization/buildKustomFile for discovered references.
@@ -80,7 +80,7 @@ public class KustomGraphBuilder {
                     .parallel() // Process kustomization files in parallel
                     .forEach(path -> {
                         try {
-                            buildKustomization(path.toAbsolutePath().normalize());
+                            buildKustomization(path);
                             kustomizationCount.incrementAndGet();
                         } catch (InvalidContentException | FileNotFoundException e) {
                             logger.error("Skipping invalid or unreadable kustomization file at {}: {}", path, e.getMessage());
@@ -105,16 +105,15 @@ public class KustomGraphBuilder {
      * @throws FileNotFoundException If the kustomization file is not found.
      */
     Kustomization buildKustomization(Path path) throws InvalidContentException, FileNotFoundException {
-        Path normalizedPath = path.toAbsolutePath().normalize();
-        logger.debug("Building Kustomization for: {}", normalizedPath);
+        logger.debug("Building Kustomization for: {}", path);
 
-        if (graph.containsNode(normalizedPath)) {
-            logger.debug("Kustomization node already exists in graph for: {}", normalizedPath);
-            return graph.getKustomization(normalizedPath);
+        if (graph.containsNode(path)) {
+            logger.debug("Kustomization node already exists in graph for: {}", path);
+            return graph.getKustomization(path);
         }
 
-        logger.debug("Resolving Kustomization using GraphNodeResolver for: {}", normalizedPath);
-        Kustomization k = GraphNodeResolver.resolveKustomization(normalizedPath);
+        logger.debug("Resolving Kustomization using GraphNodeResolver for: {}", path);
+        Kustomization k = GraphNodeResolver.resolveKustomization(path);
 
         logger.debug("Adding Kustomization node to graph: {}", k.getPath());
         graph.addNode(k); // Add to graph *before* resolving dependencies to handle cycles
@@ -137,16 +136,15 @@ public class KustomGraphBuilder {
      * @throws FileNotFoundException If the file is not found.
      */
     KustomFile buildKustomFile(Path path) throws InvalidContentException, FileNotFoundException {
-        Path normalizedPath = path.toAbsolutePath().normalize();
-        logger.debug("Building KustomFile for: {}", normalizedPath);
+        logger.debug("Building KustomFile for: {}", path);
 
-        if (graph.containsNode(normalizedPath)) {
-            logger.debug("KustomFile node already exists in graph for: {}", normalizedPath);
-            return graph.getKustomFile(normalizedPath);
+        if (graph.containsNode(path)) {
+            logger.debug("KustomFile node already exists in graph for: {}", path);
+            return graph.getKustomFile(path);
         }
 
-        logger.debug("Resolving KustomFile using GraphNodeResolver for: {}", normalizedPath);
-        KustomFile file = GraphNodeResolver.resolveKustomFile(normalizedPath);
+        logger.debug("Resolving KustomFile using GraphNodeResolver for: {}", path);
+        KustomFile file = GraphNodeResolver.resolveKustomFile(path);
 
         logger.debug("Adding KustomFile node to graph: {}", file.getPath());
         graph.addNode(file);
