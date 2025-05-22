@@ -1,0 +1,5 @@
+app-files:
+  app-with-unparseable-kustomization:
+    - Kustomization
+    - valid-kustomization-base/base-resource-two.yml
+    - valid-kustomization-base/kustomization.yml

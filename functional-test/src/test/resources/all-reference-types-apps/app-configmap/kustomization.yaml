@@ -1,0 +1,11 @@
+configMapGenerator:
+  - name: my-configmap1
+    envs:
+      - configmap1.env
+  - name: my-configmap2
+    files:
+      - configmap2=configmap2.env
+      - plain-text-file.txt
+      - non-existing-configmap.yaml
+      - invalid-directory
+      - invalid-directory/kustomization.yaml

@@ -1,0 +1,6 @@
+app-files:
+  app-configmap:
+    - configmap1.env
+    - configmap2.env
+    - kustomization.yaml
+    - plain-text-file.txt

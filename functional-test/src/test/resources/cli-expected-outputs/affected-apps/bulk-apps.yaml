@@ -1,0 +1,8 @@
+affected-apps:
+  subset-with-circular/some-deployment.JSON:
+    - subset-with-circular
+  src/test/resources/all-reference-types-apps/app-configmap/configmap1.env:
+    - root-and-all-references
+    - subset-with-circular
+  src/test/resources/circular-dependency-apps/app2/app2-resource.yaml:
+    - subset-with-circular

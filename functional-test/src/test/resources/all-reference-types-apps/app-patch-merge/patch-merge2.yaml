@@ -1,0 +1,14 @@
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "my-merged-service"
+  },
+  "spec": {
+    "ports": [
+      {
+        "protocol": "TCP"
+      }
+    ]
+  }
+}

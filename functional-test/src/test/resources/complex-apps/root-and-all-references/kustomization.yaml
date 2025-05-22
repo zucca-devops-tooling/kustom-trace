@@ -1,0 +1,3 @@
+components:
+  - ../kustomization.yaml
+  - ../all-references

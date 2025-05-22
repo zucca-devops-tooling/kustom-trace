@@ -1,0 +1,3 @@
+resources:
+  - base-resource-two.yml
+  - invalid-content-deployment.json

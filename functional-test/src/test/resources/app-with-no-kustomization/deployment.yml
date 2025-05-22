@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: base-secret-two
+type: Opaque
+data:
+  token: YWFhYg==

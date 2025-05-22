@@ -1,0 +1,8 @@
+components:
+  - ../../all-reference-types-apps/app-base/kustomization.yaml
+  - ../../all-reference-types-apps/app-configmap/kustomization.yaml
+  - ../../all-reference-types-apps/app-resource/kustomization.yaml
+  - ../../circular-dependency-apps/app1
+
+resources:
+  - some-deployment.JSON

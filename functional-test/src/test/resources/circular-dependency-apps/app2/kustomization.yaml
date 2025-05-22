@@ -1,0 +1,4 @@
+resources:
+  - app2-resource.yaml
+components:
+  - component

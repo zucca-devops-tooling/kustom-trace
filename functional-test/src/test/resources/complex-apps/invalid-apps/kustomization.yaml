@@ -1,0 +1,3 @@
+bases:
+  - ../../app-with-no-kustomization
+  - ../../app-with-unparseable-kustomization
