@@ -1,0 +1,26 @@
+app-files:
+  complex-apps/subset-with-circular:
+    - ../../all-reference-types-apps/app-base/base-directory-reference/base-resource-two.yml
+    - ../../all-reference-types-apps/app-base/base-directory-reference/kustomization.yml
+    - ../../all-reference-types-apps/app-base/base-kustomization-reference/base-resource-one.yaml
+    - ../../all-reference-types-apps/app-base/base-kustomization-reference/kustomization.yaml
+    - ../../all-reference-types-apps/app-base/kustomization.yaml
+    - ../../all-reference-types-apps/app-configmap/configmap1.env
+    - ../../all-reference-types-apps/app-configmap/configmap2.env
+    - ../../all-reference-types-apps/app-configmap/kustomization.yaml
+    - ../../all-reference-types-apps/app-configmap/plain-text-file.txt
+    - ../../all-reference-types-apps/app-resource/another-resource.yaml
+    - ../../all-reference-types-apps/app-resource/kustomization.yaml
+    - ../../all-reference-types-apps/app-resource/more-resources/extra-resource.json
+    - ../../all-reference-types-apps/app-resource/more-resources/extra-resource.yml
+    - ../../all-reference-types-apps/app-resource/my-resource.yaml
+    - ../../circular-dependency-apps/app1/app1-resource.yaml
+    - ../../circular-dependency-apps/app1/component/component1-resource.yaml
+    - ../../circular-dependency-apps/app1/component/kustomization.yaml
+    - ../../circular-dependency-apps/app1/kustomization.yaml
+    - ../../circular-dependency-apps/app2/app2-resource.yaml
+    - ../../circular-dependency-apps/app2/component/component2-resource.yaml
+    - ../../circular-dependency-apps/app2/component/kustomization.yaml
+    - ../../circular-dependency-apps/app2/kustomization.yaml
+    - kustomization.yaml
+    - some-deployment.JSON

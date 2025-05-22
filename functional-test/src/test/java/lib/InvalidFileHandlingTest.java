@@ -39,7 +39,7 @@ public class InvalidFileHandlingTest {
         KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
         KustomGraph graph = kustomTrace.getGraph();
 
-        Path appPath = appsDir.resolve("kustomization.yaml");
+        Path appPath = appsDir.resolve("Kustomization");
         app = graph.getKustomization(appPath);
         assertNotNull(app,  "kustomization should exist");
     }
