@@ -28,8 +28,6 @@ import java.util.stream.Stream;
  */
 public abstract class GraphNode {
     protected Path path; // Path to the file system entity this node represents.
-
-    // Kustomizations that depend on this node.
     protected List<Kustomization> dependents = new ArrayList<>();
 
     /**
@@ -50,7 +48,7 @@ public abstract class GraphNode {
     /**
      * @return An unmodifiable list of Kustomizations that depend on this node.
      */
-    protected List<Kustomization> getDependents() {
+    public List<Kustomization> getDependents() {
         return Collections.unmodifiableList(dependents); // Return read-only view
     }
 

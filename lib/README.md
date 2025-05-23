@@ -68,41 +68,83 @@ rootApps.forEach(appPath -> System.out.println("- " + appPath));
 
 **2. Getting All Files for a Specific Application:**
 ```java
-import dev.zucca_ops.kustomtrace.exceptions.KustomException; // Or specific sub-exceptions
 
 // ...
-try {
-    Path specificAppPath = Paths.get("my-app-overlay"); // Path to an app dir or its kustomization file
-    List<Path> appFiles = kustomTrace.getDependenciesFor(specificAppPath);
-    System.out.println("Files for app " + specificAppPath + ":");
-    appFiles.forEach(filePath -> System.out.println("  - " + filePath));
-} catch (KustomException e) {
-    System.err.println("Error getting dependencies: " + e.getMessage());
-}
+Path specificAppPath = Paths.get("my-app-overlay"); // Path to an app dir or its kustomization file
+List<Path> appFiles = kustomTrace.getDependenciesFor(specificAppPath);
+System.out.println("Files for app " + specificAppPath + ":");
+appFiles.forEach(filePath -> System.out.println("  - " + filePath));
 ```
 
 **3. Finding Applications Affected by a File Change:**
 ```java
-import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException; // Or KustomException
-
 // ...
-try {
-    Path changedFile = Paths.get("common/base/configmap.yaml");
-    List<Path> affectedApps = kustomTrace.getAppsWith(changedFile);
-    System.out.println("Applications affected by changes in " + changedFile + ":");
-    affectedApps.forEach(appPath -> System.out.println("  - " + appPath));
-} catch (UnreferencedFileException e) {
-    System.err.println("The file " + e.getPath() + " is not referenced by any application in the graph.");
+Path changedFile = Paths.get("common/base/configmap.yaml");
+List<Path> affectedApps = kustomTrace.getAppsWith(changedFile);
+System.out.println("Applications affected by changes in " + changedFile + ":");
+affectedApps.forEach(appPath -> System.out.println("  - " + appPath));
+```
+
+## Advanced Usage: Navigating the Graph
+
+Once you have a `KustomTrace` instance, you can retrieve the `KustomGraph` object for more detailed analysis and direct graph traversal. This is useful for scenarios beyond the direct facade methods.
+
+
+First, get a reference to the graph and a specific Kustomization node:
+
+```java
+KustomGraph graph = kustomTrace.getGraph();
+Path myAppKustomizationPath = Paths.get("my-app/staging/kustomization.yaml"); // Path relative to your --apps-dir
+Kustomization myApp = graph.getKustomization(myAppKustomizationPath);
+
+if (myApp == null) {
+    System.err.println("Application kustomization not found in graph: " + myAppKustomizationPath);
+    return; // Or handle error appropriately
 }
 ```
 
-## Advanced Usage
+Now you can explore its relationships:
 
-For more complex scenarios, retrieve the `KustomGraph` object:
+**1. Get Direct Dependencies (as GraphNode objects)**
+
+A Kustomization directly references other Kustomizations (bases, components) or KustomFiles (resources, patches). You can access these referenced nodes:
+
 ```java
-KustomGraph graph = kustomTrace.getGraph();
-// Example: Iterate all nodes
-// graph.getNodeMap().forEach((path, node) -> { /* ... */ });
+System.out.println("Directly referenced nodes by " + myApp.getDisplayName() + ":");
+myApp.getDirectlyReferencedNodes() // Or myApp.getReferences().stream().map(ResourceReference::resource)
+    .forEach(node -> {
+        System.out.println("- " + node.getDisplayName() +
+        " (Type: " + (node.isKustomization() ? "Kustomization" : "KustomFile") + ")");
+    });
+```
+
+**2. Get Direct Dependents (Kustomizations that reference this node)**
+
+You can find out which Kustomization files directly depend on (i.e., reference) the current `myApp` node:
+
+```java
+System.out.println("\n'" + myApp.getDisplayName() + "' is directly depended upon by Kustomizations:");
+myApp.getDependents().forEach(dependent -> {
+    System.out.println("- " + dependent.getDisplayName());
+});
+```
+
+**3. Inspecting KustomFiles and their KustomResources (Handling Multi-Document YAML)**
+
+If a `GraphNode` is a `KustomFile`, it may contain one or more Kubernetes resources (especially if the source YAML file uses `---` separators for multiple documents). `GraphNodeResolver` (via `YamlParser.parseFile`) handles this by creating multiple `KustomResource` objects for a single `KustomFile` if applicable. You can access these as follows:
+
+```java
+// Assuming 'dependencyNode' is a GraphNode obtained from myApp.getDirectlyReferencedNodes()
+if (dependencyNode.isKustomFile()) {
+    KustomFile kustomFile = (KustomFile) dependencyNode;
+    System.out.println("\nResources in KustomFile: " + kustomFile.getDisplayName());
+    kustomFile.getResources().forEach(resource -> {
+    // KustomResource contains 'kind' and 'name' parsed from the YAML document
+    System.out.println("  - Kind: " + resource.getKind() + ", Name: " + resource.getName());
+    });
+
+    // kustomFile.getResource() provides a shortcut to the first resource or a default.
+}
 ```
 
 ## Use Cases
@@ -125,7 +167,7 @@ KustomGraph graph = kustomTrace.getGraph();
 
 **(Example - Gradle)**
 ```gradle
-implementation 'dev.zucca_ops:kustomtrace-lib:YOUR_PROJECT_VERSION' // Or your actual coordinates
+implementation 'dev.zucca_ops:kustomtrace-lib:1.0.0
 ```
 
 
