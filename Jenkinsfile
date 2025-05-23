@@ -72,6 +72,12 @@ pipeline {
             }
         }
         stage('Publish to Maven repository') {
+            when {
+                anyOf {
+                    // branch 'main' disable until mavenCentral publish is completed
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publish'", returnStatus: true) == 0 } // Avoid pushing snapshots on every commit
+                }
+            }
             environment {
                 GPG_KEY_ID    = credentials('GPG_KEY_ID')
                 GPG_KEY_PASS  = credentials('GPG_KEY_PASS')

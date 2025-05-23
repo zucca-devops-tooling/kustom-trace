@@ -111,10 +111,9 @@ class CLIBasicTest {
 
         String expectedFullErrorMessage = "Error: Invalid <app-path> (path does not exist): " + nonExistentAppFile.toAbsolutePath();
 
-        assertTrue(logFileContent.equals(expectedFullErrorMessage),
-                "Log file should contain the exact invalid app path error. " +
-                        "\nExpected to find: '" + expectedFullErrorMessage + "'" +
-                        "\nActual:           '" + logFileContent + "'");
+        assertEquals(logFileContent, expectedFullErrorMessage, "Log file should contain the exact invalid app path error. " +
+                "\nExpected to find: '" + expectedFullErrorMessage + "'" +
+                "\nActual:           '" + logFileContent + "'");
 
         assertTrue(getCapturedErr().isEmpty(),
                 "System.err should be empty if error went to the log file. Actual stderr: " + getCapturedErr());
@@ -170,8 +169,8 @@ class CLIBasicTest {
         Path app2SpecificResourcePath = app2Dir.resolve("app2-specific.yaml"); // For clarity
 
         Files.createFile(commonBaseYamlPath);
-        createSimpleKustomization(kustomizationApp1Path, Arrays.asList("../base/common-base.yaml"));
-        createSimpleKustomization(kustomizationApp2Path, Arrays.asList("../base/common-base.yaml", "app2-specific.yaml"));
+        createSimpleKustomization(kustomizationApp1Path, List.of("../base/common-base.yaml"));
+        createSimpleKustomization(kustomizationApp2Path, List.of("../base/common-base.yaml", "app2-specific.yaml"));
         if (!Files.exists(app2SpecificResourcePath)) {
             Files.createFile(app2SpecificResourcePath);
         }

@@ -181,10 +181,9 @@ public class AffectedAppsTest {
 
         String expectedFullErrorMessage = "Error: File specified by --files-from-file not found: " + nonExistingFile.toAbsolutePath();
 
-        assertTrue(getCapturedErr().equals(expectedFullErrorMessage),
-                "Log file should contain the exact invalid app path error. " +
-                        "\nExpected to find: '" + expectedFullErrorMessage + "'" +
-                        "\nActual:           '" + getCapturedErr() + "'");
+        assertEquals(getCapturedErr(), expectedFullErrorMessage, "Log file should contain the exact invalid app path error. " +
+                "\nExpected to find: '" + expectedFullErrorMessage + "'" +
+                "\nActual:           '" + getCapturedErr() + "'");
     }
 
     @Test

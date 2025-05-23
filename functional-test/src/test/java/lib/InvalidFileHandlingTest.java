@@ -70,20 +70,22 @@ public class InvalidFileHandlingTest {
 
         // Assert that invalid files were logged
         Level level = Level.ERROR;
-        String cause = "invalid yaml/json content";
+        String cause = "has invalid Kustomize content";
         assertThat(listAppender.list)
                 .anySatisfy(event -> {
                     assertThat(event.getLevel()).isEqualTo(level);
-                    assertThat(event.getMessage()).contains(appsDir.resolve("invalid-kustomization-base/kustomization.yaml").toString());
-                    assertThat(event.getMessage()).contains(cause);
+                    String formattedMessage = event.getFormattedMessage();
+                    assertThat(formattedMessage).contains(appsDir.resolve("invalid-kustomization-base/kustomization.yaml").toString());
+                    assertThat(formattedMessage).contains(cause);
                 });
 
 
         assertThat(listAppender.list)
                 .anySatisfy(event -> {
                     assertThat(event.getLevel()).isEqualTo(level);
-                    assertThat(event.getMessage()).contains("invalid-content-deployment.json");
-                    assertThat(event.getMessage()).contains(cause);
+                    String formattedMessage = event.getFormattedMessage();
+                    assertThat(formattedMessage).contains("invalid-content-deployment.json");
+                    assertThat(formattedMessage).contains(cause);
                 });
     }
 }

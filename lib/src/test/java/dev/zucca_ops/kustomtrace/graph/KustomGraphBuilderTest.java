@@ -69,7 +69,6 @@ public class KustomGraphBuilderTest {
         try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
             mocked.when(() -> GraphNodeResolver.resolveKustomization(rootPath)).thenReturn(root);
             when(dependencyResolver.resolveDependencies(root)).thenReturn(Stream.of(ref));
-            when(graph.getKustomization(rootPath)).thenReturn(root);
 
             Kustomization result = builder.buildKustomization(rootPath);
 
@@ -122,7 +121,6 @@ public class KustomGraphBuilderTest {
 
         try (MockedStatic<GraphNodeResolver> mocked = mockStatic(GraphNodeResolver.class)) {
             mocked.when(() -> GraphNodeResolver.resolveKustomFile(filePath)).thenReturn(parsed);
-            when(graph.getKustomFile(filePath)).thenReturn(parsed);
 
             KustomFile result = builder.buildKustomFile(filePath);
 

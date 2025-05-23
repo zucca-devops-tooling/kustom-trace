@@ -17,5 +17,11 @@ package dev.zucca_ops.kustomtrace.model;
 
 import dev.zucca_ops.kustomtrace.parser.ReferenceType;
 
+/**
+ * Represents a typed link from a Kustomization to another graph node.
+ *
+ * @param referenceType The kind of Kustomize reference.
+ * @param resource      The {@link GraphNode} target of this reference.
+ */
 public record ResourceReference(ReferenceType referenceType, GraphNode resource) {
 }

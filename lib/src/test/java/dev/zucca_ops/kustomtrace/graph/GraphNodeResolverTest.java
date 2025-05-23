@@ -3,15 +3,18 @@ package dev.zucca_ops.kustomtrace.graph;
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
 import dev.zucca_ops.kustomtrace.model.KustomFile;
 import dev.zucca_ops.kustomtrace.model.KustomResource;
+import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import dev.zucca_ops.kustomtrace.parser.YamlParser;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mockStatic;
@@ -62,15 +65,31 @@ public class GraphNodeResolverTest {
     }
 
     @Test
-    void throwsExceptionWhenContentIsNull() {
-        Path path = tempDir.resolve("kustomization.yaml");
+    void resolveKustomization_whenParserReturnsValidContent_createsKustomization() throws InvalidContentException, FileNotFoundException {
+        Path dummyPath = tempDir.resolve("kustomization.yaml");
+        Map<String, Object> mockContent = Map.of("apiVersion", "kustomize.config.k8s.io/v1beta1");
 
-        try (MockedStatic<YamlParser> mocked = mockStatic(YamlParser.class)) {
-            mocked.when(() -> YamlParser.parseKustomizationFile(path)).thenReturn(null);
+        try (MockedStatic<YamlParser> mockedParser = mockStatic(YamlParser.class)) {
+            mockedParser.when(() -> YamlParser.parseKustomizationFile(dummyPath)).thenReturn(mockContent);
 
-            assertThrows(InvalidContentException.class, () -> {
-                GraphNodeResolver.resolveKustomization(path);
-            });
+            Kustomization kustomization = GraphNodeResolver.resolveKustomization(dummyPath);
+
+            assertNotNull(kustomization);
+            assertEquals(dummyPath, kustomization.getPath());
+            assertSame(mockContent, kustomization.getContent());
         }
     }
+    @Test
+    void resolveKustomization_whenParserThrowsInvalidContentException_propagatesException() {
+        Path dummyPath = tempDir.resolve("kustomization.yaml");
+        InvalidContentException expectedException = new InvalidContentException(dummyPath);
+
+        try (MockedStatic<YamlParser> mockedParser = mockStatic(YamlParser.class)) {
+            mockedParser.when(() -> YamlParser.parseKustomizationFile(dummyPath)).thenThrow(expectedException);
+
+            InvalidContentException actualException = assertThrows(InvalidContentException.class, () -> GraphNodeResolver.resolveKustomization(dummyPath));
+            assertSame(expectedException, actualException);
+        }
+    }
+
 }

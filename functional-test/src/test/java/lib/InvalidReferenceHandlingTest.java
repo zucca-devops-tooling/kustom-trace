@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import dev.zucca_ops.kustomtrace.KustomTrace;
-import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import org.junit.jupiter.api.AfterAll;
@@ -54,9 +53,10 @@ public class InvalidReferenceHandlingTest {
         assertThat(listAppender.list)
                 .anySatisfy(event -> {
                     assertThat(event.getLevel()).isEqualTo(level);
-                    assertThat(event.getMessage()).contains(type.toString());
-                    assertThat(event.getMessage()).contains(cause);
-                    assertThat(event.getMessage()).contains(Path.of(file).getFileName().toString());
+                    String formattedEvent = event.getFormattedMessage();
+                    assertThat(formattedEvent).contains(type.toString());
+                    assertThat(formattedEvent).contains(cause);
+                    assertThat(formattedEvent).contains(Path.of(file).getFileName().toString());
                 });
     }
 
@@ -100,22 +100,21 @@ public class InvalidReferenceHandlingTest {
         Kustomization app = apps.get("app-component");
 
         assertInvalidReference("non-existing-component", "Invalid directory or kustomization file", app, COMPONENT, Level.WARN);
-        assertInvalidReference("invalid", "Non string value found", app, COMPONENT, Level.WARN);
+        assertInvalidReference("invalid", "Non-string value found for reference", app, COMPONENT, Level.WARN);
     }
 
     @Test
     void testInvalidPatchReferences() {
         Kustomization app = apps.get("app-patch");
 
-        assertInvalidReference("non-existing-patch.yaml", "Non-Existing file referenced", app, PATCH, Level.ERROR);
-        assertInvalidReference("invalid-directory", "Not a valid kubernetes resource", app, PATCH, Level.WARN);
-        assertInvalidReference("invalid", "Non string value found", app, PATCH, Level.WARN);
+        assertInvalidReference("non-existing-patch.yaml", "Non-existing or non-regular file", app, PATCH, Level.ERROR);
+        assertInvalidReference("invalid-directory", "Not a valid Kubernetes resource", app, PATCH, Level.WARN);
     }
 
     @Test
     void testInvalidPatchMergeReferences() {
         Kustomization app = apps.get("app-patch-merge");
-        String cause = "Not a valid kubernetes resource";
+        String cause = "Not a valid Kubernetes resource";
 
         assertInvalidReference(Path.of("invalid-directory").resolve("kustomization.yaml").toString(), cause, app, PATCH_MERGE, Level.WARN);
         assertInvalidReference("invalid-directory", cause, app, PATCH_MERGE, Level.WARN);
@@ -125,8 +124,8 @@ public class InvalidReferenceHandlingTest {
     void testInvalidResourceReferences() {
         Kustomization app = apps.get("app-resource");
 
-        assertInvalidReference("non-existing-resource", "Non-Existing file referenced", app, RESOURCE, Level.ERROR);
-        assertInvalidReference(Path.of("invalid-directory").resolve("kustomization.yaml").toString(), "Not a valid kubernetes resource", app, RESOURCE, Level.WARN);
+        assertInvalidReference("non-existing-resource", "Non-existing or non-regular file", app, RESOURCE, Level.ERROR);
+        assertInvalidReference(Path.of("invalid-directory").resolve("kustomization.yaml").toString(), "Not a valid Kubernetes resource", app, RESOURCE, Level.WARN);
         assertInvalidReference("invalid", "Multiline value found", app, RESOURCE, Level.WARN);
     }
 }

@@ -11,13 +11,8 @@ repositories {
 }
 
 dependencies {
-    // Core dependencies
     implementation("org.yaml:snakeyaml:2.2")
     implementation("org.slf4j:slf4j-api:2.0.9")
-
-    // Visualization
- //   implementation("org.graphstream:gs-core:2.0")
- //   implementation("org.graphstream:gs-ui:2.0")
 
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
@@ -29,6 +24,44 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            name.set("KustomTrace Library")
+            description.set("A Java library to analyze Kustomize configurations and build a dependency graph.")
+            url.set("https://github.com/zucca-devops-tooling/kustom-trace/tree/main/lib")
+            licenses {
+                license {
+                    name.set("The Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                }
+            }
+            developers {
+                developer {
+                    id.set("zucca")
+                    name.set("Guido Zuccarelli")
+                    email.set("guidozuccarelli@hotmail.com")
+                    organizationUrl.set("https://github.com/zucca-devops-tooling")
+                }
+            }
+            scm {
+                connection.set("scm:git:git://github.com/zucca-devops-tooling/kustom-trace.git")
+                developerConnection.set("scm:git:ssh://github.com/zucca-devops-tooling/kustom-trace.git")
+                url.set("https://github.com/zucca-devops-tooling/kustom-trace/")
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.matching { it.name == "publishPluginMavenPublicationToLocalRepository" }.configureEach {
+        dependsOn("signMavenPublication")
+    }
+    tasks.matching { it.name == "publishMavenPublicationToLocalRepository" }.configureEach {
+        dependsOn("signPluginMavenPublication")
+    }
 }
 
 publisher {

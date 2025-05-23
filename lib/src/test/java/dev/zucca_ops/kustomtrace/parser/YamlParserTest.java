@@ -1,15 +1,12 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
-import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -64,9 +61,7 @@ public class YamlParserTest {
         Path path = tempDir.resolve("list.yaml");
         Files.writeString(path, "- item1\n- item2");
 
-        InvalidContentException ex = assertThrows(InvalidContentException.class, () -> {
-            YamlParser.parseFile(path);
-        });
+        InvalidContentException ex = assertThrows(InvalidContentException.class, () -> YamlParser.parseFile(path));
         assertTrue(ex.getMessage().contains(path.toString()));
     }
 
@@ -74,9 +69,7 @@ public class YamlParserTest {
     void parseFile_throwsFileNotFoundException() {
         Path path = tempDir.resolve("missing.yaml");
 
-        assertThrows(java.io.FileNotFoundException.class, () -> {
-            YamlParser.parseFile(path);
-        });
+        assertThrows(java.io.FileNotFoundException.class, () -> YamlParser.parseFile(path));
     }
 
     @Test
@@ -90,17 +83,19 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_returnsNullIfMultipleDocuments() throws IOException, InvalidContentException {
-        Path path = tempDir.resolve("invalid.yaml");
+    void parseKustomizationFile_throwsInvalidContentException_ifMultipleDocuments() throws IOException { // No InvalidContentException needed here
+        Path path = tempDir.resolve("multi_doc_kustomization.yaml"); // Renamed for clarity
         Files.writeString(path, """
-            resources:
-              - base
-            ---
-            namePrefix: dev-
-            """);
+        resources:
+          - base
+        ---
+        namePrefix: dev-
+        """);
 
-        Map<String, Object> result = YamlParser.parseKustomizationFile(path);
-        assertNull(result);
+        InvalidContentException exception = assertThrows(InvalidContentException.class, () -> YamlParser.parseKustomizationFile(path));
+
+        assertNotNull(exception.getPath(), "Exception should contain the path.");
+        assertEquals(path, exception.getPath());
     }
 
     @Test
