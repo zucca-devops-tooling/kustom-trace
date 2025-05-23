@@ -73,7 +73,12 @@ See the [KustomTrace Library README](./lib/README.md) for more details on progra
 
 ## Contribution
 
-*(Details on how to contribute, coding standards, etc., if applicable)*
+Contributions to KustomTrace are welcome!
+
+- Found a bug or have a suggestion? Please [open an issue](https://github.com/zucca-devops-tooling/kustom-trace/issues/new).
+- Want to contribute code? See our detailed [Contribution Guidelines](CONTRIBUTING.md).
+
+Thank you for helping improve KustomTrace!
 
 ## License
 
