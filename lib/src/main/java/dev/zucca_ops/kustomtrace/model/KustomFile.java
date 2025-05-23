@@ -46,8 +46,7 @@ public class KustomFile extends GraphNode {
      */
     @Override
     Stream<Kustomization> getApps() {
-        return getDependents().stream()
-                .flatMap(Kustomization::getApps);
+        return getDependents().stream().flatMap(Kustomization::getApps);
     }
 
     /**
@@ -103,7 +102,9 @@ public class KustomFile extends GraphNode {
      * @return The first {@link KustomResource}, or an "Undefined" resource if none exist.
      */
     public KustomResource getResource() {
-        return resources.stream().findAny().orElseGet(() -> new KustomResource("Undefined", "Undefined", this));
+        return resources.stream()
+                .findAny()
+                .orElseGet(() -> new KustomResource("Undefined", "Undefined", this));
     }
 
     /**

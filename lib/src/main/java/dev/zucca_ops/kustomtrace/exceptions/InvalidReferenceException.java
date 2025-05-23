@@ -39,7 +39,9 @@ public class InvalidReferenceException extends KustomException {
      * @param message The detail message.
      */
     public InvalidReferenceException(String message) {
-        super(message, Paths.get("invalid")); // Path indicates no specific file context for this error
+        super(
+                message,
+                Paths.get("invalid")); // Path indicates no specific file context for this error
         // isError remains false (warning)
     }
 

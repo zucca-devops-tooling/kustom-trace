@@ -23,5 +23,4 @@ import dev.zucca_ops.kustomtrace.parser.ReferenceType;
  * @param referenceType The kind of Kustomize reference.
  * @param resource      The {@link GraphNode} target of this reference.
  */
-public record ResourceReference(ReferenceType referenceType, GraphNode resource) {
-}
+public record ResourceReference(ReferenceType referenceType, GraphNode resource) {}

@@ -31,8 +31,7 @@ public class KustomResource {
      * Default constructor.
      * Name, kind, and file should be set via setters or a parameterized constructor.
      */
-    public KustomResource() {
-    }
+    public KustomResource() {}
 
     /**
      * Constructs a KustomResource with specified name, kind, and containing file.

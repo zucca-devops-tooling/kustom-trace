@@ -21,16 +21,14 @@ import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.model.ResourceReference;
 import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Builds a {@link KustomGraph} by scanning a directory structure for Kustomization files,
@@ -71,25 +69,39 @@ public class KustomGraphBuilder {
 
         if (!Files.exists(appsDir) || !Files.isDirectory(appsDir)) {
             logger.error("Apps directory does not exist or is not a directory: {}", appsDir);
-            throw new FileNotFoundException("Apps directory not found or is not a directory: " + appsDir);
+            throw new FileNotFoundException(
+                    "Apps directory not found or is not a directory: " + appsDir);
         }
 
         try (Stream<Path> stream = Files.walk(appsDir)) {
             stream.filter(KustomizeFileUtil::isKustomizationFileName)
-                    .filter(KustomizeFileUtil::isFile) // Ensure they are actual files, not directories named like kustomization.yaml
+                    .filter(
+                            KustomizeFileUtil
+                                    ::isFile) // Ensure they are actual files, not directories named
+                    // like kustomization.yaml
                     .parallel() // Process kustomization files in parallel
-                    .forEach(path -> {
-                        try {
-                            buildKustomization(path);
-                            kustomizationCount.incrementAndGet();
-                        } catch (InvalidContentException | FileNotFoundException e) {
-                            logger.error("Skipping invalid or unreadable kustomization file at {}: {}", path, e.getMessage());
-                        } catch (Exception e) {
-                            logger.error("Unexpected error building kustomization for path {}: {}", path, e.getMessage(), e);
-                        }
-                    });
+                    .forEach(
+                            path -> {
+                                try {
+                                    buildKustomization(path);
+                                    kustomizationCount.incrementAndGet();
+                                } catch (InvalidContentException | FileNotFoundException e) {
+                                    logger.error(
+                                            "Skipping invalid or unreadable kustomization file at {}: {}",
+                                            path,
+                                            e.getMessage());
+                                } catch (Exception e) {
+                                    logger.error(
+                                            "Unexpected error building kustomization for path {}: {}",
+                                            path,
+                                            e.getMessage(),
+                                            e);
+                                }
+                            });
         }
-        logger.info("Finished directory walk. Attempted to build {} kustomization file(s).", kustomizationCount.get());
+        logger.info(
+                "Finished directory walk. Attempted to build {} kustomization file(s).",
+                kustomizationCount.get());
 
         return graph;
     }
@@ -104,7 +116,8 @@ public class KustomGraphBuilder {
      * @throws InvalidContentException If the kustomization file content is invalid.
      * @throws FileNotFoundException If the kustomization file is not found.
      */
-    Kustomization buildKustomization(Path path) throws InvalidContentException, FileNotFoundException {
+    Kustomization buildKustomization(Path path)
+            throws InvalidContentException, FileNotFoundException {
         logger.debug("Building Kustomization for: {}", path);
 
         if (graph.containsNode(path)) {
@@ -119,7 +132,8 @@ public class KustomGraphBuilder {
         graph.addNode(k); // Add to graph *before* resolving dependencies to handle cycles
 
         logger.debug("Resolving dependencies for Kustomization: {}", k.getPath());
-        dependencyResolver.resolveDependencies(k)
+        dependencyResolver
+                .resolveDependencies(k)
                 .forEach(reference -> setMutualReference(k, reference));
 
         return k;
@@ -160,7 +174,10 @@ public class KustomGraphBuilder {
      * @param reference The {@link ResourceReference} (containing the type and the target resource node).
      */
     private void setMutualReference(Kustomization dependent, ResourceReference reference) {
-        logger.trace("Setting mutual reference between dependent {} and resource {}", dependent.getPath(), reference.resource().getPath());
+        logger.trace(
+                "Setting mutual reference between dependent {} and resource {}",
+                dependent.getPath(),
+                reference.resource().getPath());
         dependent.addReference(reference);
         reference.resource().addDependent(dependent);
     }

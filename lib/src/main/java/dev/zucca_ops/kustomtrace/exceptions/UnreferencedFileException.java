@@ -32,7 +32,11 @@ public class UnreferencedFileException extends KustomException {
      * May be null if the context for the path is unavailable, though typically non-null.
      */
     public UnreferencedFileException(Path path) {
-        super("File with path " + (path != null ? path : "unknown") + " is not referenced by any app", path);
+        super(
+                "File with path "
+                        + (path != null ? path : "unknown")
+                        + " is not referenced by any app",
+                path);
     }
 
     /**
@@ -42,6 +46,11 @@ public class UnreferencedFileException extends KustomException {
      * @param cause   The underlying cause of this exception.
      */
     public UnreferencedFileException(Path path, Throwable cause) {
-        super("File with path " + (path != null ? path : "unknown") + " is not referenced by any app", path, cause);
+        super(
+                "File with path "
+                        + (path != null ? path : "unknown")
+                        + " is not referenced by any app",
+                path,
+                cause);
     }
 }

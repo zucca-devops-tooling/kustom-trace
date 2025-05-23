@@ -16,7 +16,6 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidReferenceException;
-
 import java.nio.file.Path;
 import java.util.stream.Stream;
 

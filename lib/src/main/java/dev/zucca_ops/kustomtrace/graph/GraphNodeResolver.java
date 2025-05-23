@@ -16,17 +16,16 @@
 package dev.zucca_ops.kustomtrace.graph;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidContentException;
+import dev.zucca_ops.kustomtrace.model.KustomFile;
 import dev.zucca_ops.kustomtrace.model.KustomResource;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 import dev.zucca_ops.kustomtrace.parser.YamlParser;
-import dev.zucca_ops.kustomtrace.model.KustomFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Resolves file paths into Kustomize model objects like {@link KustomFile},
@@ -45,22 +44,29 @@ public class GraphNodeResolver {
      * @throws InvalidContentException If a parseable file contains non-map document roots.
      * @throws FileNotFoundException If the file cannot be found or read.
      */
-    static KustomFile resolveKustomFile(Path path) throws InvalidContentException, FileNotFoundException {
+    static KustomFile resolveKustomFile(Path path)
+            throws InvalidContentException, FileNotFoundException {
         logger.debug("Resolving KustomFile: {}", path);
         KustomFile file = new KustomFile(path);
 
         if (KustomizeFileUtil.isValidKubernetesResource(path)) {
-            logger.debug("Path identified as a valid Kubernetes resource, attempting to parse: {}", path);
-            YamlParser.parseFile(path)
-                    .stream()
-                    .map(GraphNodeResolver::resolveResource) // Converts each Map doc to a KustomResource
-                    .forEach(resource -> {
-                        file.addResource(resource);
-                        resource.setFile(file);
-                    });
+            logger.debug(
+                    "Path identified as a valid Kubernetes resource, attempting to parse: {}",
+                    path);
+            YamlParser.parseFile(path).stream()
+                    .map(
+                            GraphNodeResolver
+                                    ::resolveResource) // Converts each Map doc to a KustomResource
+                    .forEach(
+                            resource -> {
+                                file.addResource(resource);
+                                resource.setFile(file);
+                            });
             logger.debug("Finished processing resources in: {}", path);
         } else {
-            logger.debug("Skipping parsing for path (not a standard Kubernetes resource file or is a Kustomization file by name): {}", path);
+            logger.debug(
+                    "Skipping parsing for path (not a standard Kubernetes resource file or is a Kustomization file by name): {}",
+                    path);
         }
         return file;
     }
@@ -81,7 +87,8 @@ public class GraphNodeResolver {
             resource.setKind((String) kindObj);
         } else {
             if (document.containsKey("kind")) {
-                logger.debug("Resource 'kind' is present but not a String. Found: {}. Document snippet: {}",
+                logger.debug(
+                        "Resource 'kind' is present but not a String. Found: {}. Document snippet: {}",
                         kindObj != null ? kindObj.getClass().getName() : "null",
                         document.keySet());
             }
@@ -95,14 +102,16 @@ public class GraphNodeResolver {
                 resource.setName((String) nameObj);
             } else {
                 if (metadata.containsKey("name")) {
-                    logger.debug("Resource metadata 'name' is present but not a String. Found: {}. Metadata keys: {}",
+                    logger.debug(
+                            "Resource metadata 'name' is present but not a String. Found: {}. Metadata keys: {}",
                             nameObj != null ? nameObj.getClass().getName() : "null",
                             metadata.keySet());
                 }
             }
         } else {
             if (document.containsKey("metadata")) {
-                logger.debug("Resource 'metadata' is present but not a Map. Found: {}. Document snippet: {}",
+                logger.debug(
+                        "Resource 'metadata' is present but not a Map. Found: {}. Document snippet: {}",
                         metadataObj != null ? metadataObj.getClass().getName() : "null",
                         document.keySet());
             }
@@ -118,7 +127,8 @@ public class GraphNodeResolver {
      * @throws InvalidContentException If parsing fails or content is invalid (e.g., not a single map document).
      * @throws FileNotFoundException If the file cannot be found or read.
      */
-    static Kustomization resolveKustomization(Path path) throws InvalidContentException, FileNotFoundException {
+    static Kustomization resolveKustomization(Path path)
+            throws InvalidContentException, FileNotFoundException {
         logger.debug("Resolving Kustomization from: {}", path);
         Map<String, Object> fileContent = YamlParser.parseKustomizationFile(path);
         logger.debug("Successfully resolved Kustomization from: {}", path);

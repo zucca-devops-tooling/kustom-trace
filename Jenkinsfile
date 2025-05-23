@@ -23,7 +23,7 @@ pipeline {
                 script {
                     setStatus('build','NEUTRAL','Building the project...')
                     try {
-                        sh "./gradlew clean assemble --info --no-daemon"
+                        sh "./gradlew clean assemble --info --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('build','SUCCESS','Build succeeded')
                     } catch (Exception e) {
                         setStatus('build','FAILURE','Build failed')
@@ -37,7 +37,7 @@ pipeline {
                 script {
                     setStatus('spotless','NEUTRAL','Checking code format...')
                     try {
-                        sh './gradlew check -x test --no-daemon'
+                        sh "./gradlew check -x test --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('spotless','SUCCESS','Spotless passed')
                     } catch (Exception e) {
                         setStatus('spotless','FAILURE','Spotless failed')
@@ -50,7 +50,7 @@ pipeline {
                 script {
                     setStatus('test','NEUTRAL','Running tests...')
                     try {
-                        sh './gradlew :kustomtrace:test --no-daemon'
+                        sh "./gradlew :kustomtrace:test --no-daemon  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('test','SUCCESS','Tests passed')
                     } catch (Exception e) {
                         setStatus('test','FAILURE','Tests failed')
@@ -63,7 +63,7 @@ pipeline {
                 script {
                     setStatus('functionalTest','NEUTRAL','Running functional tests...')
                     try {
-                        sh './gradlew :functional-test:test --no-daemon --info'
+                        sh "./gradlew :functional-test:test --no-daemon --info  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('functionalTest','SUCCESS','Functional test passed')
                     } catch (Exception e) {
                         setStatus('functionalTest','FAILURE','Functional test failed')
