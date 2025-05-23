@@ -42,14 +42,4 @@ public class PathUtil {
         // Normalize to forward slashes for consistent YAML output
         return pathString.replace(File.separator, "/");
     }
-
-    // Simplified PathUtil concept
-    public static String toRelativeUnixPath(Path target, Path base) {
-        try {
-            return base.relativize(target.toAbsolutePath().normalize()).toString().replace(java.io.File.separator, "/");
-        } catch (IllegalArgumentException e) {
-            // Caller needs to handle this exception or have a defined fallback strategy
-            throw e; // Or return target.toAbsolutePath().normalize().toString().replace(File.separator, "/");
-        }
-    }
 }

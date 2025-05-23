@@ -17,7 +17,6 @@ package dev.zucca_ops.kustomtrace.cli.commands;
 import dev.zucca_ops.kustomtrace.KustomTrace;
 import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
-import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
 import dev.zucca_ops.kustomtrace.exceptions.KustomException;
 import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import picocli.CommandLine.ParentCommand;
@@ -33,28 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-
-// In AppFilesCommand.java
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
-import picocli.CommandLine.ParentCommand;
-
-import java.io.File;
-import java.io.FileWriter; // For PathUtil logging directly, if CLIHelper.printWarning isn't used for it
-import java.io.IOException;
-import java.io.PrintWriter; // For PathUtil logging directly
-import java.nio.file.Path;
-import java.util.Collections; // For sorting
-import java.util.LinkedHashMap; // To preserve insertion order in YAML
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
-
-// Assuming your KustomTraceCLI, KustomTrace, KustomException, CLIHelper,
-// Kustomization (if PathUtil needs it for some reason, though unlikely here)
-// classes are correctly imported/accessible.
 
 @Command(name = "app-files", mixinStandardHelpOptions = true,
         description = "Lists all files used by a given application directory or kustomization file.")
@@ -162,9 +139,12 @@ public class AppFilesCommand implements Callable<Integer> {
                             } catch (IllegalArgumentException e2) {
                                 fallbackPathString = absoluteDependencyPath.toString(); // Absolute path as last resort
                                 CLIHelper.printWarning(String.format(
-                                                "Dependency '%s' for app '%s' could not be made relative to its app directory or main apps dir. Using absolute path: '%s'.",
-                                                absoluteDependencyPath, finalAppIdentifierKey, appDirectoryForOutputFormatting, fallbackPathString),
-                                        finalEffectiveLogFile);
+                                        "Dependency '%s' for app '%s' could not be made relative to its app directory ('%s') or main apps dir. Using absolute path: '%s'.",
+                                        absoluteDependencyPath,         // %s 1
+                                        finalAppIdentifierKey,          // %s 2
+                                        appDirectoryForOutputFormatting, // %s 3
+                                        fallbackPathString              // %s 4
+                                ), finalEffectiveLogFile);
                             }
                             pathStr = fallbackPathString;
                         }

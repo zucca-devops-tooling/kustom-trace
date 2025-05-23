@@ -19,7 +19,6 @@ import dev.zucca_ops.kustomtrace.KustomTrace;
 import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
 import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
-import dev.zucca_ops.kustomtrace.exceptions.KustomException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -44,7 +43,7 @@ public class ListRootAppsCommand implements Callable<Integer> {
     private File outputFile;
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         File effectiveAppsDir = parentCLI.getAppsDir(); // Assuming public getter in KustomTraceCLI
         File effectiveLogFile = parentCLI.getLogFile(); // Assuming public getter
 

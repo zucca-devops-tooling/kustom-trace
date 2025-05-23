@@ -71,11 +71,12 @@ pipeline {
                 }
             }
         }
-        stage('Publish to Maven repository') {
+        stage('Publish library') {
             when {
                 anyOf {
-                    // branch 'main' disable until mavenCentral publish is completed
-                    expression { sh (script: "git log -1 --pretty=%B | grep 'publish'", returnStatus: true) == 0 } // Avoid pushing snapshots on every commit
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishLib'", returnStatus: true) == 0 } // Matches a commit message including publishLib
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
                 }
             }
             environment {
@@ -100,6 +101,38 @@ pipeline {
                             -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
                             -PmavenCentralUsername=$OSSRH_CREDENTIALS_USR \
                             -PmavenCentralPassword=$OSSRH_CREDENTIALS_PSW
+                    '''
+                }
+            }
+        }
+        stage('Publish cli') {
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishCli'", returnStatus: true) == 0 } // Matches a commit message including publishCli
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
+                }
+            }
+            environment {
+                GPG_KEY_ID    = credentials('GPG_KEY_ID')
+                GPG_KEY_PASS  = credentials('GPG_KEY_PASS')
+                OSSRH_CREDENTIALS  = credentials('OSSRH_CREDENTIALS')
+            }
+            steps {
+                withCredentials([
+                    file(credentialsId: 'GPG_SECRET_KEY', variable: 'GPG_KEY_PATH')
+                ]) {
+                    sh '''#!/bin/bash
+                        set -euo pipefail
+
+                        export GPG_ASC_ARMOR="$(cat $GPG_KEY_PATH)"
+
+                        ./gradlew :kustomtrace-cli:publish --info --no-daemon \
+                            -Psigning.keyId=$GPG_KEY_ID \
+                            -Psigning.password=$GPG_KEY_PASS \
+                            -Psigning.secretKeyRingFile=$GPG_KEY_PATH \
+                            -PgithubPackagesUsername=$GH_CREDENTIALS_USR \
+                            -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
                     '''
                 }
             }

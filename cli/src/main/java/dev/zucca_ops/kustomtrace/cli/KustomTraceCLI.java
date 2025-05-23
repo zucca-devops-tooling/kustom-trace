@@ -24,7 +24,8 @@ import picocli.CommandLine.Option;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-@Command(name = "kustomtrace", version = "kustomtrace 1.0",
+@Command(name = "kustomtrace", version = "1.0.0",
+        mixinStandardHelpOptions = true,
         description = "Analyzes Kubernetes deployment repositories.",
         subcommands = {
                 AffectedAppsCommand.class,

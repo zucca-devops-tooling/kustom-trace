@@ -124,22 +124,6 @@ public class CLIHelper {
         }
     }
 
-    public static PrintWriter getPrintWriter(File outputFile) throws FileNotFoundException {
-        if (outputFile != null) {
-            return new PrintWriter(outputFile);
-        }
-        return null;
-    }
-
-    public static void closeWriter(PrintWriter writer, String successMessage, File outputFile) {
-        if (writer != null) {
-            writer.close();
-            if (successMessage != null && outputFile != null) {
-                System.out.println(successMessage + outputFile.getAbsolutePath());
-            }
-        }
-    }
-
     /**
      * Writes data as YAML to the specified output file using SnakeYAML.
      */

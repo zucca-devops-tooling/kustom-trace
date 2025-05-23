@@ -1,3 +1,4 @@
+[![Javadoc](https://img.shields.io/badge/Javadoc-Available-brightgreen)](https://zucca-devops-tooling.github.io/kustom-trace/javadoc)
 # KustomTrace Library
 
 The KustomTrace Library provides a powerful Java API to programmatically parse Kustomize configurations, build a dependency graph, and query relationships between your applications and resources.
