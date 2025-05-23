@@ -27,6 +27,11 @@ tasks.test {
     useJUnitPlatform()
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 publishing {
     publications.withType<MavenPublication>().configureEach {
         pom {
