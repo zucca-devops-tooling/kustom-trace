@@ -23,7 +23,7 @@ KustomTrace is composed of two main modules:
 * **CI/CD Integration:** Automatically determine which applications are impacted by code changes in a pull request to trigger targeted builds, tests, or deployments.
 * **Repository Auditing:** Understand the structure and inter-dependencies of your Kustomize-managed applications.
 * **Impact Assessment:** Before making changes to shared bases or resources, identify all potentially affected applications.
-* **Code Cleanup:** Identify orphaned kustomizations or unused resources.
+* **Code Cleanup:** Identify orphaned Kustomizations or unused resources.
 
 ## Getting Started
 
