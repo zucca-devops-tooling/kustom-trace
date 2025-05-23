@@ -72,20 +72,12 @@ signing {
     }
 }
 
-afterEvaluate {
-    tasks.matching { it.name == "publishPluginMavenPublicationToLocalRepository" }.configureEach {
-        dependsOn("signMavenPublication")
-    }
-    tasks.matching { it.name == "publishMavenPublicationToLocalRepository" }.configureEach {
-        dependsOn("signPluginMavenPublication")
-    }
-}
-
 publisher {
     prod {
         target = "mavenCentral"
         usernameProperty = "mavenCentralUsername"
         passwordProperty = "mavenCentralPassword"
+        sign = true
     }
     dev {
         target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
