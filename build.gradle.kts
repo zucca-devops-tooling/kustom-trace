@@ -22,9 +22,7 @@ subprojects {
 
         format("testJava") {
             target("src/test/java/**/*.java")
-            java{
-                googleJavaFormat("1.17.0").aosp().skipJavadocFormatting()
-            }
+            java{}
         }
     }
 }
