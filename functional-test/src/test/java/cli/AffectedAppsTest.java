@@ -68,8 +68,8 @@ public class AffectedAppsTest {
         Path circularDependencyAppsPath = resourcesDir.resolve("circular-dependency-apps");
         int exitCode = cmd.execute(
                 "--apps-dir", circularDependencyAppsPath.toString(),
-                "affected-apps", circularDependencyAppsPath.resolve("app1").resolve("app1-resource.yaml").toString(), // The "modified" file
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "affected-apps", circularDependencyAppsPath.resolve("app1").resolve("app1-resource.yaml").toString()
         );
 
         assertTrue(getCapturedOut().contains("Circular dependency detected"),
@@ -87,12 +87,12 @@ public class AffectedAppsTest {
         String expectedResourceFileName = "all-apps.yaml"; // The file you created in resources
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
+                "--output", actualOutputFile.toString(),
                 "affected-apps", resourcesDir
                         .resolve("all-reference-types-apps")
                         .resolve("app-resource")
                         .resolve("more-resources")
-                        .resolve("extra-resource.json").toString(), // The "modified" file
-                "--output", actualOutputFile.toString()
+                        .resolve("extra-resource.json").toString() // The "modified" file
         );
         assertEquals(0, exitCode);
 
@@ -112,11 +112,11 @@ public class AffectedAppsTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", complexApps.toString(),
+                "--output", actualOutputFile.toString(),
                 "affected-apps",
                 someDeploymentJson,
                 configMapEnv,
-                app2ResourceYaml,
-                "--output", actualOutputFile.toString()
+                app2ResourceYaml
         );
 
         assertTrue(getCapturedOut().contains("Circular dependency detected"),
@@ -154,9 +154,9 @@ public class AffectedAppsTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
+                "--output", actualOutputFile.toString(),
                 "affected-apps",
-                "--files-from-file", listFile.toString(), // Pass the path to your list file
-                "--output", actualOutputFile.toString()
+                "--files-from-file", listFile.toString()
         );
 
         assertEquals(0, exitCode);
@@ -195,9 +195,9 @@ public class AffectedAppsTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
+                "--output", actualOutputFile.toString(),
                 "affected-apps",
-                "--files-from-file", listFile.toString(), // Pass the path to your list file
-                "--output", actualOutputFile.toString()
+                "--files-from-file", listFile.toString()
         );
 
         assertEquals(0, exitCode);

@@ -63,12 +63,23 @@ public class KustomTraceCLI implements Callable<Integer> {
             description = "Specify a file to write warnings and errors to.")
     File logFile;
 
+
+    @Option(
+            names = {"-o", "--output"},
+            paramLabel = "<file>",
+            description = "Output the list of affected apps to the specified YAML file.")
+    private File outputFile;
+
     public File getAppsDir() {
         return appsDir;
     }
 
     public File getLogFile() {
         return logFile;
+    }
+
+    public File getOutputFile() {
+        return outputFile;
     }
 
     @Override
@@ -78,43 +89,38 @@ public class KustomTraceCLI implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        String logFileArgValue = null;
-        String logLevelArgValue = null;
+        String cmdLogFile = null;
+        String cmdLogLevel = null;
 
-        // Find only --log-file and --log-level before Picocli parsing
+        // Minimal pre-scan for --log-file and --log-level
         for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("--log-file")) {
-                if (args[i].contains("=")) {
-                    logFileArgValue = args[i].substring(args[i].indexOf("=") + 1);
-                } else if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                    logFileArgValue = args[i + 1]; // Value is next argument
-                }
-            } else if (args[i].startsWith("--log-level")) {
-                if (args[i].contains("=")) {
-                    logLevelArgValue = args[i].substring(args[i].indexOf("=") + 1);
-                } else if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                    logLevelArgValue = args[i + 1]; // Value is next argument
-                }
+            if (args[i].equals("--log-file") && i + 1 < args.length) {
+                cmdLogFile = args[++i];
+            } else if (args[i].startsWith("--log-file=")) {
+                cmdLogFile = args[i].substring("--log-file=".length());
+            } else if (args[i].equals("--log-level") && i + 1 < args.length) {
+                cmdLogLevel = args[++i];
+            } else if (args[i].startsWith("--log-level=")) {
+                cmdLogLevel = args[i].substring("--log-level=".length());
             }
         }
 
-        // Set LOG_FILE property if --log-file was found
-        if (logFileArgValue != null && !logFileArgValue.trim().isEmpty()) {
-            System.setProperty("LOG_FILE", new File(logFileArgValue).getAbsolutePath());
-            // If LOG_FILE is set, make console less verbose by default unless --log-level overrides
-            if (logLevelArgValue == null) { // Only set this default if --log-level isn't also setting it
-                System.setProperty("kustomtrace.console.loglevel", "ERROR");
-            }
+        // Set system properties for Logback BEFORE Picocli execution
+        if (cmdLogFile != null && !cmdLogFile.trim().isEmpty()) {
+            System.setProperty("LOG_FILE", new File(cmdLogFile).getAbsolutePath());
         }
 
-        // Set log level properties if --log-level was found
-        if (logLevelArgValue != null && !logLevelArgValue.trim().isEmpty()) {
-            String levelUpper = logLevelArgValue.toUpperCase();
-            System.setProperty("kustomtrace.app.loglevel", levelUpper);
-            System.setProperty("kustomtrace.file.loglevel", levelUpper);    // Affects FILE appender's filter
-            System.setProperty("kustomtrace.console.loglevel", levelUpper); // Affects STDOUT appender's filter
+        if (cmdLogLevel != null && !cmdLogLevel.trim().isEmpty()) {
+            String levelUpper = cmdLogLevel.toUpperCase();
+            System.setProperty("kustomtrace.app.loglevel", levelUpper);    // For your app's logger generation level
+            System.setProperty("kustomtrace.console.loglevel", levelUpper); // For STDOUT ThresholdFilter
+            System.setProperty("kustomtrace.file.loglevel", levelUpper);    // For FILE ThresholdFilter
         }
+        // If --log-file is set but --log-level is not, console defaults to WARN (from logback.xml DEFAULT_CONSOLE_LEVEL)
+        // and file defaults to INFO (from DEFAULT_FILE_LEVEL), app logs at DEFAULT_APP_LOG_LEVEL (INFO).
+        // If neither is set, console gets WARN, app generates INFO (filtered by console's WARN). This achieves goal 2b.
 
+        // Execute Picocli
         int exitCode = new CommandLine(new KustomTraceCLI())
                 .setCaseInsensitiveEnumValuesAllowed(true)
                 .execute(args);

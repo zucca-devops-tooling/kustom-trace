@@ -47,18 +47,13 @@ public class AppFilesCommand implements Callable<Integer> {
             description = "Path to the application directory or its kustomization.yaml file.")
     File appPathInput;
 
-    @Option(
-            names = {"-o", "--output"},
-            paramLabel = "<file>",
-            description = "Output the list of files to the specified YAML file.")
-    File outputFile;
-
     // In AppFilesCommand.java
 
     @Override
     public Integer call() throws Exception {
         File effectiveAppsDir = parentCLI.getAppsDir();
         File effectiveLogFile = parentCLI.getLogFile();
+        File outputFile = parentCLI.getOutputFile();
 
         // 1. Initial Validations for global --apps-dir
         if (effectiveAppsDir == null) {
@@ -195,13 +190,13 @@ public class AppFilesCommand implements Callable<Integer> {
                             .collect(Collectors.toList());
 
             // 4. Conditional Output
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 Map<String, List<String>> appData = new LinkedHashMap<>();
                 appData.put(finalAppIdentifierKey, relativeDependencyPaths);
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("app-files", appData);
                 CLIHelper.writeYamlToFile(
-                        yamlRoot, this.outputFile); // Assumes this method exists in CLIHelper
+                        yamlRoot, outputFile); // Assumes this method exists in CLIHelper
             } else {
                 String consoleHeader = "Files used by application '" + finalAppIdentifierKey + "':";
                 CLIHelper.printOutput(

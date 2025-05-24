@@ -57,8 +57,8 @@ public class AppFilesTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", appsPath.toString(),
-                "app-files", appsPath.resolve("app-configmap").toString(),
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "app-files", appsPath.resolve("app-configmap").toString()
         );
         assertEquals(0, exitCode);
 
@@ -73,8 +73,8 @@ public class AppFilesTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", appsPath.toString(),
-                "app-files", appsPath.toString(),
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "app-files", appsPath.toString()
         );
         assertEquals(0, exitCode);
 
@@ -89,8 +89,8 @@ public class AppFilesTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
-                "app-files", appPath.toString(),
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "app-files", appPath.toString()
         );
         assertEquals(0, exitCode);
         assertTrue(getCapturedOut().contains("Circular dependency detected"),
@@ -110,8 +110,8 @@ public class AppFilesTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", appsPath.toString(),
-                "app-files", appPath.toString(),
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "app-files", appPath.toString()
         );
         assertEquals(0, exitCode);
 

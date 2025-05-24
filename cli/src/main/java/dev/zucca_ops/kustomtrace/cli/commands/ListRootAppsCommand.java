@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 @Command(
@@ -39,16 +38,11 @@ public class ListRootAppsCommand implements Callable<Integer> {
 
     @ParentCommand private KustomTraceCLI parentCLI;
 
-    @Option(
-            names = {"-o", "--output"},
-            paramLabel = "<file>",
-            description = "Output the list of root applications to the specified YAML file.")
-    private File outputFile;
-
     @Override
     public Integer call() {
-        File effectiveAppsDir = parentCLI.getAppsDir(); // Assuming public getter in KustomTraceCLI
-        File effectiveLogFile = parentCLI.getLogFile(); // Assuming public getter
+        File effectiveAppsDir = parentCLI.getAppsDir();
+        File effectiveLogFile = parentCLI.getLogFile();
+        File outputFile = parentCLI.getOutputFile();
 
         // 1. Initial Validations for --apps-dir
         if (effectiveAppsDir == null) {
@@ -86,11 +80,11 @@ public class ListRootAppsCommand implements Callable<Integer> {
                             .toList();
 
             // 3. Conditional Output
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 // YAML output
                 Map<String, List<String>> yamlOutput = new LinkedHashMap<>();
                 yamlOutput.put("root-apps", rootAppDisplayPaths);
-                CLIHelper.writeYamlToFile(yamlOutput, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlOutput, outputFile);
             } else {
                 // Verbose console output
                 if (rootAppDisplayPaths.isEmpty()) {
@@ -99,10 +93,10 @@ public class ListRootAppsCommand implements Callable<Integer> {
                     CLIHelper.printOutput(
                             "Root Applications:",
                             rootAppDisplayPaths,
-                            null); // Using your 3-arg printOutput
+                            null);
                 }
             }
-            return 0; // Success
+            return 0;
 
         } catch (Exception e) {
             String unexpectedUserMessage =

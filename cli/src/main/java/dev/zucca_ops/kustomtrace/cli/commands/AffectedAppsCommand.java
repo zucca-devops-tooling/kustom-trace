@@ -49,16 +49,11 @@ public class AffectedAppsCommand implements Callable<Integer> {
             description = "Read modified file paths from the specified file (one path per line).")
     private File filesFromFile;
 
-    @Option(
-            names = {"-o", "--output"},
-            paramLabel = "<file>",
-            description = "Output the list of affected apps to the specified YAML file.")
-    private File outputFile; // For YAML output
-
     @Override
     public Integer call() throws Exception {
         File effectiveAppsDir = parentCLI.getAppsDir();
         File effectiveLogFile = parentCLI.getLogFile();
+        File outputFile = parentCLI.getOutputFile();
 
         // 1. Validations for appsDir (from parent)
         if (effectiveAppsDir == null) {
@@ -106,10 +101,10 @@ public class AffectedAppsCommand implements Callable<Integer> {
 
         if (allModifiedFiles.isEmpty()) {
             // If outputting to file, write an empty structure. If to console, print a message.
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("affected-apps", new LinkedHashMap<>()); // Empty map of affected apps
-                CLIHelper.writeYamlToFile(yamlRoot, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlRoot, outputFile);
             } else {
                 System.out.println("Affected Applications:");
                 System.out.println("  No modified files provided to check.");
@@ -126,7 +121,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
             List<String> consoleOutputLines = new ArrayList<>();
             boolean anyAppsAffectedOverall = false;
 
-            if (this.outputFile == null) { // Main header for console output
+            if (outputFile == null) { // Main header for console output
                 consoleOutputLines.add("Affected Applications:");
             }
 
@@ -166,7 +161,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
                             relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for
                     // consistent output
 
-                    if (this.outputFile == null) { // Console output formatting for this file
+                    if (outputFile == null) { // Console output formatting for this file
                         consoleOutputLines.add(
                                 "Affected apps by "
                                         + yamlKeyForModifiedFile
@@ -180,7 +175,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
                     }
                 } catch (UnreferencedFileException e) {
                     // relativeAffectedAppPathsForCurrentFile will remain empty
-                    if (this.outputFile
+                    if (outputFile
                             == null) { // Console output mode for UnreferencedFileException
                         consoleOutputLines.add(
                                 "Affected apps by "
@@ -204,10 +199,10 @@ public class AffectedAppsCommand implements Callable<Integer> {
             }
 
             // 4. Conditional Output
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("affected-apps", affectedAppsDataForYaml);
-                CLIHelper.writeYamlToFile(yamlRoot, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlRoot, outputFile);
             } else {
                 consoleOutputLines.forEach(
                         System.out::println); // Print all accumulated console lines
