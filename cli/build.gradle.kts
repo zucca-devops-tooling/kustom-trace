@@ -52,6 +52,7 @@ dependencies {
     implementation(project(":"+rootProject.name))
     implementation("ch.qos.logback:logback-classic:1.5.18")
     implementation("org.yaml:snakeyaml:2.2")
+    implementation("org.codehaus.janino:janino:3.1.12")
 }
 
 tasks.test {

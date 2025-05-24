@@ -33,6 +33,12 @@ import picocli.CommandLine.Option;
 public class KustomTraceCLI implements Callable<Integer> {
 
     @Option(
+            names = {"--log-level"},
+            versionHelp = true,
+            description = "Set log level: ERROR, WARN, INFO, DEBUG, TRACE. Default: WARN (console), INFO (file).")
+    String logLevel;
+
+    @Option(
             names = {"-v", "--version"},
             versionHelp = true,
             description = "Print version information and exit.")

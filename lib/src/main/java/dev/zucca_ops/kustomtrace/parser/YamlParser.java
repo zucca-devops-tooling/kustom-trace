@@ -90,12 +90,12 @@ public class YamlParser {
             logger.error("Error opening YAML file (FileNotFoundException): {}", path, fnfe);
             throw fnfe;
         } catch (IOException e) {
-            logger.error("Error reading YAML file: {}", path, e);
+            logger.error("Error reading YAML file: {}", path);
             throw new FileNotFoundException(
                     "Could not read YAML file: " + path + ". Reason: " + e.getMessage());
         } catch (Exception e) { // Catch potential SnakeYAML runtime parsing exceptions (e.g.,
             // YAMLException)
-            logger.error("Error parsing YAML content in file: {}", path, e);
+            logger.error("Error parsing YAML content in file: {}", path);
             throw new InvalidContentException(path, e);
         }
     }
