@@ -15,7 +15,6 @@
  */
 package dev.zucca_ops.kustomtrace.cli.util;
 
-
 import java.io.File;
 import java.nio.file.Path;
 
@@ -32,8 +31,13 @@ public class PathUtil {
                 pathString = absoluteTargetPath.toString();
             }
         } catch (IllegalArgumentException e) {
-            String warningDetail = "Could not reliably relativize path '" + targetPath +
-                    "' against base '" + basePath + "'. Using path as is. Detail: " + e.getMessage();
+            String warningDetail =
+                    "Could not reliably relativize path '"
+                            + targetPath
+                            + "' against base '"
+                            + basePath
+                            + "'. Using path as is. Detail: "
+                            + e.getMessage();
 
             CLIHelper.printWarning(warningDetail, logFileForWarnings);
             pathString = targetPath.toAbsolutePath().normalize().toString(); // Fallback
@@ -41,15 +45,5 @@ public class PathUtil {
 
         // Normalize to forward slashes for consistent YAML output
         return pathString.replace(File.separator, "/");
-    }
-
-    // Simplified PathUtil concept
-    public static String toRelativeUnixPath(Path target, Path base) {
-        try {
-            return base.relativize(target.toAbsolutePath().normalize()).toString().replace(java.io.File.separator, "/");
-        } catch (IllegalArgumentException e) {
-            // Caller needs to handle this exception or have a defined fallback strategy
-            throw e; // Or return target.toAbsolutePath().normalize().toString().replace(File.separator, "/");
-        }
     }
 }

@@ -31,7 +31,7 @@ public class InvalidContentException extends KustomException {
      * @param path The file system {@link Path} of the file with invalid content.
      */
     public InvalidContentException(Path path) {
-        super("File " + (path != null ? path : "unknown") +  " has invalid Kustomize content", path);
+        super("File " + (path != null ? path : "unknown") + " has invalid Kustomize content", path);
     }
 
     /**
@@ -41,6 +41,9 @@ public class InvalidContentException extends KustomException {
      * @param cause   The underlying cause of this exception.
      */
     public InvalidContentException(Path path, Throwable cause) {
-        super("File " + (path != null ? path : "unknown") +  " has invalid Kustomize content", path, cause);
+        super(
+                "File " + (path != null ? path : "unknown") + " has invalid Kustomize content",
+                path,
+                cause);
     }
 }

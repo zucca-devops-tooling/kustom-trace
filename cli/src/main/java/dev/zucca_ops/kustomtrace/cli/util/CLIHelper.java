@@ -15,12 +15,11 @@
  */
 package dev.zucca_ops.kustomtrace.cli.util;
 
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 public class CLIHelper {
 
@@ -39,7 +38,8 @@ public class CLIHelper {
         return files;
     }
 
-    public static void printOutput(String header, List<?> items, File outputFile) throws FileNotFoundException {
+    public static void printOutput(String header, List<?> items, File outputFile)
+            throws FileNotFoundException {
         PrintWriter writer = null;
         if (outputFile != null) {
             writer = new PrintWriter(outputFile);
@@ -57,20 +57,37 @@ public class CLIHelper {
         }
     }
 
-    public static void printError(String message, File commandOutputOptFile, File dedicatedErrorLogFile) {
+    public static void printError(
+            String message, File commandOutputOptFile, File dedicatedErrorLogFile) {
         String fullMessage = "Error: " + message;
         if (dedicatedErrorLogFile != null) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(dedicatedErrorLogFile, true))) { // Append to error log
+            try (PrintWriter writer =
+                    new PrintWriter(
+                            new FileWriter(dedicatedErrorLogFile, true))) { // Append to error log
                 writer.println(fullMessage);
             } catch (IOException e) {
-                System.err.println("PANIC: Could not write to dedicated error log file: " + dedicatedErrorLogFile + " - " + e.getMessage());
+                System.err.println(
+                        "PANIC: Could not write to dedicated error log file: "
+                                + dedicatedErrorLogFile
+                                + " - "
+                                + e.getMessage());
                 System.err.println("Original error: " + fullMessage); // Fallback for original error
             }
         } else if (commandOutputOptFile != null) { // If -o is given and no dedicated error log
-            try (PrintWriter writer = new PrintWriter(new FileWriter(commandOutputOptFile, true))) { // Append or overwrite based on desired behavior
+            try (PrintWriter writer =
+                    new PrintWriter(
+                            new FileWriter(
+                                    commandOutputOptFile,
+                                    true))) { // Append or overwrite based on desired behavior
                 writer.println(fullMessage);
-            } catch (IOException e) { // Changed from FileNotFoundException to IOException for FileWriter
-                System.err.println("Error writing error to command output file: " + commandOutputOptFile.getAbsolutePath() + ": " + e.getMessage());
+            } catch (
+                    IOException
+                            e) { // Changed from FileNotFoundException to IOException for FileWriter
+                System.err.println(
+                        "Error writing error to command output file: "
+                                + commandOutputOptFile.getAbsolutePath()
+                                + ": "
+                                + e.getMessage());
                 System.err.println("Original error: " + fullMessage);
             }
         } else {
@@ -78,16 +95,19 @@ public class CLIHelper {
         }
     }
 
-
-
     // For general warning messages
     public static void printWarning(String message, File dedicatedLogFile) {
         String fullMessage = "Warning: " + message;
         if (dedicatedLogFile != null) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
+            try (PrintWriter writer =
+                    new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
                 writer.println(fullMessage);
             } catch (IOException e) {
-                System.err.println("PANIC: Could not write warning to dedicated log file: " + dedicatedLogFile + " - " + e.getMessage());
+                System.err.println(
+                        "PANIC: Could not write warning to dedicated log file: "
+                                + dedicatedLogFile
+                                + " - "
+                                + e.getMessage());
                 System.err.println("Original warning: " + fullMessage); // Fallback
             }
         } else {
@@ -98,45 +118,40 @@ public class CLIHelper {
     // For logging raw messages (like multi-line details or pre-formatted strings)
     public static void logRawMessage(String message, File dedicatedLogFile) {
         if (dedicatedLogFile != null) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
+            try (PrintWriter writer =
+                    new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
                 writer.println(message);
             } catch (IOException e) {
-                System.err.println("PANIC: Could not write raw message to dedicated log file: " + dedicatedLogFile + " - " + e.getMessage());
+                System.err.println(
+                        "PANIC: Could not write raw message to dedicated log file: "
+                                + dedicatedLogFile
+                                + " - "
+                                + e.getMessage());
                 // Optionally print the raw message to System.err as fallback if critical
                 // System.err.println("Original raw message: " + message);
             }
         } else {
-            System.out.println(message); // Default to System.out for general raw messages if no log file
+            System.out.println(
+                    message); // Default to System.out for general raw messages if no log file
         }
     }
 
     // For logging exception stack traces
     public static void logStackTrace(Exception e, File dedicatedLogFile) {
         if (dedicatedLogFile != null) {
-            try (PrintWriter writer = new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
+            try (PrintWriter writer =
+                    new PrintWriter(new FileWriter(dedicatedLogFile, true))) { // Append
                 e.printStackTrace(writer);
             } catch (IOException ioe) {
-                System.err.println("PANIC: Could not write stack trace to dedicated log file: " + dedicatedLogFile + " - " + ioe.getMessage());
+                System.err.println(
+                        "PANIC: Could not write stack trace to dedicated log file: "
+                                + dedicatedLogFile
+                                + " - "
+                                + ioe.getMessage());
                 e.printStackTrace(System.err); // Fallback to System.err
             }
         } else {
             e.printStackTrace(System.err); // Default to System.err if no log file
-        }
-    }
-
-    public static PrintWriter getPrintWriter(File outputFile) throws FileNotFoundException {
-        if (outputFile != null) {
-            return new PrintWriter(outputFile);
-        }
-        return null;
-    }
-
-    public static void closeWriter(PrintWriter writer, String successMessage, File outputFile) {
-        if (writer != null) {
-            writer.close();
-            if (successMessage != null && outputFile != null) {
-                System.out.println(successMessage + outputFile.getAbsolutePath());
-            }
         }
     }
 
@@ -148,15 +163,17 @@ public class CLIHelper {
             // This method is specifically for file output.
             // If outputFile is null, it implies an issue with how it was called.
             // Consider throwing an IllegalArgumentException or simply returning.
-            System.err.println("CLIHelper.writeYamlToFile called with a null outputFile. No action taken.");
+            System.err.println(
+                    "CLIHelper.writeYamlToFile called with a null outputFile. No action taken.");
             return;
         }
 
         DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK); // Prefer block style over inline/flow style
-        options.setPrettyFlow(true);        // For collections, enhance readability
-        options.setIndent(2);               // Standard 2-space indentation for mappings
-        options.setIndicatorIndent(2);      // Indentation for sequence '-' indicators
+        options.setDefaultFlowStyle(
+                DumperOptions.FlowStyle.BLOCK); // Prefer block style over inline/flow style
+        options.setPrettyFlow(true); // For collections, enhance readability
+        options.setIndent(2); // Standard 2-space indentation for mappings
+        options.setIndicatorIndent(2); // Indentation for sequence '-' indicators
         options.setIndentWithIndicator(true); // Indent sequence items relative to the '-' indicator
         // options.setExplicitStart(true);  // Uncomment if you want the "---" document start marker
 

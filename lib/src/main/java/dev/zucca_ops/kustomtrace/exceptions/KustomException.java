@@ -21,7 +21,8 @@ import java.nio.file.Path;
  * Base class for custom exceptions specific to the KustomTrace application.
  * Typically indicates an issue encountered during Kustomize structure parsing or graph building.
  */
-public abstract class KustomException extends Exception { // Mark as abstract if it's only meant to be subclassed
+public abstract class KustomException
+        extends Exception { // Mark as abstract if it's only meant to be subclassed
 
     /**
      * The file system path primarily associated with this exception, if applicable.

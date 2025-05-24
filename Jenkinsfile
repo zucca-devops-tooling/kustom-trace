@@ -23,7 +23,7 @@ pipeline {
                 script {
                     setStatus('build','NEUTRAL','Building the project...')
                     try {
-                        sh "./gradlew clean assemble --info --no-daemon"
+                        sh "./gradlew clean assemble --info --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('build','SUCCESS','Build succeeded')
                     } catch (Exception e) {
                         setStatus('build','FAILURE','Build failed')
@@ -37,7 +37,7 @@ pipeline {
                 script {
                     setStatus('spotless','NEUTRAL','Checking code format...')
                     try {
-                        sh './gradlew check -x test --no-daemon'
+                        sh "./gradlew check -x test --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('spotless','SUCCESS','Spotless passed')
                     } catch (Exception e) {
                         setStatus('spotless','FAILURE','Spotless failed')
@@ -50,7 +50,7 @@ pipeline {
                 script {
                     setStatus('test','NEUTRAL','Running tests...')
                     try {
-                        sh './gradlew :kustomtrace:test --no-daemon'
+                        sh "./gradlew :kustomtrace:test --no-daemon  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('test','SUCCESS','Tests passed')
                     } catch (Exception e) {
                         setStatus('test','FAILURE','Tests failed')
@@ -63,7 +63,7 @@ pipeline {
                 script {
                     setStatus('functionalTest','NEUTRAL','Running functional tests...')
                     try {
-                        sh './gradlew :functional-test:test --no-daemon --info'
+                        sh "./gradlew :functional-test:test --no-daemon --info  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
                         setStatus('functionalTest','SUCCESS','Functional test passed')
                     } catch (Exception e) {
                         setStatus('functionalTest','FAILURE','Functional test failed')
@@ -71,11 +71,12 @@ pipeline {
                 }
             }
         }
-        stage('Publish to Maven repository') {
+        stage('Publish library') {
             when {
                 anyOf {
-                    // branch 'main' disable until mavenCentral publish is completed
-                    expression { sh (script: "git log -1 --pretty=%B | grep 'publish'", returnStatus: true) == 0 } // Avoid pushing snapshots on every commit
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishLib'", returnStatus: true) == 0 } // Matches a commit message including publishLib
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
                 }
             }
             environment {
@@ -100,6 +101,30 @@ pipeline {
                             -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
                             -PmavenCentralUsername=$OSSRH_CREDENTIALS_USR \
                             -PmavenCentralPassword=$OSSRH_CREDENTIALS_PSW
+                    '''
+                }
+            }
+        }
+        stage('Publish cli') {
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishCli'", returnStatus: true) == 0 } // Matches a commit message including publishCli
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
+                }
+            }
+            steps {
+                withCredentials([
+                    file(credentialsId: 'GPG_SECRET_KEY', variable: 'GPG_KEY_PATH')
+                ]) {
+                    sh '''#!/bin/bash
+                        set -euo pipefail
+
+                        export GPG_ASC_ARMOR="$(cat $GPG_KEY_PATH)"
+
+                        ./gradlew :kustomtrace-cli:publish --info --no-daemon \
+                            -PgithubPackagesUsername=$GH_CREDENTIALS_USR \
+                            -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
                     '''
                 }
             }

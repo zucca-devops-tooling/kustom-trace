@@ -20,14 +20,13 @@ import dev.zucca_ops.kustomtrace.model.Kustomization;
 import dev.zucca_ops.kustomtrace.model.ResourceReference;
 import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
 import dev.zucca_ops.kustomtrace.parser.ReferenceType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Resolves references found within a {@link Kustomization} file's content.
@@ -46,7 +45,8 @@ public class ResourceReferenceResolver {
      * or retrieve graph nodes for resolved references.
      */
     public ResourceReferenceResolver(KustomGraphBuilder kustomGraphBuilder) {
-        this.builder = Objects.requireNonNull(kustomGraphBuilder, "KustomGraphBuilder cannot be null.");
+        this.builder =
+                Objects.requireNonNull(kustomGraphBuilder, "KustomGraphBuilder cannot be null.");
     }
 
     /**
@@ -71,13 +71,26 @@ public class ResourceReferenceResolver {
                 return new ResourceReference(type, builder.buildKustomFile(path));
             }
         } catch (InvalidContentException e) {
-            logger.error("Error parsing content for dependency type '{}' at {}: {}", type, path, e.getMessage());
+            logger.error(
+                    "Error parsing content for dependency type '{}' at {}: {}",
+                    type,
+                    path,
+                    e.getMessage());
             return null;
         } catch (FileNotFoundException e) {
-            logger.error("File not found for dependency type '{}' at {}: {}", type, path, e.getMessage());
+            logger.error(
+                    "File not found for dependency type '{}' at {}: {}",
+                    type,
+                    path,
+                    e.getMessage());
             return null;
         } catch (Exception e) {
-            logger.error("Unexpected error resolving dependency type '{}' at {}: {}", type, path, e.getMessage(), e);
+            logger.error(
+                    "Unexpected error resolving dependency type '{}' at {}: {}",
+                    type,
+                    path,
+                    e.getMessage(),
+                    e);
             return null;
         }
     }
@@ -93,7 +106,8 @@ public class ResourceReferenceResolver {
      */
     public Stream<ResourceReference> resolveDependencies(Kustomization kustomization) {
         if (kustomization == null || kustomization.getContent() == null) {
-            logger.warn("Attempted to resolve dependencies for a null Kustomization or Kustomization with null content.");
+            logger.warn(
+                    "Attempted to resolve dependencies for a null Kustomization or Kustomization with null content.");
             return Stream.empty();
         }
 
@@ -101,25 +115,41 @@ public class ResourceReferenceResolver {
         Map<String, Object> fileContent = kustomization.getContent();
         Path baseDir = kustomization.getPath().getParent();
         if (baseDir == null) {
-            // This might happen if the kustomization path is a root path itself (e.g. "kustomization.yaml" in CWD)
+            // This might happen if the kustomization path is a root path itself (e.g.
+            // "kustomization.yaml" in CWD)
             // In such cases, baseDir for resolving relative paths would be the current directory.
             baseDir = Path.of("").toAbsolutePath();
-            logger.warn("Kustomization path {} has no parent, using current working directory '{}' as baseDir for resolving references.", kustomization.getPath(), baseDir);
+            logger.warn(
+                    "Kustomization path {} has no parent, using current working directory '{}' as baseDir for resolving references.",
+                    kustomization.getPath(),
+                    baseDir);
         }
 
         final Path finalBaseDir = baseDir;
 
         return fileContent.keySet().stream()
                 .filter(ReferenceType::isReferenceKey) // Find keys that match known reference types
-                .map(ReferenceType::fromYamlKey)       // Convert key string to ReferenceType enum
-                .peek(referenceType -> logger.debug("Processing Kustomization key: '{}' as ReferenceType: {}", referenceType.getYamlKey(), referenceType))
-                .flatMap(referenceType -> {
+                .map(ReferenceType::fromYamlKey) // Convert key string to ReferenceType enum
+                .peek(
+                        referenceType ->
+                                logger.debug(
+                                        "Processing Kustomization key: '{}' as ReferenceType: {}",
+                                        referenceType.getYamlKey(),
+                                        referenceType))
+                .flatMap(
+                        referenceType -> {
                             // Get the raw values (e.g., list of strings) for this key
-                            return referenceType.getRawReferences(fileContent)
-                                    .flatMap(rawReferenceValue -> referenceType.extract(rawReferenceValue, finalBaseDir))
-                                    .map(resolvedPath -> resolveDependency(referenceType, resolvedPath))
-                                    .filter(Objects::nonNull); // Filter out any nulls from failed resolveDependency calls
-                        }
-                );
+                            return referenceType
+                                    .getRawReferences(fileContent)
+                                    .flatMap(
+                                            rawReferenceValue ->
+                                                    referenceType.extract(
+                                                            rawReferenceValue, finalBaseDir))
+                                    .map(
+                                            resolvedPath ->
+                                                    resolveDependency(referenceType, resolvedPath))
+                                    .filter(Objects::nonNull); // Filter out any nulls from failed
+                            // resolveDependency calls
+                        });
     }
 }

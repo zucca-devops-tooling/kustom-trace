@@ -19,13 +19,12 @@ import dev.zucca_ops.kustomtrace.exceptions.KustomException;
 import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
 import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
 import dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents the complete graph of Kustomize resources and their relationships.
@@ -119,25 +118,29 @@ public class KustomGraph {
      */
     public List<Path> getAllAppFiles(Path appPath) throws KustomException {
         if (appPath == null) {
-            throw new IllegalArgumentException("Input application path for getAllAppFiles cannot be null.");
+            throw new IllegalArgumentException(
+                    "Input application path for getAllAppFiles cannot be null.");
         }
 
-        Path actualKustomizationFilePath = KustomizeFileUtil.getKustomizationFileFromAppDirectory(appPath);
+        Path actualKustomizationFilePath =
+                KustomizeFileUtil.getKustomizationFileFromAppDirectory(appPath);
         Path normalizedKeyPath = actualKustomizationFilePath.toAbsolutePath().normalize();
 
         GraphNode appNode = nodeIndex.get(normalizedKeyPath);
-        if (appNode instanceof Kustomization) { // Ensure it's a Kustomization before calling getDependencies
+        if (appNode
+                instanceof
+                Kustomization) { // Ensure it's a Kustomization before calling getDependencies
             return appNode.getDependencies().toList();
         } else if (appNode != null) { // Node exists but is not a Kustomization
             throw new NotAnAppException(appPath);
         }
 
         // If appNode is null, it means KustomizeFileUtil found a kustomization file path,
-        // but it wasn't added to the graph (e.g., during a parallel build where it wasn't processed yet, or error).
+        // but it wasn't added to the graph (e.g., during a parallel build where it wasn't processed
+        // yet, or error).
         // Or KustomGraphBuilder didn't process this specific root.
         throw new UnreferencedFileException(normalizedKeyPath);
     }
-
 
     /**
      * Retrieves a {@link KustomFile} from the graph, ensuring type safety.

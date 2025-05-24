@@ -15,12 +15,11 @@
  */
 package dev.zucca_ops.kustomtrace.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a Kustomization (typically a kustomization.yaml file) as a node
@@ -107,14 +106,17 @@ public class Kustomization extends GraphNode {
     @Override
     Stream<Path> getDependencies(Set<GraphNode> visited) {
         if (!visited.add(this)) {
-            logger.error("Circular dependency detected while getting dependencies for kustomization: {}", this.getPath());
+            logger.error(
+                    "Circular dependency detected while getting dependencies for kustomization: {}",
+                    this.getPath());
             return Stream.empty();
         }
 
-        Stream<Path> referencedDependencies = references.stream()
-                .map(ResourceReference::resource)
-                .filter(Objects::nonNull)
-                .flatMap(resourceNode -> resourceNode.getDependencies(visited));
+        Stream<Path> referencedDependencies =
+                references.stream()
+                        .map(ResourceReference::resource)
+                        .filter(Objects::nonNull)
+                        .flatMap(resourceNode -> resourceNode.getDependencies(visited));
 
         // This Kustomization file itself is also part of its "dependencies" or "files involved".
         return Stream.concat(Stream.of(this.path), referencedDependencies).distinct();
@@ -157,7 +159,9 @@ public class Kustomization extends GraphNode {
      */
     private Stream<Kustomization> getApps(Set<GraphNode> visited) {
         if (!visited.add(this)) {
-            logger.error("Circular dependency detected while getting apps for kustomization: {}", this.getPath());
+            logger.error(
+                    "Circular dependency detected while getting apps for kustomization: {}",
+                    this.getPath());
             return Stream.empty();
         }
 

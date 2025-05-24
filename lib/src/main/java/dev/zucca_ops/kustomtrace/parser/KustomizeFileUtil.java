@@ -16,13 +16,12 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for Kustomize file and path conventions.
@@ -52,7 +51,8 @@ public class KustomizeFileUtil {
             return false;
         }
         String fileNameStr = fileNamePath.toString();
-        return List.of("kustomization.yaml", "kustomization.yml", "Kustomization").contains(fileNameStr);
+        return List.of("kustomization.yaml", "kustomization.yml", "Kustomization")
+                .contains(fileNameStr);
     }
 
     /**
@@ -67,8 +67,8 @@ public class KustomizeFileUtil {
             return false;
         }
         String fileNameStr = fileNamePath.toString();
-        return !isKustomizationFileName(path) &&
-                Stream.of(".yaml", ".yml", ".json")
+        return !isKustomizationFileName(path)
+                && Stream.of(".yaml", ".yml", ".json")
                         .anyMatch(fileNameStr.toLowerCase()::endsWith);
     }
 
@@ -89,19 +89,24 @@ public class KustomizeFileUtil {
                 logger.trace("Provided path '{}' is an existing kustomization file.", appPath);
                 return appPath;
             } else {
-                logger.trace("Path '{}' named like kustomization file, but not an existing file. Treating as directory.", appPath);
+                logger.trace(
+                        "Path '{}' named like kustomization file, but not an existing file. Treating as directory.",
+                        appPath);
             }
         }
 
         Path[] potentialFiles = {
-                appPath.resolve("kustomization.yaml"),
-                appPath.resolve("kustomization.yml"),
-                appPath.resolve("Kustomization")
+            appPath.resolve("kustomization.yaml"),
+            appPath.resolve("kustomization.yml"),
+            appPath.resolve("Kustomization")
         };
 
         for (Path potentialFile : potentialFiles) {
             if (isFile(potentialFile)) {
-                logger.trace("Found kustomization file '{}' in app directory '{}'", potentialFile.getFileName(), appPath);
+                logger.trace(
+                        "Found kustomization file '{}' in app directory '{}'",
+                        potentialFile.getFileName(),
+                        appPath);
                 return potentialFile;
             }
         }

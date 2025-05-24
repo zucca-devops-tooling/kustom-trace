@@ -16,9 +16,6 @@
 package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidReferenceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +23,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines the different types of Kustomize fields that can contain references
@@ -77,13 +76,18 @@ public enum ReferenceType {
      * stream if extraction fails or no valid references are found.
      */
     public Stream<Path> extract(Object yamlValue, Path baseDir) {
-        logger.debug("Extracting references for type '{}' using key '{}' with baseDir: {}", this.name(), this.yamlKey, baseDir);
+        logger.debug(
+                "Extracting references for type '{}' using key '{}' with baseDir: {}",
+                this.name(),
+                this.yamlKey,
+                baseDir);
 
         try {
             return extractor.extract(yamlValue, baseDir);
         } catch (InvalidReferenceException e) {
-            String errorMessage = "Extraction failed for path '%s' and type '%s': %s: %s".
-                    formatted(baseDir, this, e.getMessage(), e.getPath().getFileName());
+            String errorMessage =
+                    "Extraction failed for path '%s' and type '%s': %s: %s"
+                            .formatted(baseDir, this, e.getMessage(), e.getPath().getFileName());
             if (e.isError()) {
                 logger.error(errorMessage);
             } else {
@@ -102,26 +106,37 @@ public enum ReferenceType {
      * or its value is not a list.
      */
     public Stream<Object> getRawReferences(Map<String, Object> kustomizationContentMap) {
-        logger.debug("Getting raw reference values for type '{}' (key: '{}')", this.name(), this.yamlKey);
+        logger.debug(
+                "Getting raw reference values for type '{}' (key: '{}')",
+                this.name(),
+                this.yamlKey);
         Object value = kustomizationContentMap.get(this.yamlKey);
 
         if (!(value instanceof List<?> referencesList)) {
             if (value != null) {
-                logger.warn("Expected a List for key '{}', but found {}. Kustomization content: {}",
-                        this.yamlKey, value.getClass().getName(), kustomizationContentMap);
+                logger.warn(
+                        "Expected a List for key '{}', but found {}. Kustomization content: {}",
+                        this.yamlKey,
+                        value.getClass().getName(),
+                        kustomizationContentMap);
             } else {
-                logger.trace("Key '{}' not found or value is null in Kustomization content.", this.yamlKey);
+                logger.trace(
+                        "Key '{}' not found or value is null in Kustomization content.",
+                        this.yamlKey);
             }
             return Stream.empty();
         }
 
-        return (Stream<Object>) referencesList.stream(); // Cast to Stream<Object> for broader compatibility
+        return (Stream<Object>)
+                referencesList.stream(); // Cast to Stream<Object> for broader compatibility
     }
 
     // Static lookup map for YAML key → enum, initialized once.
     private static final Map<String, ReferenceType> BY_YAML_KEY =
             Arrays.stream(values())
-                    .collect(Collectors.toUnmodifiableMap(ReferenceType::getYamlKey, Function.identity()));
+                    .collect(
+                            Collectors.toUnmodifiableMap(
+                                    ReferenceType::getYamlKey, Function.identity()));
 
     /**
      * Retrieves a {@link ReferenceType} enum constant based on its YAML key.
