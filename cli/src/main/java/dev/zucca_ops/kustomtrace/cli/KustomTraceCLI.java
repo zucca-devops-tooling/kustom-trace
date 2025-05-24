@@ -78,7 +78,7 @@ public class KustomTraceCLI implements Callable<Integer> {
             return 1;
         }
         if (logFile != null) {
-            System.setProperty("log.file", logFile.getAbsolutePath());
+            System.setProperty("LOG_FILE", logFile.getAbsolutePath());
         }
         new CommandLine(this).usage(System.out);
         return 0;
