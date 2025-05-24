@@ -90,10 +90,7 @@ public class ListRootAppsCommand implements Callable<Integer> {
                 if (rootAppDisplayPaths.isEmpty()) {
                     System.out.println("No root applications found in: " + appsDirPathGlobal);
                 } else {
-                    CLIHelper.printOutput(
-                            "Root Applications:",
-                            rootAppDisplayPaths,
-                            null);
+                    CLIHelper.printOutput("Root Applications:", rootAppDisplayPaths, null);
                 }
             }
             return 0;

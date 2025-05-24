@@ -175,8 +175,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
                     }
                 } catch (UnreferencedFileException e) {
                     // relativeAffectedAppPathsForCurrentFile will remain empty
-                    if (outputFile
-                            == null) { // Console output mode for UnreferencedFileException
+                    if (outputFile == null) { // Console output mode for UnreferencedFileException
                         consoleOutputLines.add(
                                 "Affected apps by "
                                         + yamlKeyForModifiedFile

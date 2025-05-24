@@ -20,7 +20,6 @@ import dev.zucca_ops.kustomtrace.cli.commands.AppFilesCommand;
 import dev.zucca_ops.kustomtrace.cli.commands.ListRootAppsCommand;
 import java.io.File;
 import java.util.concurrent.Callable;
-
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -62,7 +61,6 @@ public class KustomTraceCLI implements Callable<Integer> {
             paramLabel = "<file>",
             description = "Specify a file to write warnings and errors to.")
     File logFile;
-
 
     @Option(
             names = {"-o", "--output"},
@@ -112,18 +110,25 @@ public class KustomTraceCLI implements Callable<Integer> {
 
         if (cmdLogLevel != null && !cmdLogLevel.trim().isEmpty()) {
             String levelUpper = cmdLogLevel.toUpperCase();
-            System.setProperty("kustomtrace.app.loglevel", levelUpper);    // For your app's logger generation level
-            System.setProperty("kustomtrace.console.loglevel", levelUpper); // For STDOUT ThresholdFilter
-            System.setProperty("kustomtrace.file.loglevel", levelUpper);    // For FILE ThresholdFilter
+            System.setProperty(
+                    "kustomtrace.app.loglevel",
+                    levelUpper); // For your app's logger generation level
+            System.setProperty(
+                    "kustomtrace.console.loglevel", levelUpper); // For STDOUT ThresholdFilter
+            System.setProperty("kustomtrace.file.loglevel", levelUpper); // For FILE ThresholdFilter
         }
-        // If --log-file is set but --log-level is not, console defaults to WARN (from logback.xml DEFAULT_CONSOLE_LEVEL)
-        // and file defaults to INFO (from DEFAULT_FILE_LEVEL), app logs at DEFAULT_APP_LOG_LEVEL (INFO).
-        // If neither is set, console gets WARN, app generates INFO (filtered by console's WARN). This achieves goal 2b.
+        // If --log-file is set but --log-level is not, console defaults to WARN (from logback.xml
+        // DEFAULT_CONSOLE_LEVEL)
+        // and file defaults to INFO (from DEFAULT_FILE_LEVEL), app logs at DEFAULT_APP_LOG_LEVEL
+        // (INFO).
+        // If neither is set, console gets WARN, app generates INFO (filtered by console's WARN).
+        // This achieves goal 2b.
 
         // Execute Picocli
-        int exitCode = new CommandLine(new KustomTraceCLI())
-                .setCaseInsensitiveEnumValuesAllowed(true)
-                .execute(args);
+        int exitCode =
+                new CommandLine(new KustomTraceCLI())
+                        .setCaseInsensitiveEnumValuesAllowed(true)
+                        .execute(args);
         System.exit(exitCode);
     }
 }
