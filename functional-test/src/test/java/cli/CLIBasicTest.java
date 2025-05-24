@@ -243,7 +243,7 @@ class CLIBasicTest {
     }
 
     @Test
-    void testEmptyAppsDir_AffectedAppsCommand_WritesYaml(@TempDir Path tempDir) throws IOException {
+    void testEmptyAppsDir_AffectedAppsCommand_WritesYaml(@TempDir Path tempDir) {
         Path emptyAppsDir = Paths.get( "src", "test", "resources", "app-with-no-kustomization");
         Path modifiedFile = emptyAppsDir.resolve("deployment.yml");
 

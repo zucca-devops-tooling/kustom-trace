@@ -49,7 +49,7 @@ public class AppFilesCommand implements Callable<Integer> {
     // In AppFilesCommand.java
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         File effectiveAppsDir = parentCLI.getAppsDir();
         File effectiveLogFile = parentCLI.getLogFile();
         File outputFile = parentCLI.getOutputFile();
