@@ -113,11 +113,6 @@ pipeline {
                     expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
                 }
             }
-            environment {
-                GPG_KEY_ID    = credentials('GPG_KEY_ID')
-                GPG_KEY_PASS  = credentials('GPG_KEY_PASS')
-                OSSRH_CREDENTIALS  = credentials('OSSRH_CREDENTIALS')
-            }
             steps {
                 withCredentials([
                     file(credentialsId: 'GPG_SECRET_KEY', variable: 'GPG_KEY_PATH')
@@ -128,9 +123,6 @@ pipeline {
                         export GPG_ASC_ARMOR="$(cat $GPG_KEY_PATH)"
 
                         ./gradlew :kustomtrace-cli:publish --info --no-daemon \
-                            -Psigning.keyId=$GPG_KEY_ID \
-                            -Psigning.password=$GPG_KEY_PASS \
-                            -Psigning.secretKeyRingFile=$GPG_KEY_PATH \
                             -PgithubPackagesUsername=$GH_CREDENTIALS_USR \
                             -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
                     '''

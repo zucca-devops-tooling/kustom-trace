@@ -14,64 +14,76 @@
  * limitations under the License.
  */
 package dev.zucca_ops.kustomtrace.cli;
+
 import dev.zucca_ops.kustomtrace.cli.commands.AffectedAppsCommand;
 import dev.zucca_ops.kustomtrace.cli.commands.AppFilesCommand;
 import dev.zucca_ops.kustomtrace.cli.commands.ListRootAppsCommand;
+import java.io.File;
+import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.File;
-import java.util.concurrent.Callable;
-
-@Command(name = "kustomtrace", version = "1.0.0",
+@Command(
+        name = "kustomtrace",
+        version = "1.0.0",
         mixinStandardHelpOptions = true,
         description = "Analyzes Kubernetes deployment repositories.",
-        subcommands = {
-                AffectedAppsCommand.class,
-                AppFilesCommand.class,
-                ListRootAppsCommand.class
-        })
+        subcommands = {AffectedAppsCommand.class, AppFilesCommand.class, ListRootAppsCommand.class})
 public class KustomTraceCLI implements Callable<Integer> {
 
-        @Option(names = {"-v", "--version"}, versionHelp = true, description = "Print version information and exit.")
-        boolean versionRequested;
+    @Option(
+            names = {"-v", "--version"},
+            versionHelp = true,
+            description = "Print version information and exit.")
+    boolean versionRequested;
 
-        @Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message and exit.")
-        boolean usageHelpRequested;
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "Display this help message and exit.")
+    boolean usageHelpRequested;
 
-        @Option(names = {"-a", "--apps-dir"}, required = true, description = "Path to the root apps directory.")
-        File appsDir;
+    @Option(
+            names = {"-a", "--apps-dir"},
+            required = true,
+            description = "Path to the root apps directory.")
+    File appsDir;
 
-        @Option(names = {"--log-file"}, paramLabel = "<file>", description = "Specify a file to write warnings and errors to.")
-        File logFile;
+    @Option(
+            names = {"--log-file"},
+            paramLabel = "<file>",
+            description = "Specify a file to write warnings and errors to.")
+    File logFile;
 
-        public File getAppsDir() {
-                return appsDir;
+    public File getAppsDir() {
+        return appsDir;
+    }
+
+    public File getLogFile() {
+        return logFile;
+    }
+
+    @Override
+    public Integer call() {
+        if (appsDir == null) {
+            System.err.println("Error: --apps-dir is required for any operation.");
+            new CommandLine(this).usage(System.out);
+            return 1;
         }
-
-        public File getLogFile() {
-                return logFile;
+        if (logFile != null) {
+            System.setProperty("log.file", logFile.getAbsolutePath());
         }
+        new CommandLine(this).usage(System.out);
+        return 0;
+    }
 
-        @Override
-        public Integer call() {
-                if (appsDir == null) {
-                        System.err.println("Error: --apps-dir is required for any operation.");
-                        new CommandLine(this).usage(System.out);
-                        return 1;
-                }
-                if (logFile != null) {
-                        System.setProperty("log.file", logFile.getAbsolutePath());
-                }
-                new CommandLine(this).usage(System.out);
-                return 0;
-        }
-
-        public static void main(String[] args) {
-                int exitCode = new CommandLine(new KustomTraceCLI()) // No custom factory needed here
-                        .setCaseInsensitiveEnumValuesAllowed(true) // Optional: Example of other configurations
+    public static void main(String[] args) {
+        int exitCode =
+                new CommandLine(new KustomTraceCLI()) // No custom factory needed here
+                        .setCaseInsensitiveEnumValuesAllowed(
+                                true) // Optional: Example of other configurations
                         .execute(args);
-                System.exit(exitCode);
-        }
+        System.exit(exitCode);
+    }
 }

@@ -15,7 +15,6 @@
  */
 package dev.zucca_ops.kustomtrace.cli.util;
 
-
 import java.io.File;
 import java.nio.file.Path;
 
@@ -32,8 +31,13 @@ public class PathUtil {
                 pathString = absoluteTargetPath.toString();
             }
         } catch (IllegalArgumentException e) {
-            String warningDetail = "Could not reliably relativize path '" + targetPath +
-                    "' against base '" + basePath + "'. Using path as is. Detail: " + e.getMessage();
+            String warningDetail =
+                    "Could not reliably relativize path '"
+                            + targetPath
+                            + "' against base '"
+                            + basePath
+                            + "'. Using path as is. Detail: "
+                            + e.getMessage();
 
             CLIHelper.printWarning(warningDetail, logFileForWarnings);
             pathString = targetPath.toAbsolutePath().normalize().toString(); // Fallback
