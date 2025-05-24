@@ -8,62 +8,86 @@ The KustomTrace Command-Line Interface (CLI) allows you to analyze Kustomize dir
 * *Download pre-compiled binaries from the [Releases page](link-to-releases).*
 * *Build from source: `./gradlew :kustomtrace-cli:shadowJar` (or equivalent) and find the executable JAR in `kustomtrace-cli/build/libs/`.)*
 
-**Basic Usage:**
-`java -jar kustomtrace-cli.jar <command> [options]`
-*(Or, if you have a wrapper script: `kustomtrace <command> [options]`)*
+**Basic Invocation:**
+The general way to run the CLI is:
+
+```bash
+java -jar kustomtrace-cli-VERSION.jar [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]
+```
+*(Or, if you provide a wrapper script: `kustomtrace [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]`)*
 
 ## Global Options
 
-These options are applicable to most commands:
+These options apply to the `kustomtrace` command itself and can be used with any subcommand:
 
-* `-a=<appsDir>`, `--apps-dir=<appsDir>`: **(Required)** Path to the root directory containing your Kustomize applications.
-* `--log-file=<logFile>`: (Optional) Specify a file to write detailed logs (INFO, WARN, ERROR) to. Errors and warnings from command logic will also be directed here if specified.
-* `-h`, `--help`: Display help information.
-* `-V`, `--version`: Display version information.
+* `-a=<appsDir>`, `--apps-dir=<appsDir>`: **(Required)** Path to the root directory containing your Kustomize applications. This directory is the main scope for analysis.
+* `--log-file=<logFile>`: (Optional) Specify a file to write detailed logs (INFO, WARN, ERROR, including stack traces) to. If this option is used, console output from logging will be minimized.
+* `--log-level=<LEVEL>`: (Optional) Set the verbosity of logs. Affects both console (if `--log-file` is not used) and the log file (if specified). Levels: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`. Default for console is typically `WARN`; for file is `INFO`.
+* `-h`, `--help`: Display help information for `kustomtrace` or a specific subcommand.
+* `-V`, `--version`: Display version information for `kustomtrace`.
 
 **Note on Path Output:**
-All file paths in the CLI's output (especially in the YAML format via the `--output` option, but also generally in console output) use **forward slashes (`/`)** as path separators. This ensures consistent and predictable output across all operating systems (Windows, Linux, macOS).
+All file paths in the CLI's output (especially in the YAML format via the `--output` option, but also generally in console output) use **forward slashes (`/`)** as path separators. This ensures consistent and predictable output across all operating systems.
 
-## Available Commands
+## Available Subcommands
 
+Below are the available subcommands. For detailed help on a specific subcommand, run:
+`java -jar kustomtrace-cli.jar <subcommand> --help`
+
+---
 ### `list-root-apps`
-Lists all root Kustomize applications found in the specified directory. A root app is a kustomization that is not referenced by any other kustomization.
+
+**Description:** Lists all root Kustomize applications found within the specified `--apps-dir`. A root app is a kustomization that is not referenced by any other kustomization in the scanned structure.
 
 **Usage:**
-`kustomtrace-cli list-root-apps -a=<appsDir> [-o=<outputFile.yaml>]`
+`kustomtrace list-root-apps [-o=<outputFile.yaml>]`
+*(Requires global `-a, --apps-dir`)*
+
+**Options for `list-root-apps`:**
+* `-o=<outputFile.yaml>`, `--output=<outputFile.yaml>`: (Optional) Output the list of root application paths to the specified YAML file.
 
 **Example Invocation:**
-`java -jar kustomtrace-cli.jar list-root-apps -a ./my-k8s-configs -o roots.yaml`
+```bash
+java -jar kustomtrace-cli.jar -a ./my-k8s-configs list-root-apps -o roots.yaml
+```
 
 **Console Output (if `-o` is not used):**
 ```
 Root Applications:
 - path/to/app1-dir
 - another/app/dir
-```
-  
-If no root apps are found:
-```
-No root applications found in: <appsDir_path>
-```
+  ```
+  If no root apps are found:
+  ```
+  No root applications found in: <appsDir_path>
+  ```
 
-**YAML Output (`-o roots.yaml`):**
+**YAML Output (e.g., `-o roots.yaml`):**
 ```yaml
 root-apps:
 - path/to/app1-dir # Paths are relative to --apps-dir
 - another/app/dir
-```
+  ```
 
+---
 ### `app-files`
-Lists all unique files used by a given application (including its kustomization file and all resolved resources and bases).
+
+**Description:** Lists all unique files used by a given application. This includes its own kustomization file and all transitively resolved resources, bases, and components.
 
 **Usage:**
-`kustomtrace-cli app-files -a=<appsDir> <appPath> [-o=<outputFile.yaml>]`
+`kustomtrace app-files <appPath> [-o=<outputFile.yaml>]`
+*(Requires global `-a, --apps-dir`)*
 
-* `<appPath>`: Path to the application directory or its specific kustomization file (e.g., `path/to/my-app` or `path/to/my-app/kustomization.yaml`).
+**Arguments for `app-files`:**
+* `<appPath>`: **(Required)** Path to the application directory (containing a kustomization file) or a direct path to its specific kustomization file (e.g., `path/to/my-app` or `path/to/my-app/kustomization.yaml`). This path is typically relative to the global `--apps-dir` or can be an absolute path.
+
+**Options for `app-files`:**
+* `-o=<outputFile.yaml>`, `--output=<outputFile.yaml>`: (Optional) Output the list of files to the specified YAML file.
 
 **Example Invocation:**
-`java -jar kustomtrace-cli.jar app-files -a ./all-apps path/to/my-app -o my-app-files.yaml`
+```bash
+java -jar kustomtrace-cli.jar -a ./all-apps app-files path/to/my-app -o my-app-files.yaml
+```
 
 **Console Output:**
 ```
@@ -72,29 +96,41 @@ Files used by application 'my-app':
 - deployment.yaml
 - kustomization.yaml
 - ../base/service.yaml
-```
+  ```
 
-**YAML Output (`-o my-app-files.yaml`):**
+**YAML Output (e.g., `-o my-app-files.yaml`):**
 ```yaml
 app-files:
-my-app: # Key is the app's directory, relative to --apps-dir
+my-app: # Key is the app's directory identifier (relative to --apps-dir)
 - configmap.yaml # Paths are relative to the app's own directory
 - deployment.yaml
 - kustomization.yaml
 - ../base/service.yaml
 ```
 
+---
 ### `affected-apps`
-Finds applications affected by changes in one or more specified files.
+
+**Description:** Finds and lists Kustomize applications that are (directly or indirectly) affected by changes in one or more specified files.
 
 **Usage:**
-`kustomtrace-cli affected-apps -a=<appsDir> [modifiedFile...] [-f=<filesFromFile>] [-o=<outputFile.yaml>]`
+`kustomtrace affected-apps [modifiedFile...] [-f=<filesFromFile>] [-o=<outputFile.yaml>]`
+*(Requires global `-a, --apps-dir`)*
 
-* `[modifiedFile...]`: (Optional) Space-separated paths to modified files.
-* `-f=<filesFromFile>`: (Optional) Path to a file containing a list of modified file paths (one path per line).
+**Arguments for `affected-apps`:**
+* `[modifiedFile...]`: (Optional) Space-separated paths to one or more modified files. These paths can be absolute or relative to the current working directory.
+
+**Options for `affected-apps`:**
+* `-f=<filesFromFile>`, `--files-from-file=<filesFromFile>`: (Optional) Path to a text file containing a list of modified file paths (one path per line).
+* `-o=<outputFile.yaml>`, `--output=<outputFile.yaml>`: (Optional) Output the list of affected applications to the specified YAML file.
 
 **Example Invocation:**
-`java -jar kustomtrace-cli.jar affected-apps -a ./all-apps common/base.yaml services/service-patch.yaml -o impact.yaml`
+```bash
+java -jar kustomtrace-cli.jar -a ./all-apps affected-apps common/base.yaml services/service-patch.yaml -o impact.yaml
+```
+```bash
+java -jar kustomtrace-cli.jar -a ./all-apps affected-apps -f changed_files.txt -o impact.yaml
+```
 
 **Console Output:**
 ```
@@ -104,15 +140,17 @@ Affected apps by common/base.yaml:
 - app2/staging
   Affected apps by services/service-patch.yaml:
 - app1/production
+  Affected apps by path/to/unreferenced-file.yaml:
+  Warning: File ... is not referenced by any app
   Summary: No applications were found to be affected by the specified file(s). ```
-```
-**YAML Output (`-o impact.yaml`):**
+
+**YAML Output (e.g., `-o impact.yaml`):**
 ```yaml
 affected-apps:
-common/base.yaml: # Key is the modified file path (as provided, or relative to appsDir if within)
-- app1/production # Affected app paths are relative to appsDir
+common/base.yaml: # Key is the modified file path (as provided by user, normalized)
+- app1/production # Affected app paths are relative to --apps-dir
 - app2/staging
-unreferenced-or-external-file.yaml: [] # If a file is unreferenced or affects no apps
+path/to/unreferenced-or-external-file.yaml: [] # If a modified file is unreferenced or affects no apps
 ```
 
 ## Use Cases & Examples
