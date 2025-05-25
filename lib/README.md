@@ -168,5 +168,5 @@ if (dependencyNode.isKustomFile()) {
 
 **(Example - Gradle)**
 ```gradle
-implementation 'dev.zucca_ops:kustomtrace-lib:1.0.0
+implementation 'dev.zucca_ops:kustomtrace:1.0.0
 ```
