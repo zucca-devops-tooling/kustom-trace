@@ -17,9 +17,6 @@ package dev.zucca_ops.kustomtrace.parser;
 
 import dev.zucca_ops.kustomtrace.exceptions.InvalidReferenceException;
 import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides various strategies ({@link ReferenceExtractor} instances) for extracting
@@ -62,7 +61,9 @@ public class ReferenceExtractors {
      */
     private static boolean isNotKustomizationFile(Path path) {
         if (KustomizeFileUtil.isKustomizationFileName(path)) {
-            logger.warn("Invalid reference: path points to a kustomization file, which is not expected here: {}", path);
+            logger.warn(
+                    "Invalid reference: path points to a kustomization file, which is not expected here: {}",
+                    path);
             return false;
         }
         return true;
@@ -75,7 +76,8 @@ public class ReferenceExtractors {
      * @return The validated string value.
      * @throws InvalidReferenceException if the value is not a string or contains newlines.
      */
-    private static String validateNonMultilineString(Object referenceValue) throws InvalidReferenceException {
+    private static String validateNonMultilineString(Object referenceValue)
+            throws InvalidReferenceException {
         if (!(referenceValue instanceof String valueString)) {
             throw new InvalidReferenceException("Non-string value found for reference.");
         }
@@ -100,7 +102,10 @@ public class ReferenceExtractors {
         }
         // isValidKubernetesResource only checks name patterns. Now check existence.
         if (!KustomizeFileUtil.isFile(path)) {
-            throw new InvalidReferenceException("Non-existing or non-regular file referenced as a Kubernetes resource.", path, true);
+            throw new InvalidReferenceException(
+                    "Non-existing or non-regular file referenced as a Kubernetes resource.",
+                    path,
+                    true);
         }
         logger.trace("Found valid Kubernetes resource file reference: {}", path);
         return path;
@@ -117,13 +122,17 @@ public class ReferenceExtractors {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
             if (path.equals(baseDir.normalize())) {
-                throw new InvalidReferenceException("Self reference to kustomization directory not allowed: " + referenceValue, path, true);
+                throw new InvalidReferenceException(
+                        "Self reference to kustomization directory not allowed: " + referenceValue,
+                        path,
+                        true);
             }
 
             try {
                 return Stream.of(KustomizeFileUtil.getKustomizationFileFromAppDirectory(path));
             } catch (NotAnAppException e) {
-                throw new InvalidReferenceException("Invalid directory or kustomization file referenced: " + path, path, e);
+                throw new InvalidReferenceException(
+                        "Invalid directory or kustomization file referenced: " + path, path, e);
             }
         };
     }
@@ -140,16 +149,22 @@ public class ReferenceExtractors {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
             if (Files.isDirectory(path)) {
-                logger.trace("Path '{}' is a directory. Listing valid Kubernetes resources within.", path);
+                logger.trace(
+                        "Path '{}' is a directory. Listing valid Kubernetes resources within.",
+                        path);
 
                 String[] directoryContents = new File(path.toAbsolutePath().toString()).list();
 
                 if (directoryContents == null) {
-                    throw new InvalidReferenceException("Could not list directory contents (not a directory or I/O error).", path);
+                    throw new InvalidReferenceException(
+                            "Could not list directory contents (not a directory or I/O error).",
+                            path);
                 }
                 if (directoryContents.length == 0) {
-                    logger.warn("Directory referenced by '{}' is empty. No resources to stream.", path);
-                    // Kustomize allows empty directories in resources, this means no resources from this path.
+                    logger.warn(
+                            "Directory referenced by '{}' is empty. No resources to stream.", path);
+                    // Kustomize allows empty directories in resources, this means no resources from
+                    // this path.
                     return Stream.empty();
                 }
 
@@ -157,7 +172,11 @@ public class ReferenceExtractors {
                         .map(path::resolve)
                         .filter(KustomizeFileUtil::isValidKubernetesResource)
                         .filter(KustomizeFileUtil::isFile)
-                        .peek(resolvedPath -> logger.trace("Found valid resource file in directory: {}", resolvedPath));
+                        .peek(
+                                resolvedPath ->
+                                        logger.trace(
+                                                "Found valid resource file in directory: {}",
+                                                resolvedPath));
             }
 
             // If not a directory, treat as a single resource file
@@ -188,7 +207,10 @@ public class ReferenceExtractors {
      */
     public static ReferenceExtractor inlinePathValue(String pathField) {
         return (referenceValue, baseDir) -> {
-            logger.debug("Applying inlinePathValue extractor for field '{}', baseDir: {}", pathField, baseDir);
+            logger.debug(
+                    "Applying inlinePathValue extractor for field '{}', baseDir: {}",
+                    pathField,
+                    baseDir);
 
             if (referenceValue instanceof Map) {
                 Map<String, Object> valueMap = ((Map<String, Object>) referenceValue);
@@ -219,24 +241,33 @@ public class ReferenceExtractors {
                 Map<String, Object> valueMap = ((Map<String, Object>) referenceValue);
                 Stream<String> envsFilePaths = Stream.empty();
                 if (valueMap.get("envs") instanceof List) {
-                    envsFilePaths = ((List<?>) valueMap.get("envs")).stream()
-                            .filter(String.class::isInstance)
-                            .map(String.class::cast);
+                    envsFilePaths =
+                            ((List<?>) valueMap.get("envs"))
+                                    .stream()
+                                            .filter(String.class::isInstance)
+                                            .map(String.class::cast);
                 } else if (valueMap.containsKey("envs")) {
                     logger.warn("configMapGenerator 'envs' field is not a List in: {}", valueMap);
                 }
 
-
                 Stream<String> filesKeyPaths = Stream.empty();
                 if (valueMap.get("files") instanceof List) {
-                    filesKeyPaths = ((List<?>) valueMap.get("files")).stream()
-                            .filter(String.class::isInstance)
-                            .map(String.class::cast)
-                            .map(f -> f.contains("=") ? f.substring(f.indexOf("=") + 1).trim() : f.trim());
+                    filesKeyPaths =
+                            ((List<?>) valueMap.get("files"))
+                                    .stream()
+                                            .filter(String.class::isInstance)
+                                            .map(String.class::cast)
+                                            .map(
+                                                    f ->
+                                                            f.contains("=")
+                                                                    ? f.substring(
+                                                                                    f.indexOf("=")
+                                                                                            + 1)
+                                                                            .trim()
+                                                                    : f.trim());
                 } else if (valueMap.containsKey("files")) {
                     logger.warn("configMapGenerator 'files' field is not a List in: {}", valueMap);
                 }
-
 
                 return Stream.concat(envsFilePaths, filesKeyPaths)
                         .filter(s -> !s.isEmpty())
@@ -244,8 +275,10 @@ public class ReferenceExtractors {
                         .filter(ReferenceExtractors::isValidFile)
                         .filter(ReferenceExtractors::isNotKustomizationFile);
             }
-            logger.warn("Invalid reference value for configMapGeneratorFiles: expected Map, got {}. Value: {}",
-                    (referenceValue == null ? "null" : referenceValue.getClass().getName()), referenceValue);
+            logger.warn(
+                    "Invalid reference value for configMapGeneratorFiles: expected Map, got {}. Value: {}",
+                    (referenceValue == null ? "null" : referenceValue.getClass().getName()),
+                    referenceValue);
             return Stream.empty();
         };
     }

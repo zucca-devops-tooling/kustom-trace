@@ -32,9 +32,12 @@ public class NotAnAppException extends KustomException {
      * May be null if the context for the path is unavailable.
      */
     public NotAnAppException(Path path) {
-        super("Path " + (path != null ? path : "unknown") + " does not resolve to a valid Kustomization.", path);
+        super(
+                "Path "
+                        + (path != null ? path : "unknown")
+                        + " does not resolve to a valid Kustomization.",
+                path);
     }
-
 
     /**
      * Constructs a NotAnAppException with a cause.
@@ -43,6 +46,11 @@ public class NotAnAppException extends KustomException {
      * @param cause   The underlying cause of this exception.
      */
     public NotAnAppException(Path path, Throwable cause) {
-        super("Path " + (path != null ? path : "unknown") + " does not resolve to a valid Kustomization.", path, cause);
+        super(
+                "Path "
+                        + (path != null ? path : "unknown")
+                        + " does not resolve to a valid Kustomization.",
+                path,
+                cause);
     }
 }

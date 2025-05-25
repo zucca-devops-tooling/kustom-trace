@@ -16,12 +16,13 @@ subprojects {
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
         java {
             target("src/main/java/**/*.java")
+            googleJavaFormat("1.17.0").aosp().skipJavadocFormatting()
             licenseHeaderFile(rootProject.file("config/license-header.txt"))
         }
 
         format("testJava") {
             target("src/test/java/**/*.java")
-            java{ }
+            java{}
         }
     }
 }
@@ -36,9 +37,6 @@ tasks.register("tagRelease") {
 
         exec {
             commandLine("git", "tag", "-a", tagName, "-m", "Release $tagName")
-        }
-        exec {
-            commandLine("git", "push", "origin", tagName)
         }
     }
 }

@@ -14,52 +14,58 @@
  * limitations under the License.
  */
 package dev.zucca_ops.kustomtrace.cli.commands;
+
 import dev.zucca_ops.kustomtrace.KustomTrace;
 import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
 import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
 import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParentCommand;
-
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 
-@Command(name = "affected-apps", mixinStandardHelpOptions = true,
+@Command(
+        name = "affected-apps",
+        mixinStandardHelpOptions = true,
         description = "Finds applications affected by changes in specified files.")
 public class AffectedAppsCommand implements Callable<Integer> {
 
-    @ParentCommand
-    private KustomTraceCLI parentCLI;
+    @ParentCommand private KustomTraceCLI parentCLI;
 
-    @Parameters(arity = "0..*", paramLabel = "<modified-file>",
+    @Parameters(
+            arity = "0..*",
+            paramLabel = "<modified-file>",
             description = "One or more modified file paths.")
     private File[] modifiedFilesArray;
 
-    @Option(names = {"-f", "--files-from-file"}, paramLabel = "<file>",
+    @Option(
+            names = {"-f", "--files-from-file"},
+            paramLabel = "<file>",
             description = "Read modified file paths from the specified file (one path per line).")
     private File filesFromFile;
-
-    @Option(names = {"-o", "--output"}, paramLabel = "<file>",
-            description = "Output the list of affected apps to the specified YAML file.")
-    private File outputFile; // For YAML output
 
     @Override
     public Integer call() throws Exception {
         File effectiveAppsDir = parentCLI.getAppsDir();
         File effectiveLogFile = parentCLI.getLogFile();
+        File outputFile = parentCLI.getOutputFile();
 
         // 1. Validations for appsDir (from parent)
         if (effectiveAppsDir == null) {
-            CLIHelper.printError("Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
+            CLIHelper.printError(
+                    "Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
             return 1;
         }
         if (!effectiveAppsDir.exists() || !effectiveAppsDir.isDirectory()) {
-            CLIHelper.printError("Invalid --apps-dir: " + effectiveAppsDir.getAbsolutePath(), null, effectiveLogFile);
+            CLIHelper.printError(
+                    "Invalid --apps-dir: " + effectiveAppsDir.getAbsolutePath(),
+                    null,
+                    effectiveLogFile);
             return 1;
         }
 
@@ -71,25 +77,34 @@ public class AffectedAppsCommand implements Callable<Integer> {
         try {
             if (this.filesFromFile != null) {
                 if (!this.filesFromFile.exists()) {
-                    CLIHelper.printError("File specified by --files-from-file not found: " + this.filesFromFile.getAbsolutePath(), null, effectiveLogFile);
+                    CLIHelper.printError(
+                            "File specified by --files-from-file not found: "
+                                    + this.filesFromFile.getAbsolutePath(),
+                            null,
+                            effectiveLogFile);
                     return 1;
                 }
                 allModifiedFiles.addAll(CLIHelper.readFilesFromFile(this.filesFromFile));
             }
         } catch (IOException e) {
-            CLIHelper.printError("Error reading files from --files-from-file: " +
-                            (this.filesFromFile != null ? this.filesFromFile.getAbsolutePath() : "null") +
-                            " - " + e.getMessage(),
-                    null, effectiveLogFile);
+            CLIHelper.printError(
+                    "Error reading files from --files-from-file: "
+                            + (this.filesFromFile != null
+                                    ? this.filesFromFile.getAbsolutePath()
+                                    : "null")
+                            + " - "
+                            + e.getMessage(),
+                    null,
+                    effectiveLogFile);
             return 1;
         }
 
         if (allModifiedFiles.isEmpty()) {
             // If outputting to file, write an empty structure. If to console, print a message.
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("affected-apps", new LinkedHashMap<>()); // Empty map of affected apps
-                CLIHelper.writeYamlToFile(yamlRoot, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlRoot, outputFile);
             } else {
                 System.out.println("Affected Applications:");
                 System.out.println("  No modified files provided to check.");
@@ -106,7 +121,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
             List<String> consoleOutputLines = new ArrayList<>();
             boolean anyAppsAffectedOverall = false;
 
-            if (this.outputFile == null) { // Main header for console output
+            if (outputFile == null) { // Main header for console output
                 consoleOutputLines.add("Affected Applications:");
             }
 
@@ -117,11 +132,15 @@ public class AffectedAppsCommand implements Callable<Integer> {
                 if (modifiedFileFullPath.startsWith(appsDirPath.toAbsolutePath().normalize())) {
                     // File is INSIDE appsDir: get path relative TO appsDir.
                     // PathUtil.getRelativePath should normalize to forward slashes.
-                    yamlKeyForModifiedFile = PathUtil.getRelativePath(modifiedFileFullPath, appsDirPath, effectiveLogFile);
+                    yamlKeyForModifiedFile =
+                            PathUtil.getRelativePath(
+                                    modifiedFileFullPath, appsDirPath, effectiveLogFile);
                 } else {
-                    // File is OUTSIDE appsDir: use the path string as originally provided by the user,
+                    // File is OUTSIDE appsDir: use the path string as originally provided by the
+                    // user,
                     // but normalize its separators to forward slashes.
-                    yamlKeyForModifiedFile = modifiedFile.getPath().replace(java.io.File.separator, "/");
+                    yamlKeyForModifiedFile =
+                            modifiedFile.getPath().replace(java.io.File.separator, "/");
                 }
 
                 List<String> relativeAffectedAppPathsForCurrentFile = new ArrayList<>();
@@ -134,49 +153,69 @@ public class AffectedAppsCommand implements Callable<Integer> {
 
                     for (Path app : affectedApps) {
                         // PathUtil should correctly relativize app paths against appsDirPath
-                        relativeAffectedAppPathsForCurrentFile.add(PathUtil.getRelativePath(app, appsDirPath, effectiveLogFile));
+                        relativeAffectedAppPathsForCurrentFile.add(
+                                PathUtil.getRelativePath(app, appsDirPath, effectiveLogFile));
                     }
 
-                    Collections.sort(relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for consistent output
+                    Collections.sort(
+                            relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for
+                    // consistent output
 
-                    if (this.outputFile == null) { // Console output formatting for this file
-                        consoleOutputLines.add("Affected apps by " + yamlKeyForModifiedFile + ":"); // Use yamlKeyForModifiedFile for console too
+                    if (outputFile == null) { // Console output formatting for this file
+                        consoleOutputLines.add(
+                                "Affected apps by "
+                                        + yamlKeyForModifiedFile
+                                        + ":"); // Use yamlKeyForModifiedFile for console too
                         if (relativeAffectedAppPathsForCurrentFile.isEmpty()) {
                             consoleOutputLines.add("  - None");
                         } else {
-                            relativeAffectedAppPathsForCurrentFile.forEach(appPath -> consoleOutputLines.add("  - " + appPath));
+                            relativeAffectedAppPathsForCurrentFile.forEach(
+                                    appPath -> consoleOutputLines.add("  - " + appPath));
                         }
                     }
                 } catch (UnreferencedFileException e) {
                     // relativeAffectedAppPathsForCurrentFile will remain empty
-                    if (this.outputFile == null) { // Console output mode for UnreferencedFileException
-                        consoleOutputLines.add("Affected apps by " + yamlKeyForModifiedFile + ":"); // Use yamlKeyForModifiedFile
+                    if (outputFile == null) { // Console output mode for UnreferencedFileException
+                        consoleOutputLines.add(
+                                "Affected apps by "
+                                        + yamlKeyForModifiedFile
+                                        + ":"); // Use yamlKeyForModifiedFile
                         consoleOutputLines.add("  Warning: " + e.getMessage());
                     } else { // YAML output mode
                         if (effectiveLogFile != null) {
-                            CLIHelper.printWarning(e.getMessage() + " (for modified file: " + yamlKeyForModifiedFile + ")", effectiveLogFile);
+                            CLIHelper.printWarning(
+                                    e.getMessage()
+                                            + " (for modified file: "
+                                            + yamlKeyForModifiedFile
+                                            + ")",
+                                    effectiveLogFile);
                         }
                     }
                 }
                 // Add to YAML map using the determined key
-                affectedAppsDataForYaml.put(yamlKeyForModifiedFile, relativeAffectedAppPathsForCurrentFile);
+                affectedAppsDataForYaml.put(
+                        yamlKeyForModifiedFile, relativeAffectedAppPathsForCurrentFile);
             }
 
             // 4. Conditional Output
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("affected-apps", affectedAppsDataForYaml);
-                CLIHelper.writeYamlToFile(yamlRoot, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlRoot, outputFile);
             } else {
-                consoleOutputLines.forEach(System.out::println); // Print all accumulated console lines
+                consoleOutputLines.forEach(
+                        System.out::println); // Print all accumulated console lines
                 if (!anyAppsAffectedOverall) {
-                    System.out.println("Summary: No applications were found to be affected by the specified file(s).");
+                    System.out.println(
+                            "Summary: No applications were found to be affected by the specified file(s).");
                 }
             }
             return 0;
         } catch (Exception e) {
-            String unexpectedUserMessage = "An unexpected error occurred processing affected-apps. Please check logs for details.";
-            CLIHelper.logRawMessage("UNEXPECTED ERROR in affected-apps: " + e.getMessage(), effectiveLogFile);
+            String unexpectedUserMessage =
+                    "An unexpected error occurred processing affected-apps. Please check logs for details.";
+            CLIHelper.logRawMessage(
+                    "UNEXPECTED ERROR in affected-apps: " + e.getMessage(), effectiveLogFile);
             CLIHelper.logStackTrace(e, effectiveLogFile);
             CLIHelper.printError(unexpectedUserMessage, null, effectiveLogFile);
             return 1;

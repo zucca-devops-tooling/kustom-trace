@@ -1,46 +1,44 @@
-<configuration>
-    <property name="LOG_LEVEL_FILE" value="${log.level.file:-WARN}"/>
-    <property name="LOG_FILE" value="${log.file}"/> <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <property name="DEFAULT_CONSOLE_LOG_LEVEL" value="WARN" />
+    <property name="DEFAULT_FILE_LOG_LEVEL" value="INFO" />
+    <property name="DEFAULT_APP_LOG_LEVEL" value="INFO" /> <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-        <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%ex{short}</pattern>
     </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <level>${kustomtrace.console.loglevel:-${DEFAULT_CONSOLE_LOG_LEVEL}}</level>
+    </filter>
 </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${LOG_FILE}</file>
-        <append>true</append>
+        <file>${LOG_FILE:-kustomtrace-unconfigured.log}</file> <append>true</append>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%ex</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>${LOG_LEVEL_FILE}</level>
+            <level>${kustomtrace.file.loglevel:-${DEFAULT_FILE_LOG_LEVEL}}</level>
         </filter>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT" />
-        <if condition='property("LOG_FILE").exists()'>
+    <logger name="dev.zucca_ops.kustomtrace" level="${kustomtrace.app.loglevel:-${DEFAULT_APP_LOG_LEVEL}}" additivity="false">
+        <if condition='property("LOG_FILE").length() > 0'>
             <then>
                 <appender-ref ref="FILE" />
+            </then>
+            <else>
+                <appender-ref ref="STDOUT" />
+            </else>
+        </if>
+    </logger>
+
+    <root level="WARN"> <appender-ref ref="STDOUT" />
+        <if condition='property("LOG_FILE").length() > 0'>
+            <then>
             </then>
         </if>
     </root>
 
-    <logger name="dev.zucca-ops.kustomtrace-cli" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT" />
-        <if condition='property("LOG_FILE").exists()'>
-            <then>
-                <appender-ref ref="FILE" />
-            </then>
-        </if>
-    </logger>
-
-    <logger name="dev.zucca-ops.kustomtrace" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT" />
-        <if condition='property("LOG_FILE").exists()'>
-            <then>
-                <appender-ref ref="FILE" />
-            </then>
-        </if>
-    </logger>
-</configuration>
+    <logger name="ch.qos.logback" level="ERROR" /> </configuration>

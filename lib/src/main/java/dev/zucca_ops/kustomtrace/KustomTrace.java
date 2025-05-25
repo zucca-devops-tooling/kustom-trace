@@ -20,12 +20,11 @@ import dev.zucca_ops.kustomtrace.exceptions.UnreferencedFileException;
 import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KustomTrace {
 
@@ -52,10 +51,7 @@ public class KustomTrace {
     }
 
     private List<Path> kustomizationsToPath(List<Kustomization> apps) {
-        return apps.stream()
-                .map(Kustomization::getPath)
-                .map(Path::getParent)
-                .toList();
+        return apps.stream().map(Kustomization::getPath).map(Path::getParent).toList();
     }
 
     public List<Path> getAppsWith(Path file) throws UnreferencedFileException {

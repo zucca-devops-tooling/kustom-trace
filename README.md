@@ -29,9 +29,16 @@ KustomTrace is composed of two main modules:
 
 ### Using the CLI
 
-*(Detailed instructions on how to download/build/install the CLI will go here. This might include:*
-* *Links to a releases page if you provide pre-compiled binaries.*
-* *Instructions for building from source, e.g., `./gradlew :kustomtrace-cli:shadowJar` and finding the JAR in `kustomtrace-cli/build/libs/`.)*
+The recommended way to use the KustomTrace CLI is to download the executable JAR from our official **[GitHub Releases page](https://github.com/zucca-devops-tooling/kustom-trace/releases)**.
+
+Once there:
+1.  Choose the version you want to use (e.g., the latest stable release).
+2.  Download the `kustomtrace-cli-VERSION-all.jar` (or similarly named JAR that includes all dependencies).
+3.  You can then run the CLI from your terminal.
+
+**Currently, an executable JAR is provided (requires Java 17+). Native binaries for direct execution without needing a Java installation are planned for future releases.**
+
+See the [KustomTrace CLI README](./cli/README.md) for detailed command usage.
 
 ### Using the Library
 

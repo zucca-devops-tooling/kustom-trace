@@ -139,8 +139,8 @@ class CLIBasicTest {
         // Execute the command
         int exitCode = cmd.execute(
                 "--apps-dir", appsDir.toString(),
-                "app-files", kustomizationApp1Path.toString(),
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "app-files", kustomizationApp1Path.toString()
         );
 
         // Basic assertions
@@ -182,8 +182,8 @@ class CLIBasicTest {
         // 3. Execute command
         int exitCode = cmd.execute(
                 "--apps-dir", appsDir.toString(),
-                "affected-apps", commonBaseYamlPath.toString(), // The "modified" file
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "affected-apps", commonBaseYamlPath.toString()
         );
 
         // 4. Basic Assertions
@@ -243,7 +243,7 @@ class CLIBasicTest {
     }
 
     @Test
-    void testEmptyAppsDir_AffectedAppsCommand_WritesYaml(@TempDir Path tempDir) throws IOException {
+    void testEmptyAppsDir_AffectedAppsCommand_WritesYaml(@TempDir Path tempDir) {
         Path emptyAppsDir = Paths.get( "src", "test", "resources", "app-with-no-kustomization");
         Path modifiedFile = emptyAppsDir.resolve("deployment.yml");
 
@@ -251,10 +251,10 @@ class CLIBasicTest {
         String expectedResourceFileName = "unreferenced-file.yaml";
 
         int exitCode = cmd.execute(
-                "--apps-dir", emptyAppsDir.toString(),      // Pointing to an empty directory
+                "--apps-dir", emptyAppsDir.toString(), // Pointing to an empty directory
+                "--output", actualOutputFile.toString(),
                 "affected-apps",
-                modifiedFile.toString(),               // The "modified file"
-                "--output", actualOutputFile.toString()
+                modifiedFile.toString()
         );
 
         // 1. Basic Assertions

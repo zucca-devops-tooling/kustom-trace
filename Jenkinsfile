@@ -37,7 +37,7 @@ pipeline {
                 script {
                     setStatus('spotless','NEUTRAL','Checking code format...')
                     try {
-                        sh './gradlew check -x test --no-daemon'
+                        sh "./gradlew check -x test --no-daemon"
                         setStatus('spotless','SUCCESS','Spotless passed')
                     } catch (Exception e) {
                         setStatus('spotless','FAILURE','Spotless failed')
@@ -50,7 +50,7 @@ pipeline {
                 script {
                     setStatus('test','NEUTRAL','Running tests...')
                     try {
-                        sh './gradlew :kustomtrace:test --no-daemon'
+                        sh "./gradlew :kustomtrace:test --no-daemon"
                         setStatus('test','SUCCESS','Tests passed')
                     } catch (Exception e) {
                         setStatus('test','FAILURE','Tests failed')
@@ -63,7 +63,7 @@ pipeline {
                 script {
                     setStatus('functionalTest','NEUTRAL','Running functional tests...')
                     try {
-                        sh './gradlew :functional-test:test --no-daemon --info'
+                        sh "./gradlew :functional-test:test --no-daemon --info"
                         setStatus('functionalTest','SUCCESS','Functional test passed')
                     } catch (Exception e) {
                         setStatus('functionalTest','FAILURE','Functional test failed')
@@ -71,11 +71,12 @@ pipeline {
                 }
             }
         }
-        stage('Publish to Maven repository') {
+        stage('Publish library') {
             when {
                 anyOf {
-                    // branch 'main' disable until mavenCentral publish is completed
-                    expression { sh (script: "git log -1 --pretty=%B | grep 'publish'", returnStatus: true) == 0 } // Avoid pushing snapshots on every commit
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishLib'", returnStatus: true) == 0 } // Matches a commit message including publishLib
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
                 }
             }
             environment {
@@ -104,16 +105,87 @@ pipeline {
                 }
             }
         }
-        /*
-        stage('Git Tag') {
+        stage('Publish cli') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishCli'", returnStatus: true) == 0 } // Matches a commit message including publishCli
+                    expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
+                }
             }
             steps {
-                sh './gradlew tagRelease --no-daemon'
+                withCredentials([
+                    file(credentialsId: 'GPG_SECRET_KEY', variable: 'GPG_KEY_PATH')
+                ]) {
+                    sh '''#!/bin/bash
+                        set -euo pipefail
+
+                        export GPG_ASC_ARMOR="$(cat $GPG_KEY_PATH)"
+
+                        ./gradlew :kustomtrace-cli:publish --info --no-daemon \
+                            -PgithubPackagesUsername=$GH_CREDENTIALS_USR \
+                            -PgithubPackagesPassword=$GH_CREDENTIALS_PSW \
+                    '''
+                }
             }
         }
-        */
+        stage('Tag') {
+            when {
+                allOf{
+                    expression {
+                        def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                        return commitMessage.contains('[release]')
+                    }
+                    branch 'main'
+                }
+            }
+            steps {
+                sh './gradlew tagRelease'
+            }
+        }
+        stage('Release') {
+            when {
+                allOf{
+                    expression {
+                        def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                        return commitMessage.contains('[release]')
+                    }
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    releaseVersion = sh(script: "./gradlew properties -q -Pquiet | grep '^version:' | awk '{print \$2}'", returnStdout: true).trim()
+                    echo "Read project version for release: ${releaseVersion}"
+
+                    def changelogNotes = sh(script: """
+                        awk '/^## \\[${releaseVersion}\\]/{flag=1; next} /^## \\[/{flag=0} flag' CHANGELOG.md
+                    """, returnStdout: true).trim()
+
+                    if (changelogNotes.isEmpty()) {
+                        changelogNotes = "No specific changelog notes found for this version."
+                    }
+
+                    def shadowJarPath = sh(script: "find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print -quit", returnStdout: true).trim()
+                    if (!shadowJarPath) {
+                        error("CLI Shadow JAR not found after build!")
+                    }
+
+                    def tagName = "v${releaseVersion}"
+                    sh "git push https://$GH_CREDENTIALS_USR:$GH_CREDENTIALS_PSW@github.com/zucca-devops-tooling/kustom-trace.git ${tagName}"
+
+
+                    sh """
+                        export GH_TOKEN="$GH_CREDENTIALS_PSW"
+                        gh release create ${tagName} \\
+                            "${shadowJarPath}" \\
+                            --title "Release ${tagName}" \\
+                            --notes "${changelogNotes}"
+                    """
+                    echo "GitHub Release ${tagName} created."
+                }
+            }
+        }
     }
 }
 

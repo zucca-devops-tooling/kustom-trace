@@ -19,11 +19,6 @@ import dev.zucca_ops.kustomtrace.KustomTrace;
 import dev.zucca_ops.kustomtrace.cli.KustomTraceCLI;
 import dev.zucca_ops.kustomtrace.cli.util.CLIHelper;
 import dev.zucca_ops.kustomtrace.cli.util.PathUtil;
-import dev.zucca_ops.kustomtrace.exceptions.KustomException;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParentCommand;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,31 +26,36 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.ParentCommand;
 
-@Command(name = "list-root-apps", mixinStandardHelpOptions = true,
-        description = "Lists all root Kustomize applications (e.g., directories not referenced by other kustomizations).")
+@Command(
+        name = "list-root-apps",
+        mixinStandardHelpOptions = true,
+        description =
+                "Lists all root Kustomize applications (e.g., directories not referenced by other kustomizations).")
 public class ListRootAppsCommand implements Callable<Integer> {
 
-    @ParentCommand
-    private KustomTraceCLI parentCLI;
-
-    @Option(names = {"-o", "--output"}, paramLabel = "<file>",
-            description = "Output the list of root applications to the specified YAML file.")
-    private File outputFile;
+    @ParentCommand private KustomTraceCLI parentCLI;
 
     @Override
-    public Integer call() throws Exception {
-        File effectiveAppsDir = parentCLI.getAppsDir(); // Assuming public getter in KustomTraceCLI
-        File effectiveLogFile = parentCLI.getLogFile(); // Assuming public getter
+    public Integer call() {
+        File effectiveAppsDir = parentCLI.getAppsDir();
+        File effectiveLogFile = parentCLI.getLogFile();
+        File outputFile = parentCLI.getOutputFile();
 
         // 1. Initial Validations for --apps-dir
         if (effectiveAppsDir == null) {
-            CLIHelper.printError("Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
+            CLIHelper.printError(
+                    "Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
             return 1;
         }
         final Path appsDirPathGlobal = effectiveAppsDir.toPath().toAbsolutePath().normalize();
         if (!Files.isDirectory(appsDirPathGlobal)) {
-            CLIHelper.printError("Invalid --apps-dir (not a directory or does not exist): " + appsDirPathGlobal, null, effectiveLogFile);
+            CLIHelper.printError(
+                    "Invalid --apps-dir (not a directory or does not exist): " + appsDirPathGlobal,
+                    null,
+                    effectiveLogFile);
             return 1;
         }
 
@@ -68,30 +68,38 @@ public class ListRootAppsCommand implements Callable<Integer> {
 
             // Convert to paths relative to appsDirPathGlobal for display and YAML
             final File finalEffectiveLogFile = effectiveLogFile; // For use in lambda
-            List<String> rootAppDisplayPaths = absoluteRootAppPaths.stream()
-                    .map(absoluteAppPath -> PathUtil.getRelativePath(absoluteAppPath, appsDirPathGlobal, finalEffectiveLogFile))
-                    .sorted() // Sort for consistent output order
-                    .toList();
+            List<String> rootAppDisplayPaths =
+                    absoluteRootAppPaths.stream()
+                            .map(
+                                    absoluteAppPath ->
+                                            PathUtil.getRelativePath(
+                                                    absoluteAppPath,
+                                                    appsDirPathGlobal,
+                                                    finalEffectiveLogFile))
+                            .sorted() // Sort for consistent output order
+                            .toList();
 
             // 3. Conditional Output
-            if (this.outputFile != null) {
+            if (outputFile != null) {
                 // YAML output
                 Map<String, List<String>> yamlOutput = new LinkedHashMap<>();
                 yamlOutput.put("root-apps", rootAppDisplayPaths);
-                CLIHelper.writeYamlToFile(yamlOutput, this.outputFile);
+                CLIHelper.writeYamlToFile(yamlOutput, outputFile);
             } else {
                 // Verbose console output
                 if (rootAppDisplayPaths.isEmpty()) {
                     System.out.println("No root applications found in: " + appsDirPathGlobal);
                 } else {
-                    CLIHelper.printOutput("Root Applications:", rootAppDisplayPaths, null); // Using your 3-arg printOutput
+                    CLIHelper.printOutput("Root Applications:", rootAppDisplayPaths, null);
                 }
             }
-            return 0; // Success
+            return 0;
 
         } catch (Exception e) {
-            String unexpectedUserMessage = "An unexpected error occurred while listing root apps. Please check logs for details.";
-            CLIHelper.logRawMessage("UNEXPECTED ERROR in list-root-apps: " + e.getMessage(), effectiveLogFile);
+            String unexpectedUserMessage =
+                    "An unexpected error occurred while listing root apps. Please check logs for details.";
+            CLIHelper.logRawMessage(
+                    "UNEXPECTED ERROR in list-root-apps: " + e.getMessage(), effectiveLogFile);
             CLIHelper.logStackTrace(e, effectiveLogFile);
             CLIHelper.printError(unexpectedUserMessage, null, effectiveLogFile);
             return 1;

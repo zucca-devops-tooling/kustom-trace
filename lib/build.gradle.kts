@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("dev.zucca-ops.gradle-publisher") version "1.0.4"
+    id("signing")
 }
 
 group = "dev.zucca-ops"
@@ -24,6 +25,11 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 publishing {
@@ -55,23 +61,28 @@ publishing {
     }
 }
 
-afterEvaluate {
-    tasks.matching { it.name == "publishPluginMavenPublicationToLocalRepository" }.configureEach {
-        dependsOn("signMavenPublication")
-    }
-    tasks.matching { it.name == "publishMavenPublicationToLocalRepository" }.configureEach {
-        dependsOn("signPluginMavenPublication")
+signing {
+    val keyId = findProperty("signing.keyId") as String?
+    val password = findProperty("signing.password") as String?
+    val keyPath = findProperty("signing.secretKeyRingFile")?.toString()
+
+    if (!keyId.isNullOrBlank() && !password.isNullOrBlank() && !keyPath.isNullOrBlank()) {
+        logger.lifecycle("🔐 Using GPG secret key file at $keyPath")
+        useInMemoryPgpKeys(File(keyPath).readText(), password)
+        publishing.publications.withType<MavenPublication>().configureEach {
+            signing.sign(this)
+        }
+    } else {
+        logger.warn("🔐 File-based signing skipped: missing keyId, password, or key file")
     }
 }
 
 publisher {
     prod {
-        //target = "mavenCentral"
-        //usernameProperty = "mavenCentralUsername"
-        //passwordProperty = "mavenCentralPassword"
-        target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
-        usernameProperty = "githubPackagesUsername"
-        passwordProperty = "githubPackagesPassword"
+        target = "mavenCentral"
+        usernameProperty = "mavenCentralUsername"
+        passwordProperty = "mavenCentralPassword"
+        sign = true
     }
     dev {
         target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
@@ -80,4 +91,5 @@ publisher {
         sign = false
     }
     gitFolder = "../"
+    releaseBranchPatterns = listOf("PR-17")
 }
