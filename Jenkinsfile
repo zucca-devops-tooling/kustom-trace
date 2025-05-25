@@ -24,13 +24,63 @@ pipeline {
                     setStatus('build','NEUTRAL','Building the project...')
                     try {
                         sh "./gradlew clean assemble --info --no-daemon"
-                        def shadowJarPath = sh(script: "find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print -quit", returnStdout: true).trim()
-                            if (shadowJarPath) {
-                                stash name: 'cliShadowJar', includes: shadowJarPath, allowEmpty: false
-                                echo "Stashed ${shadowJarPath}"
-                            } else {
-                                error "CLI Shadow JAR not found after build in Build stage!"
-                            }
+
+                echo "-----------------------------------------------------"
+                echo "DEBUGGING FILE EXISTENCE AFTER GRADLE BUILD:"
+                echo "-----------------------------------------------------"
+
+                echo "Current working directory (pwd):"
+                sh "pwd"
+                echo "-----------------------------------------------------"
+
+                echo "Checking if 'cli/build/libs' directory exists:"
+                sh "if [ -d 'cli/build/libs' ]; then echo 'cli/build/libs directory EXISTS.'; else echo 'cli/build/libs directory DOES NOT EXIST!'; fi"
+                echo "-----------------------------------------------------"
+
+                echo "Listing contents of 'cli/build/libs' (if it exists):"
+                sh "ls -Al cli/build/libs/ || echo 'Could not list cli/build/libs - does it exist or is it empty?'"
+                echo "-----------------------------------------------------"
+
+                echo "Full recursive listing of 'cli/build' (to see where libs might be):"
+                sh "ls -AlR cli/build || echo 'Could not list cli/build'"
+                echo "-----------------------------------------------------"
+
+                // Now, let's try to find the file
+                // This uses the shell's globbing first, which is very simple
+                echo "Attempting to find JAR using shell globbing (ls):"
+                // We use set +e to prevent the script from exiting if ls finds no files
+                // and set -e to re-enable exiting on error afterwards.
+                def lsOutput = sh(script: "set +e; ls cli/build/libs/kustomtrace-cli-*-all.jar; set -e", returnStdout: true).trim()
+
+                if (lsOutput && !lsOutput.contains("No such file or directory")) {
+                    echo "SUCCESS (ls): Found JAR(s): ${lsOutput}"
+                    // If you are stashing, you'd typically want just one.
+                    // If lsOutput might contain multiple lines if there are multiple matches (unlikely for -all.jar)
+                    // We can take the first line for simplicity if needed:
+                    def firstJarFound = lsOutput.tokenize('\n')[0]
+                    echo "Using first JAR found by ls: ${firstJarFound}"
+                    // stash name: 'cliShadowJar', includes: firstJarFound.substring(firstJarFound.indexOf("cli/")), allowEmpty: false
+                    // The substring might be needed if ls gives a full path from somewhere unexpected
+                } else {
+                    echo "FAILURE (ls): Shell globbing (ls) did not find the JAR."
+                    echo "Output of ls command was: '${lsOutput}'"
+
+                    echo "-----------------------------------------------------"
+                    echo "Attempting to find JAR using 'find' command again for diagnostics:"
+                    def findJarScript = "find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print" // Removed -quit for more info
+                    echo "Executing find script: ${findJarScript}"
+                    def findOutput = sh(script: findJarScript, returnStdout: true, returnStatus: true)
+
+                    if (findOutput.status == 0 && findOutput.stdout.trim()) {
+                        echo "DEBUG (find): Found JAR(s): ${findOutput.stdout.trim()}"
+                         error("CLI Shadow JAR found by find but NOT by ls. This is strange. Please check logs.")
+                    } else {
+                        echo "DEBUG (find): 'find' command status: ${findOutput.status}"
+                        echo "DEBUG (find): 'find' command output: ${findOutput.stdout.trim()}"
+                        error("CLI Shadow JAR not found by 'ls' or 'find' in Build stage! Check all 'ls' outputs above to see file structure and names.")
+                    }
+                }
+                echo "-----------------------------------------------------"
                         setStatus('build','SUCCESS','Build succeeded')
                     } catch (Exception e) {
                         setStatus('build','FAILURE','Build failed')
