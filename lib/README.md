@@ -170,6 +170,3 @@ if (dependencyNode.isKustomFile()) {
 ```gradle
 implementation 'dev.zucca_ops:kustomtrace-lib:1.0.0
 ```
-
-
-*(Note: Javadoc generated from your documented source code using `gradle javadoc` or `mvn javadoc:javadoc` would be the primary way to provide detailed API documentation. This README gives an overview and usage patterns.)*
