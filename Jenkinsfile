@@ -23,7 +23,7 @@ pipeline {
                 script {
                     setStatus('build','NEUTRAL','Building the project...')
                     try {
-                        sh "./gradlew clean assemble --info --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
+                        sh "./gradlew clean assemble --info --no-daemon"
                         setStatus('build','SUCCESS','Build succeeded')
                     } catch (Exception e) {
                         setStatus('build','FAILURE','Build failed')
@@ -37,7 +37,7 @@ pipeline {
                 script {
                     setStatus('spotless','NEUTRAL','Checking code format...')
                     try {
-                        sh "./gradlew check -x test --no-daemon -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
+                        sh "./gradlew check -x test --no-daemon"
                         setStatus('spotless','SUCCESS','Spotless passed')
                     } catch (Exception e) {
                         setStatus('spotless','FAILURE','Spotless failed')
@@ -50,7 +50,7 @@ pipeline {
                 script {
                     setStatus('test','NEUTRAL','Running tests...')
                     try {
-                        sh "./gradlew :kustomtrace:test --no-daemon  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
+                        sh "./gradlew :kustomtrace:test --no-daemon"
                         setStatus('test','SUCCESS','Tests passed')
                     } catch (Exception e) {
                         setStatus('test','FAILURE','Tests failed')
@@ -63,7 +63,7 @@ pipeline {
                 script {
                     setStatus('functionalTest','NEUTRAL','Running functional tests...')
                     try {
-                        sh "./gradlew :functional-test:test --no-daemon --info  -PgithubPackagesUsername=$GH_CREDENTIALS_USR -PgithubPackagesPassword=$GH_CREDENTIALS_PSW"
+                        sh "./gradlew :functional-test:test --no-daemon --info"
                         setStatus('functionalTest','SUCCESS','Functional test passed')
                     } catch (Exception e) {
                         setStatus('functionalTest','FAILURE','Functional test failed')
@@ -129,16 +129,49 @@ pipeline {
                 }
             }
         }
-        /*
-        stage('Git Tag') {
+        stage('Release') {
             when {
-                branch 'main'
+                allOf{
+                    expression {
+                        def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                        return commitMessage.contains('[release]')
+                    }
+                    branch 'PR-17'
+                }
             }
             steps {
-                sh './gradlew tagRelease --no-daemon'
+                script {
+                    releaseVersion = sh(script: "./gradlew properties -q -Pquiet | grep '^version:' | awk '{print \$2}'", returnStdout: true).trim()
+                    echo "Read project version for release: ${releaseVersion}"
+
+                    def changelogNotes = sh(script: """
+                        awk '/^## \\[${releaseVersion}\\]/{flag=1; next} /^## \\[/{flag=0} flag' CHANGELOG.md
+                    """, returnStdout: true).trim()
+
+                    if (changelogNotes.isEmpty()) {
+                        changelogNotes = "No specific changelog notes found for this version."
+                    }
+
+                    def shadowJarPath = sh(script: "find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print -quit", returnStdout: true).trim()
+                    if (!shadowJarPath) {
+                        error("CLI Shadow JAR not found after build!")
+                    }
+
+                    def tagName = "v${releaseVersion}"
+                    sh "git push https://$GH_CREDENTIALS_USR:$GH_CREDENTIALS_PSW@github.com/zucca-devops-tooling/kustom-trace.git ${tagName}"
+
+
+                    sh """
+                        export GH_TOKEN="$GH_CREDENTIALS_PSW"
+                        gh release create ${tagName} \\
+                            "${shadowJarPath}" \\
+                            --title "Release ${tagName}" \\
+                            --notes "${changelogNotes}"
+                    """
+                    echo "GitHub Release ${tagName} created."
+                }
             }
         }
-        */
     }
 }
 
