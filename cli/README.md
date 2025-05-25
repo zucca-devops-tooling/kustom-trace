@@ -4,17 +4,28 @@ The KustomTrace Command-Line Interface (CLI) allows you to analyze Kustomize dir
 
 ## Installation
 
-*(Provide instructions on how to obtain or build the CLI executable. Examples:)*
-* *Download pre-compiled binaries from the [Releases page](link-to-releases).*
-* *Build from source: `./gradlew :kustomtrace-cli:shadowJar` (or equivalent) and find the executable JAR in `kustomtrace-cli/build/libs/`.)*
+1.  Go to the **[KustomTrace GitHub Releases page](https://github.com/zucca-devops-tooling/kustom-trace/releases)**.
+2.  Select the desired release version (e.g., the latest stable release).
+3.  From the "Assets" section of that release, download the `kustomtrace-cli-VERSION-all.jar` file (this is an executable "fat JAR" containing all dependencies).
 
-**Basic Invocation:**
-The general way to run the CLI is:
+**Requirements:**
+* Java 17 (or newer) is required to run the JAR.
 
+*(Native binaries for direct execution without needing a Java installation are planned for future releases.)*
+
+## Basic Invocation
 ```bash
-java -jar kustomtrace-cli-VERSION.jar [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]
+java -jar /path/to/your/downloaded/kustomtrace-cli-VERSION-all.jar [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]
 ```
-*(Or, if you provide a wrapper script: `kustomtrace [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]`)*
+
+For easier use, you might want to:
+* Place the JAR in a directory that's in your system's `PATH`.
+* Create a shell alias or a small wrapper script (e.g., `kustomtrace`) to simplify the invocation.
+
+**Example:**
+```bash
+java -jar kustomtrace-cli-0.1.0-all.jar list-root-apps -a ./my-k8s-configs
+```
 
 ## Global Options
 
