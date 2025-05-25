@@ -22,7 +22,7 @@ tasks.named("build") {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set("kustomtrace")
+    archiveBaseName.set("kustomtrace-cli")
     archiveClassifier.set("all") // Creates 'kustomtrace-all.jar'
     manifest {
         // Access the mainClass from the application extension
