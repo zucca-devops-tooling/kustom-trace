@@ -150,7 +150,7 @@ pipeline {
                         def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
                         return commitMessage.contains('[release]')
                     }
-                    branch 'PR-17'
+                    branch 'main'
                 }
             }
             steps {
