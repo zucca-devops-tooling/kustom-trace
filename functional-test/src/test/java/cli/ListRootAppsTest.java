@@ -56,8 +56,8 @@ public class ListRootAppsTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
-                "list-root-apps",
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "list-root-apps"
         );
         assertEquals(0, exitCode);
 
@@ -77,8 +77,8 @@ public class ListRootAppsTest {
 
         int exitCode = cmd.execute(
                 "--apps-dir", appsPath.toString(),
-                "list-root-apps",
-                "--output", actualOutputFile.toString()
+                "--output", actualOutputFile.toString(),
+                "list-root-apps"
         );
         assertEquals(0, exitCode);
 
