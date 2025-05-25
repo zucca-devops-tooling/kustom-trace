@@ -24,6 +24,13 @@ pipeline {
                     setStatus('build','NEUTRAL','Building the project...')
                     try {
                         sh "./gradlew clean assemble --info --no-daemon"
+                        def shadowJarPath = sh(script: "find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print -quit", returnStdout: true).trim()
+                            if (shadowJarPath) {
+                                stash name: 'cliShadowJar', includes: shadowJarPath, allowEmpty: false
+                                echo "Stashed ${shadowJarPath}"
+                            } else {
+                                error "CLI Shadow JAR not found after build in Build stage!"
+                            }
                         setStatus('build','SUCCESS','Build succeeded')
                     } catch (Exception e) {
                         setStatus('build','FAILURE','Build failed')
