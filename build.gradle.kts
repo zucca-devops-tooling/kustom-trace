@@ -26,3 +26,17 @@ subprojects {
         }
     }
 }
+
+tasks.register("tagRelease") {
+    group = "release"
+    description = "Tags the current version from build.gradle.kts in Git"
+
+    doLast {
+        val version = project.version.toString()
+        val tagName = "v$version"
+
+        exec {
+            commandLine("git", "tag", "-a", tagName, "-m", "Release $tagName")
+        }
+    }
+}

@@ -129,6 +129,20 @@ pipeline {
                 }
             }
         }
+        stage('Tag') {
+            when {
+                allOf{
+                    expression {
+                        def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                        return commitMessage.contains('[release]')
+                    }
+                    branch 'PR-17'
+                }
+            }
+            steps {
+                sh './gradlew tagRelease'
+            }
+        }
         stage('Release') {
             when {
                 allOf{
