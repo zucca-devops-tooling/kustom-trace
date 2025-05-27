@@ -133,14 +133,15 @@ public class ReferenceExtractors {
 
     /**
      * Returns a {@link ReferenceExtractor} for Kustomize fields (e.g., 'bases', 'components')
-     * that must reference directories. The extractor first validates that the resolved path
-     * is a directory. It then attempts to find a kustomization definition file
-     * (e.g., "kustomization.yaml") within that directory using
-     * {@link KustomizeFileUtil#getKustomizationFileFromAppDirectory(Path)}.
+     * that must reference directories.
+     * <p>
+     * The returned extractor expects the resolved path to be a directory and will then
+     * attempt to find a kustomization definition file (e.g., "kustomization.yaml") within it.
      *
-     * @return A stream containing the single {@link Path} to the resolved kustomization definition file.
-     * @throws InvalidReferenceException if the resolved path from {@code referenceValue} is not a directory,
-     * or if the directory does not contain a valid kustomization definition, or if it's a self-reference.
+     * @return A {@link ReferenceExtractor}. Its {@code extract} method returns a stream with a
+     * single {@link Path} to the resolved kustomization definition file. The {@code extract}
+     * method may throw an {@link InvalidReferenceException} if the input path is not a directory,
+     * if no valid kustomization definition is found, or if a self-reference is detected.
      */
     public static ReferenceExtractor directory() {
         return (referenceValue, baseDir) -> {
@@ -162,7 +163,7 @@ public class ReferenceExtractors {
      *
      * @return A stream containing the resolved {@link Path} to either a kustomization
      * definition file or a validated Kubernetes resource file.
-     * @throws InvalidReferenceException if the path is neither a valid Kustomization
+     * method may throw an {@link InvalidReferenceException} if the input path is not a directory,
      * target nor a valid, existing Kubernetes resource file.
      */
     public static ReferenceExtractor resourceOrDirectory() {

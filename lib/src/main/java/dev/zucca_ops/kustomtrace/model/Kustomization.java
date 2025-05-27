@@ -18,6 +18,8 @@ package dev.zucca_ops.kustomtrace.model;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
+
+import dev.zucca_ops.kustomtrace.parser.YamlParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,8 @@ public class Kustomization extends GraphNode {
     // The parsed content (YAML map) of the kustomization file.
     private final Map<String, Object> content;
 
+    private final String kind;
+
     private static final Logger logger = LoggerFactory.getLogger(Kustomization.class);
 
     /**
@@ -42,7 +46,13 @@ public class Kustomization extends GraphNode {
     public Kustomization(Path path, Map<String, Object> content) {
         super(path);
         this.content = Objects.requireNonNull(content, "Kustomization content cannot be null.");
+        this.kind = Objects.requireNonNullElse(YamlParser.getKind(content), "Kustomization");
+        if (Stream.of("Kustomization", "Component").noneMatch(this.kind::equals)) {
+            logger.warn("Incorrect kind on kustomization file " + this.path);
+        }
     }
+
+
 
     /**
      * Returns the parsed content (YAML map) of this kustomization file.
@@ -75,7 +85,7 @@ public class Kustomization extends GraphNode {
      * @return Always "Kustomization" for this class.
      */
     public String getKind() { // Consider if this should be an @Override if GraphNode defines it
-        return "Kustomization";
+        return kind;
     }
 
     /**

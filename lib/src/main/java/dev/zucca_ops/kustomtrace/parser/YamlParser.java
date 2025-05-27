@@ -136,4 +136,27 @@ public class YamlParser {
 
         return fileContent.get(0);
     }
-}
+
+    /**
+     * Safely extracts the 'kind' attribute as a String from a parsed YAML document.
+     *
+     * @param document A Map representing the parsed YAML document.
+     * @return The String value of the 'kind' field if present and a String;
+     * otherwise, returns {@code null}.
+     */
+    public static String getKind(Map<String, Object> document) {
+        Object kindObj = document.get("kind");
+        if (kindObj instanceof String) {
+            return (String) kindObj;
+        } else {
+            if (document.containsKey("kind")) {
+                logger.debug(
+                        "Resource 'kind' is present but not a String. Found: {}. Document snippet: {}",
+                        kindObj != null ? kindObj.getClass().getName() : "null",
+                        document.keySet());
+            }
+        }
+
+        return null;
+    }
+ }
