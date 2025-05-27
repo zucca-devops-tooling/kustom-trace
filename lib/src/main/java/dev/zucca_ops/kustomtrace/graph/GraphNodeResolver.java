@@ -82,17 +82,7 @@ public class GraphNodeResolver {
         logger.trace("Resolving KustomResource from document");
         KustomResource resource = new KustomResource();
 
-        Object kindObj = document.get("kind");
-        if (kindObj instanceof String) {
-            resource.setKind((String) kindObj);
-        } else {
-            if (document.containsKey("kind")) {
-                logger.debug(
-                        "Resource 'kind' is present but not a String. Found: {}. Document snippet: {}",
-                        kindObj != null ? kindObj.getClass().getName() : "null",
-                        document.keySet());
-            }
-        }
+        resource.setKind(YamlParser.getKind(document));
 
         Object metadataObj = document.get("metadata");
         if (metadataObj instanceof Map) {

@@ -15,12 +15,11 @@
  */
 package dev.zucca_ops.kustomtrace.parser;
 
+import static dev.zucca_ops.kustomtrace.parser.KustomizeFileUtil.isDirectory;
+
 import dev.zucca_ops.kustomtrace.exceptions.InvalidReferenceException;
 import dev.zucca_ops.kustomtrace.exceptions.NotAnAppException;
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -112,74 +111,71 @@ public class ReferenceExtractors {
     }
 
     /**
-     * Returns a {@link ReferenceExtractor} for resolving references to other Kustomization files
-     * (e.g., in 'bases' or 'resources' fields that point to kustomizations).
-     * It uses {@link KustomizeFileUtil#getKustomizationFileFromAppDirectory(Path)} to resolve
-     * the reference to a canonical kustomization file path.
+     * Helper to resolve a path to a canonical Kustomization file.
+     * @throws InvalidReferenceException if path doesn't lead to a valid Kustomization.
      */
-    public static ReferenceExtractor kustomizationFile() {
+    private static Path extractKustomization(Path path, Path baseDir)
+            throws InvalidReferenceException {
+        if (path.equals(baseDir.normalize())) {
+            throw new InvalidReferenceException(
+                    "Self reference to kustomization directory not allowed: " + path.getFileName(),
+                    path,
+                    true);
+        }
+
+        try {
+            return KustomizeFileUtil.getKustomizationFileFromAppDirectory(path);
+        } catch (NotAnAppException e) {
+            throw new InvalidReferenceException(
+                    "Expected directory with Kustomization inside: " + path, path, e);
+        }
+    }
+
+    /**
+     * Returns a {@link ReferenceExtractor} for Kustomize fields (e.g., 'bases', 'components')
+     * that must reference directories.
+     * <p>
+     * The returned extractor expects the resolved path to be a directory and will then
+     * attempt to find a kustomization definition file (e.g., "kustomization.yaml") within it.
+     *
+     * @return A {@link ReferenceExtractor}. Its {@code extract} method returns a stream with a
+     * single {@link Path} to the resolved kustomization definition file. The {@code extract}
+     * method may throw an {@link InvalidReferenceException} if the input path is not a directory,
+     * if no valid kustomization definition is found, or if a self-reference is detected.
+     */
+    public static ReferenceExtractor directory() {
         return (referenceValue, baseDir) -> {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
-            if (path.equals(baseDir.normalize())) {
-                throw new InvalidReferenceException(
-                        "Self reference to kustomization directory not allowed: " + referenceValue,
-                        path,
-                        true);
+            if (!isDirectory(path)) {
+                throw new InvalidReferenceException("Expected a directory", path, true);
             }
 
-            try {
-                return Stream.of(KustomizeFileUtil.getKustomizationFileFromAppDirectory(path));
-            } catch (NotAnAppException e) {
-                throw new InvalidReferenceException(
-                        "Invalid directory or kustomization file referenced: " + path, path, e);
-            }
+            return Stream.of(extractKustomization(path, baseDir));
         };
     }
 
     /**
-     * Returns a {@link ReferenceExtractor} for resolving references that can be either a direct
-     * Kubernetes resource file or a directory containing multiple Kubernetes resource files.
+     * Extractor for Kustomize 'resources' field entries.
      * <p>
-     * If the path is a directory, it streams all valid Kubernetes resource files within that directory.
-     * If the path is a file, it validates it as a Kubernetes resource file.
+     * Attempts to resolve the path as a Kustomization target first.
+     * If that fails, it treats the path as a direct Kubernetes resource file.
+     *
+     * @return A stream containing the resolved {@link Path} to either a kustomization
+     * definition file or a validated Kubernetes resource file.
+     * method may throw an {@link InvalidReferenceException} if the input path is not a directory,
+     * target nor a valid, existing Kubernetes resource file.
      */
     public static ReferenceExtractor resourceOrDirectory() {
         return (referenceValue, baseDir) -> {
             Path path = baseDir.resolve(validateNonMultilineString(referenceValue)).normalize();
 
-            if (Files.isDirectory(path)) {
-                logger.trace(
-                        "Path '{}' is a directory. Listing valid Kubernetes resources within.",
-                        path);
-
-                String[] directoryContents = new File(path.toAbsolutePath().toString()).list();
-
-                if (directoryContents == null) {
-                    throw new InvalidReferenceException(
-                            "Could not list directory contents (not a directory or I/O error).",
-                            path);
-                }
-                if (directoryContents.length == 0) {
-                    logger.warn(
-                            "Directory referenced by '{}' is empty. No resources to stream.", path);
-                    // Kustomize allows empty directories in resources, this means no resources from
-                    // this path.
-                    return Stream.empty();
-                }
-
-                return Arrays.stream(directoryContents)
-                        .map(path::resolve)
-                        .filter(KustomizeFileUtil::isValidKubernetesResource)
-                        .filter(KustomizeFileUtil::isFile)
-                        .peek(
-                                resolvedPath ->
-                                        logger.trace(
-                                                "Found valid resource file in directory: {}",
-                                                resolvedPath));
+            if (isDirectory(path)) {
+                logger.trace("Path '{}' is a directory. finding kustomization within.", path);
+                return Stream.of(extractKustomization(path, baseDir));
             }
 
-            // If not a directory, treat as a single resource file
+            logger.trace("Path '{}' is a file.", path);
             return Stream.of(validateKubernetesResource(path));
         };
     }

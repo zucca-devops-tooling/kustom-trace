@@ -3,3 +3,4 @@ bases:
   - base-directory-reference                      # Referencing the directory (should pick up kustomization.yaml inside)
   - non-existing-base
   - invalid-reference.yaml
+  - base-with-empty-kustomization

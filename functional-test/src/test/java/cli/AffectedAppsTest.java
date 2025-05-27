@@ -138,7 +138,7 @@ public class AffectedAppsTest {
         String baseResourceOneYaml = resourcesDir
                 .resolve("all-reference-types-apps")
                 .resolve("app-base")
-                .resolve("base-kustomization-reference")
+                .resolve("base-directory-reference")
                 .resolve("base-resource-one.yaml").toString();
         String baseResourceTwoYaml = resourcesDir
                 .resolve("app-with-unparseable-kustomization")

@@ -48,14 +48,14 @@ To use KustomTrace as a Java library, add it as a dependency to your project.
 ```xml
 <dependency>
     <groupId>dev.zucca-ops</groupId>
-    <artifactId>kustomtrace</artifactId> <version>1.0.0</version>
+    <artifactId>kustomtrace</artifactId> <version>1.0.1</version>
 </dependency>
 ```
 
 
 **(Example - Gradle)**
 ```gradle
-implementation 'dev.zucca-ops:kustomtrace:1.0.0'
+implementation 'dev.zucca-ops:kustomtrace:1.0.1'
 ```
 
 

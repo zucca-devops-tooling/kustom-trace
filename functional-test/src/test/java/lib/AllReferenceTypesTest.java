@@ -86,21 +86,10 @@ public class AllReferenceTypesTest {
     }
 
     @Test
-    void testBaseKustomizationReference() {
-        String folderName = "base-kustomization-reference";
-        String appName = "app-base";
-        String resource = "base-resource-one.yaml";
-        String kind = "ConfigMap";
-        String kustomizationName = "kustomization.yaml";
-
-        assertDirectoryDependency(appName, folderName, kustomizationName, resource, kind);
-    }
-
-    @Test
     void testBaseDirectoryReference() {
         String folderName = "base-directory-reference";
         String appName = "app-base";
-        String resource = "base-resource-two.yml";
+        String resource = "base-resource-one.yaml";
         String kind = "Secret";
         String kustomizationName = "kustomization.yml";
 
@@ -204,30 +193,19 @@ public class AllReferenceTypesTest {
     }
 
     @Test
-    void testResourceSelfDirectoryReference1() {
-        String folderName = "app-resource";
+    void testResourceDirectoryReference() {
+        String folderName = "valid-directory";
         String appName = "app-resource";
-        String resource = "my-resource.yaml";
+        String resource = "last-resource.yml";
         String kind = "Service";
-        String kustomizationName = "kustomization.yaml";
-
-        assertDirectoryDependency(appName, folderName, kustomizationName, resource, kind);
-    }
-
-    @Test
-    void testResourceSelfDirectoryReference2() {
-        String folderName = "app-resource";
-        String appName = "app-resource";
-        String resource = "another-resource.yaml";
-        String kind = "Deployment";
-        String kustomizationName = "kustomization.yaml";
+        String kustomizationName = "Kustomization";
 
         assertDirectoryDependency(appName, folderName, kustomizationName, resource, kind);
     }
 
     @Test
     void testAppAmount() {
-        // We expect 6 root apps in total (1 per type) and 3 isolated/bad referenced kustomization.yaml
-        assertThat(graph.getRootApps().size()).isEqualTo(9);
+        // We expect 6 root apps in total (1 per type) and 5 isolated/bad referenced kustomization.yaml (invalid directories)
+        assertThat(graph.getRootApps().size()).isEqualTo(11);
     }
 }

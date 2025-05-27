@@ -26,7 +26,7 @@ import picocli.CommandLine.Option;
 
 @Command(
         name = "kustomtrace",
-        version = "1.0.0",
+        version = "1.0.1",
         mixinStandardHelpOptions = true,
         description = "Analyzes Kubernetes deployment repositories.",
         subcommands = {AffectedAppsCommand.class, AppFilesCommand.class, ListRootAppsCommand.class})

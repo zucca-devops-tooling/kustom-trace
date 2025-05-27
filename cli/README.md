@@ -48,7 +48,7 @@ Below are the available subcommands. For detailed help on a specific subcommand,
 ---
 ### `list-root-apps`
 
-**Description:** Lists all root Kustomize applications found within the specified `--apps-dir`. A root app is a kustomization that is not referenced by any other kustomization in the scanned structure.
+**Description:** Lists all root Kustomize applications found within the specified `--apps-dir`. A root app is a directory containing a kustomization file that is not referenced by any other app in the scanned structure.
 
 **Usage:**
 `kustomtrace list-root-apps [-o=<outputFile.yaml>]`
@@ -90,7 +90,7 @@ root-apps:
 *(Requires global `-a, --apps-dir`)*
 
 **Arguments for `app-files`:**
-* `<appPath>`: **(Required)** Path to the application directory (containing a kustomization file) or a direct path to its specific kustomization file (e.g., `path/to/my-app` or `path/to/my-app/kustomization.yaml`). This path is typically relative to the global `--apps-dir` or can be an absolute path.
+* `<appPath>`: **(Required)** Path to the application directory (containing a kustomization file) . This path is typically relative to the global `--apps-dir` or can be an absolute path.
 
 **Options for `app-files`:**
 * `-o=<outputFile.yaml>`, `--output=<outputFile.yaml>`: (Optional) Output the list of files to the specified YAML file.

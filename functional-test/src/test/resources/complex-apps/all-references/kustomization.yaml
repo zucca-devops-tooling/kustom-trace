@@ -1,7 +1,7 @@
 components:
-  - ../../all-reference-types-apps/app-base/kustomization.yaml
-  - ../../all-reference-types-apps/app-component/kustomization.yaml
-  - ../../all-reference-types-apps/app-configmap/kustomization.yaml
-  - ../../all-reference-types-apps/app-patch/kustomization.yaml
-  - ../../all-reference-types-apps/app-patch-merge/kustomization.yaml
-  - ../../all-reference-types-apps/app-resource/kustomization.yaml
+  - ../../all-reference-types-apps/app-base/
+  - ../../all-reference-types-apps/app-component
+  - ../../all-reference-types-apps/app-configmap
+  - ../../all-reference-types-apps/app-patch
+  - ../../all-reference-types-apps/app-patch-merge
+  - ../../all-reference-types-apps/app-resource

@@ -140,7 +140,7 @@ class CLIBasicTest {
         int exitCode = cmd.execute(
                 "--apps-dir", appsDir.toString(),
                 "--output", actualOutputFile.toString(),
-                "app-files", kustomizationApp1Path.toString()
+                "app-files", app1Dir.toString()
         );
 
         // Basic assertions
