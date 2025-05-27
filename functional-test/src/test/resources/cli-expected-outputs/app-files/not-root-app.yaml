@@ -1,7 +1,5 @@
 app-files:
   ../../all-reference-types-apps/app-base:
-    - base-directory-reference/base-resource-two.yml
+    - base-directory-reference/base-resource-one.yaml
     - base-directory-reference/kustomization.yml
-    - base-kustomization-reference/base-resource-one.yaml
-    - base-kustomization-reference/kustomization.yaml
     - kustomization.yaml

@@ -89,17 +89,18 @@ public class InvalidReferenceHandlingTest {
     void testInvalidBaseReferences() {
         Kustomization app = apps.get("app-base");
 
-        String cause = "Invalid directory or kustomization file";
+        String cause = "Expected a directory";
 
-        assertInvalidReference("non-existing-base", cause, app, BASE, Level.WARN);
-        assertInvalidReference("invalid-reference.yaml", cause, app, BASE, Level.WARN);
+        assertInvalidReference("non-existing-base", cause, app, BASE, Level.ERROR);
+        assertInvalidReference("invalid-reference.yaml", cause, app, BASE, Level.ERROR);
+        assertInvalidReference(Path.of("base-kustomization-reference").resolve("kustomization.yaml").toString(), cause, app, BASE, Level.ERROR);
     }
 
     @Test
     void testInvalidComponentReferences() {
         Kustomization app = apps.get("app-component");
 
-        assertInvalidReference("non-existing-component", "Invalid directory or kustomization file", app, COMPONENT, Level.WARN);
+        assertInvalidReference("non-existing-component", "Expected a directory", app, COMPONENT, Level.ERROR);
         assertInvalidReference("invalid", "Non-string value found for reference", app, COMPONENT, Level.WARN);
     }
 
@@ -127,5 +128,20 @@ public class InvalidReferenceHandlingTest {
         assertInvalidReference("non-existing-resource", "Non-existing or non-regular file", app, RESOURCE, Level.ERROR);
         assertInvalidReference(Path.of("invalid-directory").resolve("kustomization.yaml").toString(), "Not a valid Kubernetes resource", app, RESOURCE, Level.WARN);
         assertInvalidReference("invalid", "Multiline value found", app, RESOURCE, Level.WARN);
+
+        // manually test self references not to be included
+        assertThat(app.getDependencies())
+                .noneMatch(path -> path.toString().contains("another-resource.yaml"));
+        assertThat(app.getDependencies())
+                .noneMatch(path -> path.toString().contains("my-resource.yaml"));
+
+        assertThat(listAppender.list)
+                .anySatisfy(event -> {
+                    assertThat(event.getLevel()).isEqualTo(Level.ERROR);
+                    String formattedEvent = event.getFormattedMessage();
+                    assertThat(formattedEvent).contains(RESOURCE.toString());
+                    assertThat(formattedEvent).contains("Self reference to kustomization directory not allowed");
+                    assertThat(formattedEvent).contains(Path.of("app-resource").getFileName().toString());
+                });
     }
 }

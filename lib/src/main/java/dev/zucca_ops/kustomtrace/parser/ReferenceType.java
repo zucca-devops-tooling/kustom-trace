@@ -39,8 +39,8 @@ public enum ReferenceType {
     // Enum constants define the specific reference types, their YAML keys,
     // and the appropriate ReferenceExtractor to use.
     RESOURCE("resources", ReferenceExtractors.resourceOrDirectory()),
-    BASE("bases", ReferenceExtractors.kustomizationFile()),
-    COMPONENT("components", ReferenceExtractors.kustomizationFile()),
+    BASE("bases", ReferenceExtractors.directory()),
+    COMPONENT("components", ReferenceExtractors.directory()),
     PATCH("patches", ReferenceExtractors.inlinePathValue("path")),
     PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.resource()),
     CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles());

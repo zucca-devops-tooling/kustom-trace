@@ -4,6 +4,7 @@ resources:
   - more-resources/extra-resource.json
   - invalid-directory/kustomization.yaml
   - more-resources/non-existing-resource.yaml
+  - valid-directory
   - |
     ignored
     multiline

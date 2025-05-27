@@ -1,6 +1,8 @@
 root-apps:
+  - all-reference-types-apps/app-base/base-kustomization-reference
   - all-reference-types-apps/app-configmap/invalid-directory
   - all-reference-types-apps/app-patch-merge/invalid-directory
   - all-reference-types-apps/app-patch/invalid-directory
+  - all-reference-types-apps/app-resource/invalid-directory
   - complex-apps/root-and-all-references
   - complex-apps/subset-with-circular

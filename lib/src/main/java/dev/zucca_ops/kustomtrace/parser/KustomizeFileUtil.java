@@ -40,6 +40,15 @@ public class KustomizeFileUtil {
     }
 
     /**
+     * Checks if the path exists and is a directory.
+     * @param path The path to check.
+     * @return {@code true} if the path exists and is a directory, {@code false} otherwise.
+     */
+    public static boolean isDirectory(Path path) {
+        return Files.exists(path) && Files.isDirectory(path);
+    }
+
+    /**
      * Checks if the path's filename is a standard Kustomization filename.
      * (kustomization.yaml, kustomization.yml, or Kustomization).
      * @param path The path to check.
@@ -83,17 +92,6 @@ public class KustomizeFileUtil {
      */
     public static Path getKustomizationFileFromAppDirectory(Path appPath) throws NotAnAppException {
         logger.debug("Finding kustomization file for app path: {}", appPath);
-
-        if (isKustomizationFileName(appPath)) {
-            if (isFile(appPath)) {
-                logger.trace("Provided path '{}' is an existing kustomization file.", appPath);
-                return appPath;
-            } else {
-                logger.trace(
-                        "Path '{}' named like kustomization file, but not an existing file. Treating as directory.",
-                        appPath);
-            }
-        }
 
         Path[] potentialFiles = {
             appPath.resolve("kustomization.yaml"),

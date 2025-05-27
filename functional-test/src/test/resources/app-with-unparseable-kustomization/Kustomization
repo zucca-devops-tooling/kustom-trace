@@ -1,3 +1,3 @@
 bases:
-  - invalid-kustomization-base/kustomization.yaml  # Referencing the kustomization file directly
+  - invalid-kustomization-base                    # Referencing the kustomization file directly
   - valid-kustomization-base                      # Referencing the directory (should pick up kustomization.yaml inside)
