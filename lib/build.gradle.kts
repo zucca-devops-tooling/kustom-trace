@@ -91,5 +91,4 @@ publisher {
         sign = false
     }
     gitFolder = "../"
-    releaseBranchPatterns = listOf("PR-17")
 }
