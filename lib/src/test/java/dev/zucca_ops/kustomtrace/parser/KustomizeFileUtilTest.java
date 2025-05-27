@@ -119,19 +119,19 @@ public class KustomizeFileUtilTest {
         @Test
         void getKustomizationFile_inputIsExistingKustomizationYamlFile_returnsInputPath() throws IOException, NotAnAppException {
             Path kustomFile = Files.createFile(tempDir.resolve("kustomization.yaml"));
-            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile));
+            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile.getParent()));
         }
 
         @Test
         void getKustomizationFile_inputIsExistingKustomizationYmlFile_returnsInputPath() throws IOException, NotAnAppException {
             Path kustomFile = Files.createFile(tempDir.resolve("kustomization.yml"));
-            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile));
+            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile.getParent()));
         }
 
         @Test
         void getKustomizationFile_inputIsExistingKustomizationUpperFile_returnsInputPath() throws IOException, NotAnAppException {
             Path kustomFile = Files.createFile(tempDir.resolve("Kustomization"));
-            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile));
+            assertEquals(kustomFile, KustomizeFileUtil.getKustomizationFileFromAppDirectory(kustomFile.getParent()));
         }
 
         @Test

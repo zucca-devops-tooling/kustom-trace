@@ -15,11 +15,10 @@
  */
 package dev.zucca_ops.kustomtrace.model;
 
+import dev.zucca_ops.kustomtrace.parser.YamlParser;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
-
-import dev.zucca_ops.kustomtrace.parser.YamlParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +50,6 @@ public class Kustomization extends GraphNode {
             logger.warn("Incorrect kind on kustomization file " + this.path);
         }
     }
-
-
 
     /**
      * Returns the parsed content (YAML map) of this kustomization file.
