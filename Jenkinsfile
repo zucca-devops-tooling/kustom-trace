@@ -108,7 +108,13 @@ pipeline {
         stage('Publish cli') {
             when {
                 anyOf {
-                    branch 'main'
+                    allOf{
+                        expression {
+                            def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                            return commitMessage.contains('[release]')
+                        }
+                        branch 'main'
+                    }
                     expression { sh (script: "git log -1 --pretty=%B | grep 'publishCli'", returnStatus: true) == 0 } // Matches a commit message including publishCli
                     expression { sh (script: "git log -1 --pretty=%B | grep 'publishAll'", returnStatus: true) == 0 } // Matches a commit message including publishAll
                 }
