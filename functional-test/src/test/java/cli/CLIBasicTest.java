@@ -72,8 +72,6 @@ class CLIBasicTest {
     @Test
     void testErrorRedirection_AppFilesMissingAppPath_NoErrorFileSpecified(@TempDir Path tempDir) throws IOException {
         Path appsActualDir = Files.createDirectory(tempDir.resolve("apps"));
-        // No --log-file here, and no -o for the subcommand.
-        // Picocli will handle the missing required parameter for 'app-files'.
 
         int exitCode = cmd.execute(
                 "--apps-dir", appsActualDir.toString(),
@@ -133,8 +131,8 @@ class CLIBasicTest {
         createSimpleKustomization(kustomizationApp1Path, Arrays.asList("../base/base-resource.yaml", "app1-specific.yaml"));
 
 
-        Path actualOutputFile = tempDir.resolve("app-files-output.yaml"); // Name of the file your CLI will create
-        String expectedResourceFile = "app-files.yaml"; // Path in src/test/resources
+        Path actualOutputFile = tempDir.resolve("app-files-output.yaml");
+        String expectedResourceFile = "app-files.yaml";
 
         // Execute the command
         int exitCode = cmd.execute(
@@ -143,7 +141,6 @@ class CLIBasicTest {
                 "app-files", app1Dir.toString()
         );
 
-        // Basic assertions
         assertEquals(0, exitCode, "Exit code should be 0. Stderr: " + getCapturedErr());
         assertTrue(getCapturedErr().isEmpty(), "Stderr should be empty on success. Actual: " + getCapturedErr());
         assertTrue(Files.exists(actualOutputFile), "Output YAML file should be created.");
@@ -157,7 +154,7 @@ class CLIBasicTest {
 
     @Test
     void testAffectedAppsCommand_OutputToFile_WritesYaml(@TempDir Path tempDir) throws IOException {
-        // 1. Setup (same as your existing test, ensuring paths are clear)
+        // 1. Setup
         Path appsDir = Files.createDirectory(tempDir.resolve("apps"));
         Path app1Dir = Files.createDirectory(appsDir.resolve("app1"));
         Path app2Dir = Files.createDirectory(appsDir.resolve("app2"));
