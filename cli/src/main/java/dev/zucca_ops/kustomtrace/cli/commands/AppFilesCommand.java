@@ -175,8 +175,7 @@ public class AppFilesCommand implements Callable<Integer> {
                                                                 absoluteDependencyPath,
                                                                 finalAppIdentifierKey,
                                                                 appDirectoryForOutputFormatting,
-                                                                fallbackPathString
-                                                                ),
+                                                                fallbackPathString),
                                                         finalEffectiveLogFile);
                                             }
                                             pathStr = fallbackPathString;
@@ -192,12 +191,10 @@ public class AppFilesCommand implements Callable<Integer> {
                 appData.put(finalAppIdentifierKey, relativeDependencyPaths);
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("app-files", appData);
-                CLIHelper.writeYamlToFile(
-                        yamlRoot, outputFile);
+                CLIHelper.writeYamlToFile(yamlRoot, outputFile);
             } else {
                 String consoleHeader = "Files used by application '" + finalAppIdentifierKey + "':";
-                CLIHelper.printOutput(
-                        consoleHeader, relativeDependencyPaths, null);
+                CLIHelper.printOutput(consoleHeader, relativeDependencyPaths, null);
             }
             return 0;
 

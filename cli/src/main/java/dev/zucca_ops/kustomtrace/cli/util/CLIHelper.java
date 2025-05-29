@@ -170,7 +170,7 @@ public class CLIHelper {
         options.setIndent(2); // Standard 2-space indentation for mappings
         options.setIndicatorIndent(2); // Indentation for sequence '-' indicators
         options.setIndentWithIndicator(true); // Indent sequence items relative to the '-' indicator
-        options.setExplicitStart(true);  // "---" document start marker
+        options.setExplicitStart(true); // "---" document start marker
 
         Yaml yaml = new Yaml(options);
         try (FileWriter writer = new FileWriter(outputFile)) {
