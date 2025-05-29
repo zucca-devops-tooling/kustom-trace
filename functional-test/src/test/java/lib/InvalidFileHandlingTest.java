@@ -79,7 +79,6 @@ public class InvalidFileHandlingTest {
                     assertThat(formattedMessage).contains(cause);
                 });
 
-
         assertThat(listAppender.list)
                 .anySatisfy(event -> {
                     assertThat(event.getLevel()).isEqualTo(level);
