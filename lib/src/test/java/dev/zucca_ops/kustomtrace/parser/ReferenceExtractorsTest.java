@@ -71,9 +71,7 @@ public class ReferenceExtractorsTest {
             Path targetFile = Files.createFile(baseDir.resolve("not_a_directory.yaml"));
             ReferenceExtractor extractor = ReferenceExtractors.directory();
 
-            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract(targetFile.getFileName(), baseDir).findFirst();
-            });
+            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract(targetFile.getFileName(), baseDir).findFirst());
             assertTrue(ex.getMessage().contains("Expected a directory"));
         }
 
@@ -82,9 +80,7 @@ public class ReferenceExtractorsTest {
             Path targetDir = Files.createDirectory(baseDir.resolve("emptyComponent"));
             ReferenceExtractor extractor = ReferenceExtractors.directory();
 
-            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract(targetDir.getFileName(), baseDir).findFirst();
-            });
+            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract(targetDir.getFileName(), baseDir).findFirst());
             assertTrue(ex.getMessage().contains("Expected directory with Kustomization inside"));
             // Check that the cause is NotAnAppException
             assertNotNull(ex.getCause());
@@ -143,9 +139,7 @@ public class ReferenceExtractorsTest {
             Files.createFile(kustomizationAsResource); // It exists
 
             ReferenceExtractor extractor = ReferenceExtractors.resourceOrDirectory();
-            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract("kustomization.yaml", baseDir).toList();
-            });
+            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract("kustomization.yaml", baseDir).toList());
             assertTrue(ex.getMessage().contains("Not a valid Kubernetes resource"));
         }
 
@@ -154,9 +148,7 @@ public class ReferenceExtractorsTest {
             Path plainDir = Files.createDirectory(baseDir.resolve("plainDir"));
             ReferenceExtractor extractor = ReferenceExtractors.resourceOrDirectory();
 
-            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract(plainDir.getFileName(), baseDir).toList();
-            });
+            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract(plainDir.getFileName(), baseDir).toList());
             assertTrue(ex.getMessage().contains("Expected directory with Kustomization inside"));
         }
 
@@ -166,9 +158,7 @@ public class ReferenceExtractorsTest {
             // KFG.getKustomizationFileFromAppDirectory will throw for non-existent path.
             // That NotAnAppException is caught, then validateKubernetesResource is called.
             // validateKubernetesResource will then throw because KustomizeFileUtil.isFile will be false.
-            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract("nonexistent.yaml", baseDir).toList();
-            });
+            InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract("nonexistent.yaml", baseDir).toList());
             assertTrue(ex.getMessage().contains("Non-existing or non-regular file referenced"));
         }
     }
