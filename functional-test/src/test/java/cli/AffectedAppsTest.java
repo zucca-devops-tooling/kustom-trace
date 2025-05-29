@@ -40,6 +40,7 @@ public class AffectedAppsTest {
 
     @TempDir
     Path tempDir;
+    
     @BeforeEach
     void setUp() {
         originalOut = System.out;
@@ -61,6 +62,7 @@ public class AffectedAppsTest {
         System.setErr(originalErr);
         System.clearProperty("log.file");
     }
+    
     @Test
     void testCircularDependency() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
@@ -92,7 +94,7 @@ public class AffectedAppsTest {
                         .resolve("all-reference-types-apps")
                         .resolve("app-resource")
                         .resolve("more-resources")
-                        .resolve("extra-resource.json").toString() // The "modified" file
+                        .resolve("extra-resource.json").toString()
         );
         assertEquals(0, exitCode);
 
@@ -132,7 +134,7 @@ public class AffectedAppsTest {
     @Test
     void testBulkFileQuery() throws IOException {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "bulk-file-apps.yaml"; // The file you created in resources
+        String expectedResourceFileName = "bulk-file-apps.yaml";
         Path listFile = tempDir.resolve("my-list-of-modified-files.txt");
 
         String baseResourceOneYaml = resourcesDir
@@ -189,7 +191,7 @@ public class AffectedAppsTest {
     @Test
     void testErrorRedirection_EmptyFile() throws IOException {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "empty-bulk-file-apps.yaml"; // The file you created in resources
+        String expectedResourceFileName = "empty-bulk-file-apps.yaml";
         Path listFile = tempDir.resolve("my-empty-list.txt");
         Files.write(listFile, Collections.emptyList(), StandardCharsets.UTF_8);
 
