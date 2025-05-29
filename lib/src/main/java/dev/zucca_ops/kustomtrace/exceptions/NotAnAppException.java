@@ -38,19 +38,4 @@ public class NotAnAppException extends KustomException {
                         + " does not resolve to a valid Kustomization.",
                 path);
     }
-
-    /**
-     * Constructs a NotAnAppException with a cause.
-     *
-     * @param path    The file system {@link Path} related to the exception. May be null.
-     * @param cause   The underlying cause of this exception.
-     */
-    public NotAnAppException(Path path, Throwable cause) {
-        super(
-                "Path "
-                        + (path != null ? path : "unknown")
-                        + " does not resolve to a valid Kustomization.",
-                path,
-                cause);
-    }
 }

@@ -144,9 +144,7 @@ public class KustomizeFileUtilTest {
             //        Fall-through: treat pathNamedLikeKustomization as directory to scan.
             //        Scan pathNamedLikeKustomization/kustomization.yaml etc. -> not found
             //        Throws NotAnAppException referring to pathNamedLikeKustomization
-            NotAnAppException ex = assertThrows(NotAnAppException.class, () -> {
-                KustomizeFileUtil.getKustomizationFileFromAppDirectory(pathNamedLikeKustomization);
-            });
+            NotAnAppException ex = assertThrows(NotAnAppException.class, () -> KustomizeFileUtil.getKustomizationFileFromAppDirectory(pathNamedLikeKustomization));
             assertTrue(ex.getMessage().contains(pathNamedLikeKustomization.toString()));
         }
 
@@ -162,9 +160,7 @@ public class KustomizeFileUtilTest {
         void getKustomizationFile_inputNameIsKustomization_butPathIsDirectoryAndEmpty_throws(@TempDir Path tempDir) throws IOException {
             Path dirNamedAsKustomization = Files.createDirectory(tempDir.resolve("kustomization.yaml")); // Empty directory
 
-            assertThrows(NotAnAppException.class, () -> {
-                KustomizeFileUtil.getKustomizationFileFromAppDirectory(dirNamedAsKustomization);
-            });
+            assertThrows(NotAnAppException.class, () -> KustomizeFileUtil.getKustomizationFileFromAppDirectory(dirNamedAsKustomization));
         }
 
 

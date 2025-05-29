@@ -40,7 +40,7 @@ public class CLIHelper {
 
     public static void printOutput(String header, List<?> items, File outputFile)
             throws FileNotFoundException {
-        PrintWriter writer = null;
+        PrintWriter writer;
         if (outputFile != null) {
             writer = new PrintWriter(outputFile);
             writer.println(header);
@@ -127,8 +127,6 @@ public class CLIHelper {
                                 + dedicatedLogFile
                                 + " - "
                                 + e.getMessage());
-                // Optionally print the raw message to System.err as fallback if critical
-                // System.err.println("Original raw message: " + message);
             }
         } else {
             System.out.println(
@@ -160,9 +158,6 @@ public class CLIHelper {
      */
     public static void writeYamlToFile(Object data, File outputFile) throws IOException {
         if (outputFile == null) {
-            // This method is specifically for file output.
-            // If outputFile is null, it implies an issue with how it was called.
-            // Consider throwing an IllegalArgumentException or simply returning.
             System.err.println(
                     "CLIHelper.writeYamlToFile called with a null outputFile. No action taken.");
             return;
@@ -175,12 +170,11 @@ public class CLIHelper {
         options.setIndent(2); // Standard 2-space indentation for mappings
         options.setIndicatorIndent(2); // Indentation for sequence '-' indicators
         options.setIndentWithIndicator(true); // Indent sequence items relative to the '-' indicator
-        // options.setExplicitStart(true);  // Uncomment if you want the "---" document start marker
+        options.setExplicitStart(true); // "---" document start marker
 
         Yaml yaml = new Yaml(options);
         try (FileWriter writer = new FileWriter(outputFile)) {
             yaml.dump(data, writer);
         }
-        // No "Output written to..." console message for clean YAML file output
     }
 }

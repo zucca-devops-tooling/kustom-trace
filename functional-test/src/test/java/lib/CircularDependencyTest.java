@@ -22,8 +22,8 @@ public class CircularDependencyTest {
 
     private static final Logger logger = (Logger) LoggerFactory.getLogger(Kustomization.class);
 
-    private Path getTestResourcePath(String subDirectory) {
-        return Paths.get("src", "test", "resources", "circular-dependency-apps", subDirectory);
+    private Path getTestResourcePath() {
+        return Paths.get("src", "test", "resources", "circular-dependency-apps", "");
     }
 
     @Test
@@ -33,7 +33,7 @@ public class CircularDependencyTest {
         listAppender.start();
         logger.addAppender(listAppender);
 
-        Path appsDir = getTestResourcePath("");
+        Path appsDir = getTestResourcePath();
         KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDir);
         KustomGraph graph = kustomTrace.getGraph();
         Path app1Path = appsDir.resolve("app1").resolve("kustomization.yaml");
@@ -78,8 +78,5 @@ public class CircularDependencyTest {
 
         // Clean up the appender
         logger.detachAppender(listAppender);
-
-        // TODO: add graphsize method
-        //assertEquals(8, graph.getNodeIndex().size()); // Check total number of nodes
     }
 }

@@ -16,7 +16,6 @@ application {
     mainClass.set("dev.zucca_ops.kustomtrace.cli.KustomTraceCLI")
 }
 
-// Make the 'build' task depend on 'shadowJar' so the fat JAR is created during a build
 tasks.named("build") {
     dependsOn(tasks.named("shadowJar"))
 }

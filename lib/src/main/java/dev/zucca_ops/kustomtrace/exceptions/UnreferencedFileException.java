@@ -38,19 +38,4 @@ public class UnreferencedFileException extends KustomException {
                         + " is not referenced by any app",
                 path);
     }
-
-    /**
-     * Constructs an UnreferencedFileException with an associated path, and cause.
-     *
-     * @param path    The file system {@link Path} related to the exception. May be null.
-     * @param cause   The underlying cause of this exception.
-     */
-    public UnreferencedFileException(Path path, Throwable cause) {
-        super(
-                "File with path "
-                        + (path != null ? path : "unknown")
-                        + " is not referenced by any app",
-                path,
-                cause);
-    }
 }

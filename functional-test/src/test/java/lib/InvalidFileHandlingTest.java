@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import dev.zucca_ops.kustomtrace.KustomTrace;
-import dev.zucca_ops.kustomtrace.graph.KustomGraphBuilder;
 import dev.zucca_ops.kustomtrace.graph.ResourceReferenceResolver;
 import dev.zucca_ops.kustomtrace.model.KustomGraph;
 import dev.zucca_ops.kustomtrace.model.Kustomization;
@@ -78,7 +77,6 @@ public class InvalidFileHandlingTest {
                     assertThat(formattedMessage).contains(appsDir.resolve("invalid-kustomization-base/kustomization.yaml").toString());
                     assertThat(formattedMessage).contains(cause);
                 });
-
 
         assertThat(listAppender.list)
                 .anySatisfy(event -> {

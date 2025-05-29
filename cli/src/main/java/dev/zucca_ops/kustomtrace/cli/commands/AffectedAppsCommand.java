@@ -161,7 +161,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
                             relativeAffectedAppPathsForCurrentFile); // Sort alphabetically for
                     // consistent output
 
-                    if (outputFile == null) { // Console output formatting for this file
+                    if (outputFile == null) {
                         consoleOutputLines.add(
                                 "Affected apps by "
                                         + yamlKeyForModifiedFile
@@ -175,7 +175,7 @@ public class AffectedAppsCommand implements Callable<Integer> {
                     }
                 } catch (UnreferencedFileException e) {
                     // relativeAffectedAppPathsForCurrentFile will remain empty
-                    if (outputFile == null) { // Console output mode for UnreferencedFileException
+                    if (outputFile == null) {
                         consoleOutputLines.add(
                                 "Affected apps by "
                                         + yamlKeyForModifiedFile

@@ -2,9 +2,7 @@ package cli.util;
 
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class OutputResourceAssesor {
 
     private final Path resourcesDir = Paths.get( "src", "test", "resources", "cli-expected-outputs");
-    private String testDir;
+    private final String testDir;
     private final Yaml yaml = new Yaml();
 
     public OutputResourceAssesor(String testDir) {
@@ -46,7 +44,6 @@ public class OutputResourceAssesor {
      * @param actualFilePath Path to the CLI-generated output file.
      * @return A Map representing the parsed YAML.
      */
-    @SuppressWarnings("unchecked")
     private Map<String, Object> loadActualYaml(Path actualFilePath) {
         try (Reader reader = Files.newBufferedReader(actualFilePath, StandardCharsets.UTF_8)) {
             return yaml.load(reader);

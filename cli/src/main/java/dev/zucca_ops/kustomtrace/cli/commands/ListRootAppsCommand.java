@@ -86,7 +86,6 @@ public class ListRootAppsCommand implements Callable<Integer> {
                 yamlOutput.put("root-apps", rootAppDisplayPaths);
                 CLIHelper.writeYamlToFile(yamlOutput, outputFile);
             } else {
-                // Verbose console output
                 if (rootAppDisplayPaths.isEmpty()) {
                     System.out.println("No root applications found in: " + appsDirPathGlobal);
                 } else {
