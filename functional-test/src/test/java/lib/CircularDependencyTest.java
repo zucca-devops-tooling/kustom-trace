@@ -78,8 +78,5 @@ public class CircularDependencyTest {
 
         // Clean up the appender
         logger.detachAppender(listAppender);
-
-        // TODO: add graphsize method
-        //assertEquals(8, graph.getNodeIndex().size()); // Check total number of nodes
     }
 }
