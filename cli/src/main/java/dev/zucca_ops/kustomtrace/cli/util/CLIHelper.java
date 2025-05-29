@@ -40,7 +40,7 @@ public class CLIHelper {
 
     public static void printOutput(String header, List<?> items, File outputFile)
             throws FileNotFoundException {
-        PrintWriter writer = null;
+        PrintWriter writer;
         if (outputFile != null) {
             writer = new PrintWriter(outputFile);
             writer.println(header);

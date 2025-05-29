@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,7 +72,7 @@ public class ReferenceExtractorsTest {
             ReferenceExtractor extractor = ReferenceExtractors.directory();
 
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract("not_a_directory.yaml", baseDir).findFirst();
+                extractor.extract(targetFile.getFileName(), baseDir).findFirst();
             });
             assertTrue(ex.getMessage().contains("Expected a directory"));
         }
@@ -82,12 +83,12 @@ public class ReferenceExtractorsTest {
             ReferenceExtractor extractor = ReferenceExtractors.directory();
 
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract("emptyComponent", baseDir).findFirst();
+                extractor.extract(targetDir.getFileName(), baseDir).findFirst();
             });
             assertTrue(ex.getMessage().contains("Expected directory with Kustomization inside"));
             // Check that the cause is NotAnAppException
             assertNotNull(ex.getCause());
-            assertTrue(ex.getCause() instanceof NotAnAppException);
+            assertInstanceOf(NotAnAppException.class, ex.getCause());
         }
 
         @Test
@@ -154,7 +155,7 @@ public class ReferenceExtractorsTest {
             ReferenceExtractor extractor = ReferenceExtractors.resourceOrDirectory();
 
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> {
-                extractor.extract("plainDir", baseDir).toList();
+                extractor.extract(plainDir.getFileName(), baseDir).toList();
             });
             assertTrue(ex.getMessage().contains("Expected directory with Kustomization inside"));
         }
@@ -177,7 +178,7 @@ public class ReferenceExtractorsTest {
         Path resourceFile = baseDir.resolve("resource.yaml");
         Files.createFile(resourceFile);
         var extractor = ReferenceExtractors.resource();
-        assertEquals(resourceFile.toAbsolutePath().normalize(), extractor.extract("resource.yaml", baseDir).findFirst().orElse(null).toAbsolutePath().normalize());
+        assertEquals(resourceFile.toAbsolutePath().normalize(), Objects.requireNonNull(extractor.extract("resource.yaml", baseDir).findFirst().orElse(null)).toAbsolutePath().normalize());
     }
 
     @Test
