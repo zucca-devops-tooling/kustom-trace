@@ -46,8 +46,6 @@ public class AppFilesCommand implements Callable<Integer> {
             description = "Path to the application directory or its kustomization.yaml file.")
     File appPathInput;
 
-    // In AppFilesCommand.java
-
     @Override
     public Integer call() {
         File effectiveAppsDir = parentCLI.getAppsDir();
@@ -174,10 +172,10 @@ public class AppFilesCommand implements Callable<Integer> {
                                                 CLIHelper.printWarning(
                                                         String.format(
                                                                 "Dependency '%s' for app '%s' could not be made relative to its app directory ('%s') or main apps dir. Using absolute path: '%s'.",
-                                                                absoluteDependencyPath, // %s 1
-                                                                finalAppIdentifierKey, // %s 2
-                                                                appDirectoryForOutputFormatting, // %s 3
-                                                                fallbackPathString // %s 4
+                                                                absoluteDependencyPath,
+                                                                finalAppIdentifierKey,
+                                                                appDirectoryForOutputFormatting,
+                                                                fallbackPathString
                                                                 ),
                                                         finalEffectiveLogFile);
                                             }
@@ -195,11 +193,11 @@ public class AppFilesCommand implements Callable<Integer> {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("app-files", appData);
                 CLIHelper.writeYamlToFile(
-                        yamlRoot, outputFile); // Assumes this method exists in CLIHelper
+                        yamlRoot, outputFile);
             } else {
                 String consoleHeader = "Files used by application '" + finalAppIdentifierKey + "':";
                 CLIHelper.printOutput(
-                        consoleHeader, relativeDependencyPaths, null); // Uses 3-arg printOutput
+                        consoleHeader, relativeDependencyPaths, null);
             }
             return 0;
 
