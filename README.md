@@ -25,6 +25,17 @@ KustomTrace is composed of two main modules:
 * **Impact Assessment:** Before making changes to shared bases or resources, identify all potentially affected applications.
 * **Code Cleanup:** Identify orphaned Kustomizations or unused resources.
 
+## Real-World Demonstration: Solving CI/CD Bottlenecks
+
+This tool was designed to solve common performance and complexity challenges in large-scale GitOps repositories. Its power is best demonstrated when combined with other tools to create intelligent CI/CD pipelines.
+
+➡️ **[Kustomize and Kyverno at Scale: A CI/CD Demonstration](https://github.com/zucca-devops-tooling/kustomize-at-scale-demo)**
+
+This demo repository showcases how `kustom-trace` can be used to:
+* **Reliably Discover Build Targets:** Use the `list-root-apps` command to automatically find all buildable applications, eliminating manual lists.
+* **Enable Efficient PR Validation:** Use the `affected-apps` command to find the exact set of applications impacted by a pull request's file changes.
+* **Dramatically Speed Up Policy Enforcement:** By identifying only the affected applications, `kustom-trace` provides the precise input needed for tools like Kyverno, preventing slow "apply all" validation steps and enabling high-performance, parallel policy checks. The demo shows a **55% reduction** in policy enforcement time by moving from a monolithic to a targeted, parallel approach.
+
 ## Getting Started
 
 ### Using the CLI
