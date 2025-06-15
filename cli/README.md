@@ -54,8 +54,18 @@ Lists all "root applications" found. A root application is identified by a `kust
 ```bash
 java -jar kustomtrace-cli.jar -a ./my-k8s-configs -o roots.yaml list-root-apps
 ```
+**Console Output (if `-o` is not used):**
+```
+Root Applications:
+- path/to/app1-dir
+- another/app/dir
+  ```
+If no root apps are found:
+  ```
+  No root applications found in: <appsDir_path>
+  ```
 
-**YAML Output (`-o roots.yaml`):**
+**YAML Output (e.g., `-o roots.yaml`):**
 ```yaml
 root-apps:
 - path/to/app1-dir # Paths are relative to --apps-dir
@@ -79,7 +89,15 @@ Lists all unique files used by a given application, including its own kustomizat
 java -jar kustomtrace-cli.jar -a ./all-apps -o my-app-files.yaml app-files path/to/my-app
 ```
 
-**YAML Output (`-o my-app-files.yaml`):**
+**Console Output:**
+```
+Files used by application 'my-app':
+- configmap.yaml
+- deployment.yaml
+- kustomization.yaml
+- ../base/service.yaml
+  ```
+**YAML Output (e.g., `-o my-app-files.yaml`):**
 ```yaml
 app-files:
 my-app: # Key is the app's directory, relative to --apps-dir
@@ -107,13 +125,26 @@ Finds and lists Kustomize applications that are (directly or indirectly) affecte
 java -jar kustomtrace-cli.jar -a ./all-apps -o impact.yaml affected-apps common/base.yaml services/service-patch.yaml
 ```
 
-**YAML Output (`-o impact.yaml`):**
+**Console Output:**
+```
+Affected Applications:
+Affected apps by common/base.yaml:
+- app1/production
+- app2/staging
+  Affected apps by services/service-patch.yaml:
+- app1/production
+  Affected apps by path/to/unreferenced-file.yaml:
+  Warning: File ... is not referenced by any app
+  Summary: No applications were found to be affected by the specified file(s).
+```
+
+**YAML Output (e.g., `-o impact.yaml`):**
 ```yaml
 affected-apps:
 common/base.yaml: # Key is the modified file path
 - app1/production
 - app2/staging
-unreferenced-or-external-file.yaml: [] # Ignored files with no affected apps will not appear
+path/to/unreferenced-or-external-file.yaml: [] # If a modified file is unreferenced or affects no apps
 ```
 
 ## Use Cases & Examples
@@ -127,5 +158,7 @@ unreferenced-or-external-file.yaml: [] # Ignored files with no affected apps wil
   # Then parse impacted_apps.yaml to trigger downstream jobs
   ```
 
----
-*(Limitations and Future Work sections can remain as previously discussed)*
+## Future Development Ideas
+* **User-Selectable App Path Representation:** An option like `--represent-app-as <folder|file>` to control how application paths are displayed in the output.
+* **Bulk Queries:** Combine multiple queries into a single execution and output file.
+* **Chained Queries:** Use the output of one command as input for another, leveraging the pre-built graph for efficiency.
