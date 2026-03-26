@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError"
+
+jobs:
+  verify:
+    name: Build and Verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew clean assemble --info --no-daemon
+
+      - name: Spotless
+        run: ./gradlew check -x test --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew :kustomtrace:test --no-daemon
+
+      - name: Functional tests
+        run: ./gradlew :functional-test:test --no-daemon --info
+
+  publish-library:
+    name: Publish Library
+    needs: verify
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'push' &&
+      (
+        github.ref_name == 'main' ||
+        contains(github.event.head_commit.message || '', 'publishLib') ||
+        contains(github.event.head_commit.message || '', 'publishAll')
+      )
+    permissions:
+      contents: read
+    env:
+      # If the token belongs to a service user, set GH_PACKAGES_USERNAME as an org/repo variable.
+      GH_PACKAGES_USERNAME: ${{ vars.GH_PACKAGES_USERNAME || github.actor }}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+      GPG_KEY_PASS: ${{ secrets.GPG_KEY_PASS }}
+      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Write GPG key
+        run: printf '%s' "${{ secrets.GPG_SECRET_KEY }}" > "$RUNNER_TEMP/gpg-secret-key.asc"
+
+      - name: Publish library
+        env:
+          GPG_KEY_PATH: ${{ runner.temp }}/gpg-secret-key.asc
+        run: |
+          ./gradlew :kustomtrace:publish --info --no-daemon \
+            -Psigning.keyId="${GPG_KEY_ID}" \
+            -Psigning.password="${GPG_KEY_PASS}" \
+            -Psigning.secretKeyRingFile="${GPG_KEY_PATH}" \
+            -PgithubPackagesUsername="${GH_PACKAGES_USERNAME}" \
+            -PgithubPackagesPassword="${GH_PACKAGES_TOKEN}" \
+            -PmavenCentralUsername="${OSSRH_USERNAME}" \
+            -PmavenCentralPassword="${OSSRH_PASSWORD}"
+
+  publish-cli-and-release:
+    name: Publish CLI and Release
+    needs: verify
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'push' &&
+      (
+        (
+          github.ref_name == 'main' &&
+          contains(github.event.head_commit.message || '', '[release]')
+        ) ||
+        contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishAll')
+      )
+    permissions:
+      contents: write
+    env:
+      # If the token belongs to a service user, set GH_PACKAGES_USERNAME as an org/repo variable.
+      GH_PACKAGES_USERNAME: ${{ vars.GH_PACKAGES_USERNAME || github.actor }}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Publish CLI
+        run: |
+          ./gradlew :kustomtrace-cli:publish --info --no-daemon \
+            -PgithubPackagesUsername="${GH_PACKAGES_USERNAME}" \
+            -PgithubPackagesPassword="${GH_PACKAGES_TOKEN}"
+
+      - name: Tag release
+        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
+        run: ./gradlew tagRelease --no-daemon
+
+      - name: Read release metadata
+        id: release
+        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
+        run: |
+          release_version="$(./gradlew properties -q -Pquiet | awk '/^version:/ { print $2 }')"
+          if [[ -z "$release_version" ]]; then
+            echo "Failed to read project version." >&2
+            exit 1
+          fi
+
+          changelog_notes="$(awk "/^## \\[$release_version\\]/{flag=1; next} /^## \\[/{flag=0} flag" CHANGELOG.md)"
+          if [[ -z "$changelog_notes" ]]; then
+            changelog_notes="No specific changelog notes found for this version."
+          fi
+
+          shadow_jar_path="$(find cli/build/libs -name 'kustomtrace-cli-*-all.jar' -print -quit)"
+          if [[ -z "$shadow_jar_path" ]]; then
+            echo "CLI Shadow JAR not found after publish." >&2
+            exit 1
+          fi
+
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          printf '%s\n' "$changelog_notes" > "$notes_file"
+
+          {
+            echo "tag_name=v$release_version"
+            echo "shadow_jar_path=$shadow_jar_path"
+            echo "notes_file=$notes_file"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Push tag
+        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
+        env:
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin "${TAG_NAME}"
+
+      - name: Create GitHub release
+        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+          SHADOW_JAR_PATH: ${{ steps.release.outputs.shadow_jar_path }}
+          NOTES_FILE: ${{ steps.release.outputs.notes_file }}
+        run: |
+          gh release create "${TAG_NAME}" \
+            "${SHADOW_JAR_PATH}" \
+            --title "Release ${TAG_NAME}" \
+            --notes-file "${NOTES_FILE}"
