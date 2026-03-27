@@ -41,17 +41,55 @@ jobs:
       - name: Functional tests
         run: ./gradlew :functional-test:test --no-daemon --info
 
+  intent:
+    name: Resolve Publish Intent
+    runs-on: ubuntu-latest
+    outputs:
+      publish_lib: ${{ steps.flags.outputs.publish_lib }}
+      publish_cli: ${{ steps.flags.outputs.publish_cli }}
+      create_release: ${{ steps.flags.outputs.create_release }}
+    steps:
+      - name: Resolve markers from commit message
+        id: flags
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
+        run: |
+          publish_lib=false
+          publish_cli=false
+          create_release=false
+
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            if [[ "$COMMIT_MESSAGE" == *publishLib* || "$COMMIT_MESSAGE" == *publishAll* ]]; then
+              publish_lib=true
+            fi
+
+            if [[ "$COMMIT_MESSAGE" == *publishCli* || "$COMMIT_MESSAGE" == *publishAll* ]]; then
+              publish_cli=true
+            fi
+
+            if [[ "$REF_NAME" == "main" && "$COMMIT_MESSAGE" == *release* ]]; then
+              publish_lib=true
+              publish_cli=true
+              create_release=true
+            fi
+          fi
+
+          {
+            echo "publish_lib=$publish_lib"
+            echo "publish_cli=$publish_cli"
+            echo "create_release=$create_release"
+          } >> "$GITHUB_OUTPUT"
+
   publish-library:
     name: Publish Library
-    needs: verify
+    needs:
+      - verify
+      - intent
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'push' &&
-      (
-        github.ref_name == 'main' ||
-        contains(github.event.head_commit.message || '', 'publishLib') ||
-        contains(github.event.head_commit.message || '', 'publishAll')
-      )
+    if: needs.intent.outputs.publish_lib == 'true'
     permissions:
       contents: read
     env:
@@ -92,22 +130,15 @@ jobs:
             -PmavenCentralUsername="${OSSRH_USERNAME}" \
             -PmavenCentralPassword="${OSSRH_PASSWORD}"
 
-  publish-cli-and-release:
-    name: Publish CLI and Release
-    needs: verify
+  publish-cli:
+    name: Publish CLI
+    needs:
+      - verify
+      - intent
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'push' &&
-      (
-        (
-          github.ref_name == 'main' &&
-          contains(github.event.head_commit.message || '', '[release]')
-        ) ||
-        contains(github.event.head_commit.message || '', 'publishCli') ||
-        contains(github.event.head_commit.message || '', 'publishAll')
-      )
+    if: needs.intent.outputs.publish_cli == 'true'
     permissions:
-      contents: write
+      contents: read
     env:
       # If the token belongs to a service user, set GH_PACKAGES_USERNAME as an org/repo variable.
       GH_PACKAGES_USERNAME: ${{ vars.GH_PACKAGES_USERNAME || github.actor }}
@@ -134,13 +165,41 @@ jobs:
             -PgithubPackagesUsername="${GH_PACKAGES_USERNAME}" \
             -PgithubPackagesPassword="${GH_PACKAGES_TOKEN}"
 
+  release:
+    name: Tag and Release
+    needs:
+      - verify
+      - intent
+      - publish-library
+      - publish-cli
+    runs-on: ubuntu-latest
+    if: needs.intent.outputs.create_release == 'true'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build CLI release artifact
+        run: ./gradlew :kustomtrace-cli:shadowJar --info --no-daemon
+
       - name: Tag release
-        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
         run: ./gradlew tagRelease --no-daemon
 
       - name: Read release metadata
         id: release
-        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
         run: |
           release_version="$(./gradlew properties -q -Pquiet | awk '/^version:/ { print $2 }')"
           if [[ -z "$release_version" ]]; then
@@ -169,7 +228,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Push tag
-        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
         env:
           TAG_NAME: ${{ steps.release.outputs.tag_name }}
         run: |
@@ -178,7 +236,6 @@ jobs:
           git push origin "${TAG_NAME}"
 
       - name: Create GitHub release
-        if: github.ref_name == 'main' && contains(github.event.head_commit.message || '', '[release]')
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ steps.release.outputs.tag_name }}
