@@ -2,7 +2,7 @@ plugins {
     id("java")
     id("application")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("dev.zucca-ops.gradle-publisher") version "1.1.0"
+    id("dev.zucca-ops.gradle-publisher") version "1.1.1"
 }
 
 group = "dev.zucca-ops"
