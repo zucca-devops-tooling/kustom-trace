@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("dev.zucca-ops.gradle-publisher") version "1.0.4"
+    id("dev.zucca-ops.gradle-publisher") version "1.1.1"
     id("signing")
 }
 

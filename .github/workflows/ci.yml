@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx2g -XX:+HeapDumpOnOutOfMemoryError"
+
+jobs:
+  verify:
+    name: Build and Verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew clean assemble --info --no-daemon
+
+      - name: Spotless
+        run: ./gradlew check -x test --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew :kustomtrace:test --no-daemon
+
+      - name: Functional tests
+        run: ./gradlew :functional-test:test --no-daemon --info
