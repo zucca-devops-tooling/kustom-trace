@@ -107,15 +107,8 @@ jobs:
             throw "Unsupported archive format: $($env:ARCHIVE_FORMAT)"
           }
 
-          $checksum = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLowerInvariant()
-          $checksumFile = "$archivePath.sha256"
-          $checksumLine = "$checksum  $(Split-Path -Leaf $archivePath)"
-          Set-Content -Path $checksumFile -Value $checksumLine -NoNewline
-
       - name: Upload native artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-          path: |
-            dist/${{ inputs.archive_name }}
-            dist/${{ inputs.archive_name }}.sha256
+          path: dist/${{ inputs.archive_name }}

@@ -278,33 +278,15 @@ jobs:
             exit 1
           fi
 
-          native_linux_checksum="release-assets/kustomtrace-linux-x64.tar.gz.sha256"
-          if [[ ! -f "$native_linux_checksum" ]]; then
-            echo "Linux native checksum not found after artifact download." >&2
-            exit 1
-          fi
-
           native_windows_archive="release-assets/kustomtrace-windows-x64.zip"
           if [[ ! -f "$native_windows_archive" ]]; then
             echo "Windows native archive not found after artifact download." >&2
             exit 1
           fi
 
-          native_windows_checksum="release-assets/kustomtrace-windows-x64.zip.sha256"
-          if [[ ! -f "$native_windows_checksum" ]]; then
-            echo "Windows native checksum not found after artifact download." >&2
-            exit 1
-          fi
-
           native_macos_archive="release-assets/kustomtrace-macos-x64.tar.gz"
           if [[ ! -f "$native_macos_archive" ]]; then
             echo "macOS native archive not found after artifact download." >&2
-            exit 1
-          fi
-
-          native_macos_checksum="release-assets/kustomtrace-macos-x64.tar.gz.sha256"
-          if [[ ! -f "$native_macos_checksum" ]]; then
-            echo "macOS native checksum not found after artifact download." >&2
             exit 1
           fi
 
@@ -315,11 +297,8 @@ jobs:
             echo "tag_name=v$release_version"
             echo "shadow_jar_path=$shadow_jar_path"
             echo "native_linux_archive=$native_linux_archive"
-            echo "native_linux_checksum=$native_linux_checksum"
             echo "native_windows_archive=$native_windows_archive"
-            echo "native_windows_checksum=$native_windows_checksum"
             echo "native_macos_archive=$native_macos_archive"
-            echo "native_macos_checksum=$native_macos_checksum"
             echo "notes_file=$notes_file"
           } >> "$GITHUB_OUTPUT"
 
@@ -334,20 +313,14 @@ jobs:
           TAG_NAME: ${{ steps.release.outputs.tag_name }}
           SHADOW_JAR_PATH: ${{ steps.release.outputs.shadow_jar_path }}
           NATIVE_LINUX_ARCHIVE: ${{ steps.release.outputs.native_linux_archive }}
-          NATIVE_LINUX_CHECKSUM: ${{ steps.release.outputs.native_linux_checksum }}
           NATIVE_WINDOWS_ARCHIVE: ${{ steps.release.outputs.native_windows_archive }}
-          NATIVE_WINDOWS_CHECKSUM: ${{ steps.release.outputs.native_windows_checksum }}
           NATIVE_MACOS_ARCHIVE: ${{ steps.release.outputs.native_macos_archive }}
-          NATIVE_MACOS_CHECKSUM: ${{ steps.release.outputs.native_macos_checksum }}
           NOTES_FILE: ${{ steps.release.outputs.notes_file }}
         run: |
           gh release create "${TAG_NAME}" \
             "${SHADOW_JAR_PATH}" \
             "${NATIVE_LINUX_ARCHIVE}" \
-            "${NATIVE_LINUX_CHECKSUM}" \
             "${NATIVE_WINDOWS_ARCHIVE}" \
-            "${NATIVE_WINDOWS_CHECKSUM}" \
             "${NATIVE_MACOS_ARCHIVE}" \
-            "${NATIVE_MACOS_CHECKSUM}" \
             --title "Release ${TAG_NAME}" \
             --notes-file "${NOTES_FILE}"
