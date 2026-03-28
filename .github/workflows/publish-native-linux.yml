@@ -31,6 +31,11 @@ jobs:
       - name: Build Linux native image
         run: ./gradlew :kustomtrace-cli:nativeCompile --info --no-daemon
 
+      - name: Run native CLI smoke tests
+        run: |
+          ./gradlew :functional-test:nativeSmokeTest --info --no-daemon \
+            -DnativeCliPath="$PWD/cli/build/native/nativeCompile/kustomtrace"
+
       - name: Package Linux native artifact
         run: |
           mkdir -p dist

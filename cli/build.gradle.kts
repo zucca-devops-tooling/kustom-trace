@@ -69,7 +69,7 @@ dependencies {
     implementation("info.picocli:picocli:$picocliVersion")
     annotationProcessor("info.picocli:picocli-codegen:$picocliVersion")
     implementation(project(":"+rootProject.name))
-    implementation("ch.qos.logback:logback-classic:1.5.18")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
     implementation("org.yaml:snakeyaml:2.2")
     implementation("org.codehaus.janino:janino:3.1.12")
 }
