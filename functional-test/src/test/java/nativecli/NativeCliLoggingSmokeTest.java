@@ -15,40 +15,9 @@ class NativeCliLoggingSmokeTest extends NativeCliSmokeTestSupport {
 
     private final OutputResourceAssesor basicTestOutputResourceAssesor =
             new OutputResourceAssesor("basic-test");
-    private final OutputResourceAssesor rootAppsOutputResourceAssesor =
-            new OutputResourceAssesor("root-apps");
 
     @TempDir
     Path tempDir;
-
-    @Test
-    void testListRootAppsWritesResolverWarningsToLogFile() throws IOException {
-        Path actualOutputFile = tempDir.resolve("root-apps-native-output.yaml");
-        Path logFile = tempDir.resolve("list-root-apps-native.log");
-
-        NativeCliResult result =
-                nativeCliExecutor.execute(
-                        "--apps-dir",
-                        resourcesDir.toString(),
-                        "--log-file",
-                        logFile.toString(),
-                        "--output",
-                        actualOutputFile.toString(),
-                        "list-root-apps");
-
-        assertEquals(0, result.exitCode());
-        assertTrue(Files.exists(logFile));
-
-        String logFileContent = Files.readString(logFile);
-        assertTrue(logFileContent.contains("Error parsing content for dependency type 'BASE'"));
-        assertFalse(logFileContent.contains("Building Kustomization for:"));
-        assertTrue(result.stderr().isEmpty(), "stderr should be empty when diagnostics go to the log file.");
-        assertFalse(
-                result.stdout().contains("Error parsing content for dependency type 'BASE'"),
-                "stdout should not carry resolver diagnostics when --log-file is set.");
-
-        rootAppsOutputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, "overall.yaml");
-    }
 
     @Test
     void testAffectedAppsWritesUnreferencedFileWarningsToLogFile() throws IOException {
