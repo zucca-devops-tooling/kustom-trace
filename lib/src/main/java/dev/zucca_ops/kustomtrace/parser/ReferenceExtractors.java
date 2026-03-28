@@ -40,7 +40,7 @@ public class ReferenceExtractors {
 
     /**
      * Helper method to check if a path is a valid file, with logging.
-     * Primarily used by {@link #configMapGeneratorFiles()}.
+     * Primarily used by {@link #generatorFiles()}.
      * @param path The path to check.
      * @return True if the path represents an existing, regular file.
      */
@@ -54,7 +54,7 @@ public class ReferenceExtractors {
 
     /**
      * Helper method to check if a path does NOT represent a Kustomization file by name, with logging.
-     * Primarily used by {@link #configMapGeneratorFiles()}.
+     * Primarily used by {@link #generatorFiles()}.
      * @param path The path to check.
      * @return True if the path is NOT a Kustomization file by name.
      */
@@ -224,58 +224,61 @@ public class ReferenceExtractors {
         };
     }
 
+    private static Stream<String> generatorStringListField(
+            Map<String, Object> generatorEntry, String fieldName) {
+        Object fieldValue = generatorEntry.get(fieldName);
+        if (fieldValue instanceof List<?> fieldValues) {
+            return fieldValues.stream().filter(String.class::isInstance).map(String.class::cast);
+        }
+
+        if (generatorEntry.containsKey(fieldName)) {
+            logger.warn("Generator '{}' field is not a List in: {}", fieldName, generatorEntry);
+        }
+        return Stream.empty();
+    }
+
+    private static String generatorFilePath(String fileEntry) {
+        if (!fileEntry.contains("=")) {
+            return fileEntry.trim();
+        }
+
+        return fileEntry.substring(fileEntry.indexOf('=') + 1).trim();
+    }
+
     /**
-     * Returns a {@link ReferenceExtractor} for extracting file paths from the 'envs' and 'files'
-     * fields of a configMapGenerator or secretGenerator.
-     * Handles parsing of 'key=value' format in the 'files' list.
+     * Returns a {@link ReferenceExtractor} for extracting file paths from the {@code envs}
+     * and {@code files} fields of generator entries such as {@code configMapGenerator}
+     * and {@code secretGenerator}.
+     * Handles parsing of {@code key=path} format in the {@code files} list.
      */
-    public static ReferenceExtractor configMapGeneratorFiles() {
+    public static ReferenceExtractor generatorFiles() {
         return (referenceValue, baseDir) -> {
-            logger.debug("Applying configMapGeneratorFiles extractor, baseDir: {}", baseDir);
+            logger.debug("Applying generatorFiles extractor, baseDir: {}", baseDir);
 
-            if (referenceValue instanceof Map) {
-                Map<String, Object> valueMap = ((Map<String, Object>) referenceValue);
-                Stream<String> envsFilePaths = Stream.empty();
-                if (valueMap.get("envs") instanceof List) {
-                    envsFilePaths =
-                            ((List<?>) valueMap.get("envs"))
-                                    .stream()
-                                            .filter(String.class::isInstance)
-                                            .map(String.class::cast);
-                } else if (valueMap.containsKey("envs")) {
-                    logger.warn("configMapGenerator 'envs' field is not a List in: {}", valueMap);
-                }
-
-                Stream<String> filesKeyPaths = Stream.empty();
-                if (valueMap.get("files") instanceof List) {
-                    filesKeyPaths =
-                            ((List<?>) valueMap.get("files"))
-                                    .stream()
-                                            .filter(String.class::isInstance)
-                                            .map(String.class::cast)
-                                            .map(
-                                                    f ->
-                                                            f.contains("=")
-                                                                    ? f.substring(
-                                                                                    f.indexOf("=")
-                                                                                            + 1)
-                                                                            .trim()
-                                                                    : f.trim());
-                } else if (valueMap.containsKey("files")) {
-                    logger.warn("configMapGenerator 'files' field is not a List in: {}", valueMap);
-                }
-
-                return Stream.concat(envsFilePaths, filesKeyPaths)
+            if (referenceValue instanceof Map<?, ?> rawValueMap) {
+                Map<String, Object> valueMap = (Map<String, Object>) rawValueMap;
+                return Stream.concat(
+                                generatorStringListField(valueMap, "envs"),
+                                generatorStringListField(valueMap, "files")
+                                        .map(ReferenceExtractors::generatorFilePath))
                         .filter(s -> !s.isEmpty())
                         .map(f -> baseDir.resolve(f).normalize())
                         .filter(ReferenceExtractors::isValidFile)
                         .filter(ReferenceExtractors::isNotKustomizationFile);
             }
             logger.warn(
-                    "Invalid reference value for configMapGeneratorFiles: expected Map, got {}. Value: {}",
+                    "Invalid reference value for generatorFiles: expected Map, got {}. Value: {}",
                     (referenceValue == null ? "null" : referenceValue.getClass().getName()),
                     referenceValue);
             return Stream.empty();
         };
+    }
+
+    /**
+     * @deprecated Use {@link #generatorFiles()}.
+     */
+    @Deprecated(forRemoval = false)
+    public static ReferenceExtractor configMapGeneratorFiles() {
+        return generatorFiles();
     }
 }

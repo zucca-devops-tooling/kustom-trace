@@ -43,7 +43,8 @@ public enum ReferenceType {
     COMPONENT("components", ReferenceExtractors.directory()),
     PATCH("patches", ReferenceExtractors.inlinePathValue("path")),
     PATCH_MERGE("patchesStrategicMerge", ReferenceExtractors.resource()),
-    CONFIG_MAP("configMapGenerator", ReferenceExtractors.configMapGeneratorFiles());
+    CONFIG_MAP("configMapGenerator", ReferenceExtractors.generatorFiles()),
+    SECRET("secretGenerator", ReferenceExtractors.generatorFiles());
 
     private final String yamlKey;
     private final ReferenceExtractor extractor;

@@ -213,8 +213,8 @@ public class ReferenceExtractorsTest {
     }
 
     @Test
-    void configMapGeneratorFiles_extractsEnvsAndFiles() throws InvalidReferenceException, IOException {
-        var extractor = ReferenceExtractors.configMapGeneratorFiles();
+    void generatorFiles_extractsEnvsAndFiles() throws InvalidReferenceException, IOException {
+        var extractor = ReferenceExtractors.generatorFiles();
         Path file1 = baseDir.resolve("a.yaml"); // Will be filtered by isNotKustomizationFile if KustomizeFileUtil.isKustomizationFileName matches based on content.
         // Assuming a.yaml is NOT "kustomization.yaml"
         Path pathToB = baseDir.resolve("path").resolve("to"); // Intermediate dir
@@ -247,8 +247,8 @@ public class ReferenceExtractorsTest {
     }
 
     @Test
-    void configMapGeneratorFiles_skipsKustomizationFiles() throws InvalidReferenceException, IOException {
-        var extractor = ReferenceExtractors.configMapGeneratorFiles();
+    void generatorFiles_skipsKustomizationFiles() throws InvalidReferenceException, IOException {
+        var extractor = ReferenceExtractors.generatorFiles();
         Path kustomizationFile = baseDir.resolve("kustomization.yaml");
         Path envFile = baseDir.resolve("env.env");
 
@@ -263,5 +263,20 @@ public class ReferenceExtractorsTest {
         assertEquals(1, result.size());
         assertTrue(result.contains(envFile.toAbsolutePath().normalize()));
         assertFalse(result.contains(kustomizationFile.toAbsolutePath().normalize()));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void configMapGeneratorFiles_delegatesToGeneratorFiles() throws InvalidReferenceException, IOException {
+        Path secretFile = baseDir.resolve("secret.txt");
+        Files.createFile(secretFile);
+
+        Map<String, Object> input = Map.of("files", List.of("password=secret.txt"));
+
+        List<Path> aliasResult = ReferenceExtractors.configMapGeneratorFiles().extract(input, baseDir).toList();
+        List<Path> sharedResult = ReferenceExtractors.generatorFiles().extract(input, baseDir).toList();
+
+        assertEquals(sharedResult, aliasResult);
+        assertEquals(List.of(secretFile.toAbsolutePath().normalize()), sharedResult);
     }
 }

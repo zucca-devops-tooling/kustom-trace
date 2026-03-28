@@ -29,6 +29,7 @@ public class AllReferenceTypesTest {
             "app-base",
             "app-component",
             "app-configmap",
+            "app-secret",
             "app-patch",
             "app-patch-merge",
             "app-resource"
@@ -143,6 +144,30 @@ public class AllReferenceTypesTest {
     }
 
     @Test
+    void testSecretGeneratorEnv() {
+        String appName = "app-secret";
+        String resource = "secret1.env";
+        String kind = "Undefined";
+        assertFileDependency(appName, resource, kind);
+    }
+
+    @Test
+    void testSecretGeneratorAssignedFile() {
+        String appName = "app-secret";
+        String resource = "secret-password.txt";
+        String kind = "Undefined";
+        assertFileDependency(appName, resource, kind);
+    }
+
+    @Test
+    void testSecretGeneratorTxtFile() {
+        String appName = "app-secret";
+        String resource = "secret-note.txt";
+        String kind = "Undefined";
+        assertFileDependency(appName, resource, kind);
+    }
+
+    @Test
     void testPatchReference() {
         String appName = "app-patch";
         String resource = "patch1.yaml";
@@ -205,7 +230,7 @@ public class AllReferenceTypesTest {
 
     @Test
     void testAppAmount() {
-        // We expect 6 root apps in total (1 per type) and 5 isolated/bad referenced kustomization.yaml (invalid directories)
-        assertThat(graph.getRootApps().size()).isEqualTo(11);
+        // We expect 7 root apps in total (1 per type) and 6 isolated/bad referenced kustomization.yaml (invalid directories)
+        assertThat(graph.getRootApps().size()).isEqualTo(13);
     }
 }

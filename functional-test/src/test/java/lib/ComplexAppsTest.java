@@ -48,6 +48,7 @@ public class ComplexAppsTest {
                 "app-base",
                 "app-component",
                 "app-configmap",
+                "app-secret",
                 "app-patch",
                 "app-patch-merge",
                 "app-resource"
@@ -93,7 +94,8 @@ public class ComplexAppsTest {
         List<String> subsetFolders = List.of(
                 "app-base",
                 "app-configmap",
-                "app-resource"
+                "app-resource",
+                "app-secret"
         );
         Path referencesAppFolder = appsDir.resolve("../").resolve("all-reference-types-apps");
         Path appPath = appsDir.resolve("subset-with-circular");

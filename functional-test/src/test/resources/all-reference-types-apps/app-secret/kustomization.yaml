@@ -1,0 +1,11 @@
+secretGenerator:
+  - name: my-secret1
+    envs:
+      - secret1.env
+  - name: my-secret2
+    files:
+      - password=secret-password.txt
+      - secret-note.txt
+      - non-existing-secret.txt
+      - invalid-directory
+      - invalid-directory/kustomization.yaml

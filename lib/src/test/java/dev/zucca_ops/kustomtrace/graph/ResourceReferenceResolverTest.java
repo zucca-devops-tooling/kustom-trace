@@ -122,6 +122,49 @@ public class ResourceReferenceResolverTest {
     }
 
     @Test
+    void resolveDependencies_processesSecretGeneratorReferences() throws IOException, InvalidContentException {
+        Path kustomPath = tempDir.resolve("kustomization.yaml");
+        Files.writeString(kustomPath, "secretGenerator:\n  - name: app-secret");
+
+        Path envFilePath = tempDir.resolve("secret.env");
+        Path secretFilePath = tempDir.resolve("secret.txt");
+        Files.createFile(envFilePath);
+        Files.createFile(secretFilePath);
+
+        Kustomization root = new Kustomization(
+                kustomPath,
+                Map.of(
+                        "secretGenerator",
+                        List.of(
+                                Map.of(
+                                        "envs", List.of("secret.env"),
+                                        "files", List.of("password=secret.txt")))));
+
+        KustomGraphBuilder mockedBuilder = mock(KustomGraphBuilder.class);
+        ResourceReferenceResolver resolver = new ResourceReferenceResolver(mockedBuilder);
+
+        KustomFile envNode = new KustomFile(envFilePath);
+        KustomFile secretNode = new KustomFile(secretFilePath);
+
+        when(mockedBuilder.buildKustomFile(envFilePath)).thenReturn(envNode);
+        when(mockedBuilder.buildKustomFile(secretFilePath)).thenReturn(secretNode);
+
+        List<ResourceReference> references = resolver.resolveDependencies(root).toList();
+
+        assertEquals(2, references.size(), "Should resolve env and file references from secretGenerator.");
+        assertTrue(
+                references.stream()
+                        .anyMatch(ref -> ref.referenceType() == ReferenceType.SECRET && ref.resource() == envNode));
+        assertTrue(
+                references.stream()
+                        .anyMatch(ref -> ref.referenceType() == ReferenceType.SECRET && ref.resource() == secretNode));
+
+        verify(mockedBuilder).buildKustomFile(envFilePath);
+        verify(mockedBuilder).buildKustomFile(secretFilePath);
+        verify(mockedBuilder, never()).buildKustomization(any());
+    }
+
+    @Test
     void returnsNullOnInvalidContent() throws InvalidContentException, FileNotFoundException {
         KustomGraphBuilder builder = mock(KustomGraphBuilder.class);
         try (MockedStatic<KustomizeFileUtil> mocked = mockStatic(KustomizeFileUtil.class)) {
