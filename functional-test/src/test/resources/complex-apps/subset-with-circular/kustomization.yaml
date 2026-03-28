@@ -2,6 +2,7 @@ components:
   - ../../all-reference-types-apps/app-base/
   - ../../all-reference-types-apps/app-configmap
   - ../../all-reference-types-apps/app-resource/
+  - ../../all-reference-types-apps/app-secret
   - ../../circular-dependency-apps/app1
 
 resources:

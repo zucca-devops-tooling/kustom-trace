@@ -48,6 +48,7 @@ public class ComplexAppsTest {
                 "app-base",
                 "app-component",
                 "app-configmap",
+                "app-secret",
                 "app-patch",
                 "app-patch-merge",
                 "app-resource"
@@ -82,10 +83,10 @@ public class ComplexAppsTest {
 
         List<Path> dependencies = app.getDependencies().toList();
 
-        assertThat(dependencies).contains(appResolve(appsDir)); // root
-        assertThat(dependencies).contains(appResolve(appsDir.resolve("invalid-apps"))); // as root reference
+        assertThat(dependencies).contains(appResolve(appsDir));
+        assertThat(dependencies).contains(appResolve(appsDir.resolve("invalid-apps")));
         assertThat(dependencies).contains(appResolve(appsDir.resolve("all-references")));
-        assertThat(dependencies).noneMatch(path -> path.toString().contains("app-with-no-kustomization")); // still should not pick them up
+        assertThat(dependencies).noneMatch(path -> path.toString().contains("app-with-no-kustomization"));
     }
 
     @Test
@@ -93,7 +94,8 @@ public class ComplexAppsTest {
         List<String> subsetFolders = List.of(
                 "app-base",
                 "app-configmap",
-                "app-resource"
+                "app-resource",
+                "app-secret"
         );
         Path referencesAppFolder = appsDir.resolve("../").resolve("all-reference-types-apps");
         Path appPath = appsDir.resolve("subset-with-circular");

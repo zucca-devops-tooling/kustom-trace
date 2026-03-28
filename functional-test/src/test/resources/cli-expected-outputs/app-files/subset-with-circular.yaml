@@ -12,6 +12,10 @@ app-files:
     - ../../all-reference-types-apps/app-resource/more-resources/extra-resource.yml
     - ../../all-reference-types-apps/app-resource/valid-directory/Kustomization
     - ../../all-reference-types-apps/app-resource/valid-directory/last-resource.yml
+    - ../../all-reference-types-apps/app-secret/kustomization.yaml
+    - ../../all-reference-types-apps/app-secret/secret-note.txt
+    - ../../all-reference-types-apps/app-secret/secret-password.txt
+    - ../../all-reference-types-apps/app-secret/secret1.env
     - ../../circular-dependency-apps/app1/app1-resource.yaml
     - ../../circular-dependency-apps/app1/component/component1-resource.yaml
     - ../../circular-dependency-apps/app1/component/kustomization.yaml

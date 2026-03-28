@@ -66,6 +66,22 @@ public class AppFilesTest {
     }
 
     @Test
+    void testSecretApp() {
+        Path actualOutputFile = tempDir.resolve("affected-apps-secret-output.yaml");
+        String expectedResourceFileName = "secret-files.yaml";
+        Path appsPath = resourcesDir.resolve("all-reference-types-apps");
+
+        int exitCode = cmd.execute(
+                "--apps-dir", appsPath.toString(),
+                "--output", actualOutputFile.toString(),
+                "app-files", appsPath.resolve("app-secret").toString()
+        );
+        assertEquals(0, exitCode);
+
+        outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
+    }
+
+    @Test
     void testUnparseableApp() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
         String expectedResourceFileName = "app-with-unparseables.yaml";

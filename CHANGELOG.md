@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Native CLI build and release support for Linux, Windows, and macOS via GraalVM Community 21 on GitHub Actions.
 - Pre-release validation for the native CLI binaries in CI across Linux, Windows, and macOS.
-- Concurrency regression coverage for graph node dependent registration.
+- Support for `secretGenerator` file and env references when building Kustomize dependency graphs.
 
 ### Changed
 - Upgraded the Gradle wrapper to 8.14.4.

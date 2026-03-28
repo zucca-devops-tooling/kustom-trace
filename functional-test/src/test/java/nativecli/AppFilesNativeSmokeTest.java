@@ -31,6 +31,22 @@ class AppFilesNativeSmokeTest extends NativeCliSmokeTestSupport {
     }
 
     @Test
+    void testSecretApp() {
+        Path actualOutputFile = tempDir.resolve("app-files-secret-native-output.yaml");
+        String expectedResourceFileName = "secret-files.yaml";
+        Path appsPath = resourcesDir.resolve("all-reference-types-apps");
+
+        NativeCliResult result = nativeCliExecutor.execute(
+                "--apps-dir", appsPath.toString(),
+                "--output", actualOutputFile.toString(),
+                "app-files", appsPath.resolve("app-secret").toString()
+        );
+
+        assertEquals(0, result.exitCode());
+        outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
+    }
+
+    @Test
     void testUnparseableApp() {
         Path actualOutputFile = tempDir.resolve("app-files-native-output.yaml");
         String expectedResourceFileName = "app-with-unparseables.yaml";

@@ -44,7 +44,6 @@ public class ListRootAppsCommand implements Callable<Integer> {
         File effectiveLogFile = parentCLI.getLogFile();
         File outputFile = parentCLI.getOutputFile();
 
-        // 1. Initial Validations for --apps-dir
         if (effectiveAppsDir == null) {
             CLIHelper.printError(
                     "Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
@@ -59,7 +58,6 @@ public class ListRootAppsCommand implements Callable<Integer> {
             return 1;
         }
 
-        // 2. Core Logic
         try {
             KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDirPathGlobal);
 
@@ -79,7 +77,6 @@ public class ListRootAppsCommand implements Callable<Integer> {
                             .sorted() // Sort for consistent output order
                             .toList();
 
-            // 3. Conditional Output
             if (outputFile != null) {
                 // YAML output
                 Map<String, List<String>> yamlOutput = new LinkedHashMap<>();

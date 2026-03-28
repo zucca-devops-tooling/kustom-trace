@@ -76,7 +76,6 @@ public class CircularDependencyTest {
         // There shoudl be no apps, as they are circularly dependent
         assertEquals(0, app1Apps.size());
 
-        // Clean up the appender
         logger.detachAppender(listAppender);
     }
 }

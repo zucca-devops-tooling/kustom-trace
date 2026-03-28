@@ -5,3 +5,4 @@ components:
   - ../../all-reference-types-apps/app-patch
   - ../../all-reference-types-apps/app-patch-merge
   - ../../all-reference-types-apps/app-resource
+  - ../../all-reference-types-apps/app-secret

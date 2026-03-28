@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class ResourceReferenceResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(ResourceReferenceResolver.class);
-    private final KustomGraphBuilder builder; // Renamed for clarity from user's 'builder'
+    private final KustomGraphBuilder builder;
 
     /**
      * Constructs a ResourceReferenceResolver.

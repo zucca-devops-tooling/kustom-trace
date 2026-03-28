@@ -64,43 +64,33 @@ public class ResourceReferenceResolverTest {
 
     @Test
     void resolveDependencies_processesValidReferences() throws IOException, InvalidContentException {
-        // 1. Setup Paths and Files
         Path kustomPath = tempDir.resolve("kustomization.yaml");
         Files.writeString(kustomPath, "components:\n  - component1\nresources:\n  - resource.yaml");
 
         Path componentDir = tempDir.resolve("component1");
         Files.createDirectory(componentDir);
         Path componentKustomizationPath = componentDir.resolve("kustomization.yaml");
-        Files.createFile(componentKustomizationPath); // Create the component's kustomization file
+        Files.createFile(componentKustomizationPath);
 
         Path resourcePath = tempDir.resolve("resource.yaml");
-        Files.createFile(resourcePath); // Create the resource file
+        Files.createFile(resourcePath);
 
-        // 2. Create Root Kustomization and Mock Collaborators
         Kustomization root = new Kustomization(kustomPath, Map.of("components", List.of("component1"), "resources", List.of("resource.yaml")));
 
-        // Mock KustomGraphBuilder, as ResourceReferenceResolver depends on it
         KustomGraphBuilder mockedBuilder = mock(KustomGraphBuilder.class);
         ResourceReferenceResolver resolver = new ResourceReferenceResolver(mockedBuilder);
 
-        // Define the objects that the mocked builder should return
         Kustomization componentNode = new Kustomization(componentKustomizationPath, Map.of());
         KustomFile resourceNode = new KustomFile(resourcePath);
 
-        // Stub the builder's methods
         when(mockedBuilder.buildKustomization(componentKustomizationPath)).thenReturn(componentNode);
         when(mockedBuilder.buildKustomFile(resourcePath)).thenReturn(resourceNode);
 
-        // 3. Execute the method under test
         Stream<ResourceReference> resultStream = resolver.resolveDependencies(root);
         List<ResourceReference> references = resultStream.toList();
 
-        // 4. Assertions (Order-Independent)
-
-        // 4a. Assert the total number of references
         assertEquals(2, references.size(), "Should have resolved exactly two references.");
 
-        // 4b. Verify that the expected COMPONENT reference is present
         ReferenceType expectedComponentType = ReferenceType.COMPONENT;
 
         long componentReferenceCount = references.stream()
@@ -108,7 +98,6 @@ public class ResourceReferenceResolverTest {
                 .count();
         assertEquals(1, componentReferenceCount, "Exactly one COMPONENT reference to the expected component instance (" + componentKustomizationPath.getFileName() + ") should exist.");
 
-        // 4c. Verify that the expected RESOURCE reference is present
         ReferenceType expectedResourceType = ReferenceType.RESOURCE;
 
         long resourceReferenceCount = references.stream()
@@ -116,9 +105,51 @@ public class ResourceReferenceResolverTest {
                 .count();
         assertEquals(1, resourceReferenceCount, "Exactly one RESOURCE reference to the expected resource instance (" + resourcePath.getFileName() + ") should exist.");
 
-        // 5. Verify interactions with the mocked builder (these remain the same)
         verify(mockedBuilder).buildKustomization(componentKustomizationPath);
         verify(mockedBuilder).buildKustomFile(resourcePath);
+    }
+
+    @Test
+    void resolveDependencies_processesSecretGeneratorReferences() throws IOException, InvalidContentException {
+        Path kustomPath = tempDir.resolve("kustomization.yaml");
+        Files.writeString(kustomPath, "secretGenerator:\n  - name: app-secret");
+
+        Path envFilePath = tempDir.resolve("secret.env");
+        Path secretFilePath = tempDir.resolve("secret.txt");
+        Files.createFile(envFilePath);
+        Files.createFile(secretFilePath);
+
+        Kustomization root = new Kustomization(
+                kustomPath,
+                Map.of(
+                        "secretGenerator",
+                        List.of(
+                                Map.of(
+                                        "envs", List.of("secret.env"),
+                                        "files", List.of("password=secret.txt")))));
+
+        KustomGraphBuilder mockedBuilder = mock(KustomGraphBuilder.class);
+        ResourceReferenceResolver resolver = new ResourceReferenceResolver(mockedBuilder);
+
+        KustomFile envNode = new KustomFile(envFilePath);
+        KustomFile secretNode = new KustomFile(secretFilePath);
+
+        when(mockedBuilder.buildKustomFile(envFilePath)).thenReturn(envNode);
+        when(mockedBuilder.buildKustomFile(secretFilePath)).thenReturn(secretNode);
+
+        List<ResourceReference> references = resolver.resolveDependencies(root).toList();
+
+        assertEquals(2, references.size(), "Should resolve env and file references from secretGenerator.");
+        assertTrue(
+                references.stream()
+                        .anyMatch(ref -> ref.referenceType() == ReferenceType.SECRET && ref.resource() == envNode));
+        assertTrue(
+                references.stream()
+                        .anyMatch(ref -> ref.referenceType() == ReferenceType.SECRET && ref.resource() == secretNode));
+
+        verify(mockedBuilder).buildKustomFile(envFilePath);
+        verify(mockedBuilder).buildKustomFile(secretFilePath);
+        verify(mockedBuilder, never()).buildKustomization(any());
     }
 
     @Test

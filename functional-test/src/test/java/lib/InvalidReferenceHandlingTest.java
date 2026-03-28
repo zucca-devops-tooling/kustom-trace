@@ -80,7 +80,6 @@ public class InvalidReferenceHandlingTest {
 
     @AfterAll
     static void tearDown() {
-        // Clean up the appender
         logger.detachAppender(listAppender);
     }
 
@@ -129,7 +128,6 @@ public class InvalidReferenceHandlingTest {
         assertInvalidReference(Path.of("invalid-directory").resolve("kustomization.yaml").toString(), "Not a valid Kubernetes resource", app, RESOURCE, Level.WARN);
         assertInvalidReference("invalid", "Multiline value found", app, RESOURCE, Level.WARN);
 
-        // manually test self references not to be included
         assertThat(app.getDependencies())
                 .noneMatch(path -> path.toString().contains("another-resource.yaml"));
         assertThat(app.getDependencies())

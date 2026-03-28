@@ -66,7 +66,7 @@ public class AffectedAppsTest {
     @Test
     void testCircularDependency() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "circular-dependency.yaml"; // The file you created in resources
+        String expectedResourceFileName = "circular-dependency.yaml";
         Path circularDependencyAppsPath = resourcesDir.resolve("circular-dependency-apps");
         int exitCode = cmd.execute(
                 "--apps-dir", circularDependencyAppsPath.toString(),
@@ -86,7 +86,7 @@ public class AffectedAppsTest {
     @Test
     void testAllApps() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "all-apps.yaml"; // The file you created in resources
+        String expectedResourceFileName = "all-apps.yaml";
         int exitCode = cmd.execute(
                 "--apps-dir", resourcesDir.toString(),
                 "--output", actualOutputFile.toString(),
@@ -104,7 +104,7 @@ public class AffectedAppsTest {
     @Test
     void testBulkQuery() {
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "bulk-apps.yaml"; // The file you created in resources
+        String expectedResourceFileName = "bulk-apps.yaml";
         Path complexApps = resourcesDir.resolve("complex-apps");
         Path appConfigMap = resourcesDir.resolve("all-reference-types-apps").resolve("app-configmap");
         Path circularDependencyAppsPath = resourcesDir.resolve("circular-dependency-apps");

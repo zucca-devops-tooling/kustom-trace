@@ -83,8 +83,8 @@ public class YamlParserTest {
     }
 
     @Test
-    void parseKustomizationFile_throwsInvalidContentException_ifMultipleDocuments() throws IOException { // No InvalidContentException needed here
-        Path path = tempDir.resolve("multi_doc_kustomization.yaml"); // Renamed for clarity
+    void parseKustomizationFile_throwsInvalidContentException_ifMultipleDocuments() throws IOException {
+        Path path = tempDir.resolve("multi_doc_kustomization.yaml");
         Files.writeString(path, """
         resources:
           - base
