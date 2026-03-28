@@ -48,6 +48,9 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set("kustomtrace")
+            buildArgs.add(
+                "--initialize-at-run-time=dev.zucca_ops.kustomtrace,org.slf4j,ch.qos.logback,org.codehaus.janino"
+            )
         }
     }
 }
