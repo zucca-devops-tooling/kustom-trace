@@ -244,6 +244,11 @@ jobs:
           name: kustomtrace-cli-macos-x64
           path: release-assets
 
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Tag release
         run: ./gradlew tagRelease --no-daemon
 
@@ -321,10 +326,7 @@ jobs:
       - name: Push tag
         env:
           TAG_NAME: ${{ steps.release.outputs.tag_name }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git push origin "${TAG_NAME}"
+        run: git push origin "${TAG_NAME}"
 
       - name: Create GitHub release
         env:
