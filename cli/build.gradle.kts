@@ -3,10 +3,13 @@ plugins {
     id("application")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("dev.zucca-ops.gradle-publisher") version "1.1.1"
+    id("org.graalvm.buildtools.native") version "0.11.1"
 }
 
 group = "dev.zucca-ops"
 version = rootProject.version
+
+val picocliVersion = "4.7.7"
 
 repositories {
     mavenCentral()
@@ -14,6 +17,10 @@ repositories {
 
 application {
     mainClass.set("dev.zucca_ops.kustomtrace.cli.KustomTraceCLI")
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
 }
 
 tasks.named("build") {
@@ -33,6 +40,18 @@ tasks.shadowJar {
     }
 }
 
+graalvmNative {
+    testSupport.set(false)
+    metadataRepository {
+        enabled.set(true)
+    }
+    binaries {
+        named("main") {
+            imageName.set("kustomtrace")
+        }
+    }
+}
+
 publisher {
     prod {
         target = "https://maven.pkg.github.com/zucca-devops-tooling/kustom-trace"
@@ -47,7 +66,8 @@ publisher {
 }
 
 dependencies {
-    implementation("info.picocli:picocli:4.7.7")
+    implementation("info.picocli:picocli:$picocliVersion")
+    annotationProcessor("info.picocli:picocli-codegen:$picocliVersion")
     implementation(project(":"+rootProject.name))
     implementation("ch.qos.logback:logback-classic:1.5.18")
     implementation("org.yaml:snakeyaml:2.2")

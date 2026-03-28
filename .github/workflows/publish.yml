@@ -135,14 +135,30 @@ jobs:
             -PgithubPackagesUsername="${GH_PACKAGES_USERNAME}" \
             -PgithubPackagesPassword="${GH_PACKAGES_TOKEN}"
 
+  publish-cli-native-linux:
+    name: Publish CLI Native Linux
+    needs: verify
+    if: >-
+      needs.verify.result == 'success' &&
+      (
+        contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishAll') ||
+        (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
+      )
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish-native-linux.yml
+
   release:
     name: Tag and Release
     needs:
       - publish-library
       - publish-cli
+      - publish-cli-native-linux
     if: >-
       needs.publish-library.result == 'success' &&
       needs.publish-cli.result == 'success' &&
+      needs.publish-cli-native-linux.result == 'success' &&
       github.ref_name == 'main' &&
       contains(github.event.head_commit.message || '', 'release')
     runs-on: ubuntu-latest
@@ -167,6 +183,12 @@ jobs:
       - name: Build CLI release artifact
         run: ./gradlew :kustomtrace-cli:shadowJar --info --no-daemon
 
+      - name: Download Linux native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kustomtrace-cli-linux-x64
+          path: release-assets
+
       - name: Tag release
         run: ./gradlew tagRelease --no-daemon
 
@@ -190,12 +212,26 @@ jobs:
             exit 1
           fi
 
+          native_linux_archive="release-assets/kustomtrace-linux-x64.tar.gz"
+          if [[ ! -f "$native_linux_archive" ]]; then
+            echo "Linux native archive not found after artifact download." >&2
+            exit 1
+          fi
+
+          native_linux_checksum="release-assets/kustomtrace-linux-x64.tar.gz.sha256"
+          if [[ ! -f "$native_linux_checksum" ]]; then
+            echo "Linux native checksum not found after artifact download." >&2
+            exit 1
+          fi
+
           notes_file="$RUNNER_TEMP/release-notes.md"
           printf '%s\n' "$changelog_notes" > "$notes_file"
 
           {
             echo "tag_name=v$release_version"
             echo "shadow_jar_path=$shadow_jar_path"
+            echo "native_linux_archive=$native_linux_archive"
+            echo "native_linux_checksum=$native_linux_checksum"
             echo "notes_file=$notes_file"
           } >> "$GITHUB_OUTPUT"
 
@@ -212,9 +248,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ steps.release.outputs.tag_name }}
           SHADOW_JAR_PATH: ${{ steps.release.outputs.shadow_jar_path }}
+          NATIVE_LINUX_ARCHIVE: ${{ steps.release.outputs.native_linux_archive }}
+          NATIVE_LINUX_CHECKSUM: ${{ steps.release.outputs.native_linux_checksum }}
           NOTES_FILE: ${{ steps.release.outputs.notes_file }}
         run: |
           gh release create "${TAG_NAME}" \
             "${SHADOW_JAR_PATH}" \
+            "${NATIVE_LINUX_ARCHIVE}" \
+            "${NATIVE_LINUX_CHECKSUM}" \
             --title "Release ${TAG_NAME}" \
             --notes-file "${NOTES_FILE}"
