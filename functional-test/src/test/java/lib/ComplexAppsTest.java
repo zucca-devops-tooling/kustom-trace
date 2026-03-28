@@ -83,10 +83,10 @@ public class ComplexAppsTest {
 
         List<Path> dependencies = app.getDependencies().toList();
 
-        assertThat(dependencies).contains(appResolve(appsDir)); // root
-        assertThat(dependencies).contains(appResolve(appsDir.resolve("invalid-apps"))); // as root reference
+        assertThat(dependencies).contains(appResolve(appsDir));
+        assertThat(dependencies).contains(appResolve(appsDir.resolve("invalid-apps")));
         assertThat(dependencies).contains(appResolve(appsDir.resolve("all-references")));
-        assertThat(dependencies).noneMatch(path -> path.toString().contains("app-with-no-kustomization")); // still should not pick them up
+        assertThat(dependencies).noneMatch(path -> path.toString().contains("app-with-no-kustomization"));
     }
 
     @Test

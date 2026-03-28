@@ -90,7 +90,6 @@ public class KustomTraceCLI implements Callable<Integer> {
         String cmdLogFile = null;
         String cmdLogLevel = null;
 
-        // Minimal pre-scan for --log-file and --log-level
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--log-file") && i + 1 < args.length) {
                 cmdLogFile = args[++i];
@@ -103,28 +102,17 @@ public class KustomTraceCLI implements Callable<Integer> {
             }
         }
 
-        // Set system properties for Logback BEFORE Picocli execution
         if (cmdLogFile != null && !cmdLogFile.trim().isEmpty()) {
             System.setProperty("LOG_FILE", new File(cmdLogFile).getAbsolutePath());
         }
 
         if (cmdLogLevel != null && !cmdLogLevel.trim().isEmpty()) {
             String levelUpper = cmdLogLevel.toUpperCase();
-            System.setProperty(
-                    "kustomtrace.app.loglevel",
-                    levelUpper); // For your app's logger generation level
-            System.setProperty(
-                    "kustomtrace.console.loglevel", levelUpper); // For STDOUT ThresholdFilter
-            System.setProperty("kustomtrace.file.loglevel", levelUpper); // For FILE ThresholdFilter
+            System.setProperty("kustomtrace.app.loglevel", levelUpper);
+            System.setProperty("kustomtrace.console.loglevel", levelUpper);
+            System.setProperty("kustomtrace.file.loglevel", levelUpper);
         }
-        // If --log-file is set but --log-level is not, console defaults to WARN (from logback.xml
-        // DEFAULT_CONSOLE_LEVEL)
-        // and file defaults to INFO (from DEFAULT_FILE_LEVEL), app logs at DEFAULT_APP_LOG_LEVEL
-        // (INFO).
-        // If neither is set, console gets WARN, app generates INFO (filtered by console's WARN).
-        // This achieves goal 2b.
 
-        // Execute Picocli
         int exitCode =
                 new CommandLine(new KustomTraceCLI())
                         .setCaseInsensitiveEnumValuesAllowed(true)

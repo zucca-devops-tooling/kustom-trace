@@ -56,7 +56,6 @@ public class ConfigMapInvalidReferenceHandlingTest {
         assertThat(app.getDependencies())
                 .noneMatch(path -> path.toString().contains("ignored.yaml"));
 
-        // Clean up the appender
         logger.detachAppender(listAppender);
     }
 }

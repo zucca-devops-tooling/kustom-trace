@@ -45,7 +45,6 @@ public class InvalidFileHandlingTest {
 
     @AfterAll
     static void tearDown() {
-        // Clean up the appender
         logger.detachAppender(listAppender);
     }
 
