@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+## [1.1.0] - 2026-03-28
 ### Added
 - Native CLI build and release support for Linux, Windows, and macOS via GraalVM Community 21 on GitHub Actions.
 - Pre-release validation for the native CLI binaries in CI across Linux, Windows, and macOS.
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### ✨ Added
 - Initial release
 
-[Unreleased]: https://github.com/zucca-devops-tooling/kustom-trace/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/zucca-devops-tooling/kustom-trace/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/zucca-devops-tooling/kustom-trace/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/zucca-devops-tooling/kustom-trace/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/zucca-devops-tooling/kustom-trace/releases/tag/v1.0.0

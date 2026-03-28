@@ -13,14 +13,14 @@ Maven:
 <dependency>
   <groupId>dev.zucca-ops</groupId>
   <artifactId>kustomtrace</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```gradle
-implementation("dev.zucca-ops:kustomtrace:1.0.1")
+implementation("dev.zucca-ops:kustomtrace:1.1.0")
 ```
 
 ## Quick Start

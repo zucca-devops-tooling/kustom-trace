@@ -27,7 +27,7 @@ Examples below assume the executable is available as `kustomtrace`. If you run t
 
 ```bash
 kustomtrace --apps-dir ./apps list-root-apps
-java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps list-root-apps
+java -jar kustomtrace-cli-1.1.0-all.jar --apps-dir ./apps list-root-apps
 ```
 
 Important: global options must appear before the subcommand.

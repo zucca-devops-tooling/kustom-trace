@@ -45,8 +45,8 @@ Example with a native binary:
 Example with the shaded JAR:
 
 ```bash
-java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps list-root-apps
-java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps affected-apps ./apps/base/common.yaml
+java -jar kustomtrace-cli-1.1.0-all.jar --apps-dir ./apps list-root-apps
+java -jar kustomtrace-cli-1.1.0-all.jar --apps-dir ./apps affected-apps ./apps/base/common.yaml
 ```
 
 See [cli/README.md](./cli/README.md) for installation details, command examples, YAML output, logging, and native build instructions.
@@ -59,14 +59,14 @@ Maven:
 <dependency>
   <groupId>dev.zucca-ops</groupId>
   <artifactId>kustomtrace</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```gradle
-implementation("dev.zucca-ops:kustomtrace:1.0.1")
+implementation("dev.zucca-ops:kustomtrace:1.1.0")
 ```
 
 Basic usage:
