@@ -5,58 +5,14 @@ on:
 
 jobs:
   build-linux-native:
-    name: Build Linux Native Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up GraalVM
-        uses: graalvm/setup-graalvm@v1
-        with:
-          distribution: graalvm-community
-          java-version: "21"
-          components: native-image
-          cache: gradle
-          github-token: ${{ github.token }}
-          native-image-job-reports: "true"
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x gradlew
-
-      - name: Build Linux native image
-        run: ./gradlew :kustomtrace-cli:nativeCompile --info --no-daemon
-
-      - name: Run native CLI smoke tests
-        run: |
-          ./gradlew :functional-test:nativeSmokeTest --info --no-daemon \
-            -DnativeCliPath="$PWD/cli/build/native/nativeCompile/kustomtrace"
-
-      - name: Package Linux native artifact
-        run: |
-          mkdir -p dist
-          binary_path="cli/build/native/nativeCompile/kustomtrace"
-          release_binary="dist/kustomtrace-linux-x64"
-          archive_path="dist/kustomtrace-linux-x64.tar.gz"
-
-          if [[ ! -f "$binary_path" ]]; then
-            echo "Linux native binary not found at $binary_path" >&2
-            exit 1
-          fi
-
-          cp "$binary_path" "$release_binary"
-          chmod +x "$release_binary"
-          tar -C dist -czf "$archive_path" "$(basename "$release_binary")"
-          sha256sum "$archive_path" > "$archive_path.sha256"
-
-      - name: Upload Linux native artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: kustomtrace-cli-linux-x64
-          path: |
-            dist/kustomtrace-linux-x64.tar.gz
-            dist/kustomtrace-linux-x64.tar.gz.sha256
+    uses: ./.github/workflows/publish-native-platform.yml
+    with:
+      platform_name: Linux
+      runs_on: ubuntu-latest
+      artifact_name: kustomtrace-cli-linux-x64
+      archive_name: kustomtrace-linux-x64.tar.gz
+      archive_format: tar.gz
+      release_binary_name: kustomtrace-linux-x64
+      binary_name: kustomtrace
+      gradle_command: ./gradlew
+    secrets: inherit
