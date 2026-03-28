@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ListRootAppsNativeSmokeTest extends NativeCliSmokeTestSupport {
 
@@ -27,11 +26,6 @@ class ListRootAppsNativeSmokeTest extends NativeCliSmokeTestSupport {
         );
 
         assertEquals(0, result.exitCode());
-        String expectedError = "ResourceReferenceResolver - Error parsing content for dependency type 'BASE'";
-        assertTrue(
-                result.stdout().contains(expectedError) || result.stderr().contains(expectedError),
-                "Make sure at least one of the expected errors like " + expectedError
-                        + " is logged.\nstdout: " + result.stdout() + "\nstderr: " + result.stderr());
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
     }
 

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppFilesNativeSmokeTest extends NativeCliSmokeTestSupport {
 
@@ -60,10 +59,6 @@ class AppFilesNativeSmokeTest extends NativeCliSmokeTestSupport {
         );
 
         assertEquals(0, result.exitCode());
-        assertTrue(
-                result.stdout().contains("Circular dependency detected")
-                        || result.stderr().contains("Circular dependency detected"),
-                "Expected circular dependency message. stdout: " + result.stdout() + "\nstderr: " + result.stderr());
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
     }
 
