@@ -40,7 +40,7 @@ class CLIBasicTest {
         swErr = new StringWriter();
         System.setErr(new PrintStream(new WriterOutputStream(swErr, StandardCharsets.UTF_8.name()), true));
 
-        cmd = new CommandLine(new KustomTraceCLI()); // Instantiate your actual KustomTraceCLI
+        cmd = new CommandLine(new KustomTraceCLI());
         System.clearProperty("log.file");
     }
 
@@ -119,7 +119,6 @@ class CLIBasicTest {
 
     @Test
     void testAppFilesCommand_OutputToFile_WritesYaml(@TempDir Path tempDir) throws IOException {
-        // ... (setup code for appsDir, kustomizationApp1Path, etc. is the same) ...
         Path appsDir = Files.createDirectory(tempDir.resolve("apps"));
         Path app1Dir = Files.createDirectory(appsDir.resolve("app1"));
         Path baseDir = Files.createDirectory(appsDir.resolve("base"));
@@ -134,7 +133,6 @@ class CLIBasicTest {
         Path actualOutputFile = tempDir.resolve("app-files-output.yaml");
         String expectedResourceFile = "app-files.yaml";
 
-        // Execute the command
         int exitCode = cmd.execute(
                 "--apps-dir", appsDir.toString(),
                 "--output", actualOutputFile.toString(),
@@ -147,14 +145,12 @@ class CLIBasicTest {
 
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFile);
 
-        // System.out assertions (should be clean of command data)
         String capturedStdOut = getCapturedOut();
         assertFalse(capturedStdOut.contains("Files used by application at:"), "System.out should NOT contain verbose output header.");
     }
 
     @Test
     void testAffectedAppsCommand_OutputToFile_WritesYaml(@TempDir Path tempDir) throws IOException {
-        // 1. Setup
         Path appsDir = Files.createDirectory(tempDir.resolve("apps"));
         Path app1Dir = Files.createDirectory(appsDir.resolve("app1"));
         Path app2Dir = Files.createDirectory(appsDir.resolve("app2"));
@@ -163,7 +159,7 @@ class CLIBasicTest {
         Path kustomizationApp1Path = app1Dir.resolve("kustomization.yaml");
         Path kustomizationApp2Path = app2Dir.resolve("kustomization.yaml");
         Path commonBaseYamlPath = baseDir.resolve("common-base.yaml");
-        Path app2SpecificResourcePath = app2Dir.resolve("app2-specific.yaml"); // For clarity
+        Path app2SpecificResourcePath = app2Dir.resolve("app2-specific.yaml");
 
         Files.createFile(commonBaseYamlPath);
         createSimpleKustomization(kustomizationApp1Path, List.of("../base/common-base.yaml"));
@@ -172,26 +168,21 @@ class CLIBasicTest {
             Files.createFile(app2SpecificResourcePath);
         }
 
-        // 2. Define actual output file path and expected resource file name
         Path actualOutputFile = tempDir.resolve("affected-apps-actual-output.yaml");
-        String expectedResourceFileName = "affected-apps.yaml"; // The file you created in resources
+        String expectedResourceFileName = "affected-apps.yaml";
 
-        // 3. Execute command
         int exitCode = cmd.execute(
                 "--apps-dir", appsDir.toString(),
                 "--output", actualOutputFile.toString(),
                 "affected-apps", commonBaseYamlPath.toString()
         );
 
-        // 4. Basic Assertions
         assertEquals(0, exitCode, "Exit code should be 0. Stderr: " + getCapturedErr());
         assertTrue(getCapturedErr().isEmpty(), "Stderr should be empty on success. Actual: " + getCapturedErr());
         assertTrue(Files.exists(actualOutputFile), "Output YAML file should be created.");
 
-        // 5. Use OutputResourceAssessor to compare the YAML content
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
 
-        // 6. System.out assertions (should be clean of the command's data output)
         String capturedStdOut = getCapturedOut();
         assertFalse(capturedStdOut.contains("Affected Applications:"), "System.out should NOT contain verbose 'Affected Applications:' header.");
         assertFalse(capturedStdOut.contains("Affected apps by"), "System.out should NOT contain verbose 'Affected apps by' sub-headers.");
@@ -248,21 +239,18 @@ class CLIBasicTest {
         String expectedResourceFileName = "unreferenced-file.yaml";
 
         int exitCode = cmd.execute(
-                "--apps-dir", emptyAppsDir.toString(), // Pointing to an empty directory
+                "--apps-dir", emptyAppsDir.toString(),
                 "--output", actualOutputFile.toString(),
                 "affected-apps",
                 modifiedFile.toString()
         );
 
-        // 1. Basic Assertions
         assertEquals(0, exitCode, "Exit code should be 0. Stderr: " + getCapturedErr());
         assertTrue(getCapturedErr().isEmpty(), "Stderr should be empty if warnings go to log file or are suppressed. Actual: " + getCapturedErr());
         assertTrue(Files.exists(actualOutputFile), "Output YAML file should be created.");
 
-        // 2. Use OutputResourceAssessor to compare the YAML content
         outputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, expectedResourceFileName);
 
-        // 3. System.out assertions (should be clean of command data and specific messages)
         String capturedStdOut = getCapturedOut();
         assertFalse(capturedStdOut.contains("Affected Applications:"), "System.out should NOT contain verbose output header.");
         assertFalse(capturedStdOut.contains("Affected apps by"), "System.out should NOT contain verbose sub-headers.");

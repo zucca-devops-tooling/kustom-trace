@@ -52,7 +52,6 @@ public class AppFilesCommand implements Callable<Integer> {
         File effectiveLogFile = parentCLI.getLogFile();
         File outputFile = parentCLI.getOutputFile();
 
-        // 1. Initial Validations for global --apps-dir
         if (effectiveAppsDir == null) {
             CLIHelper.printError(
                     "Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
@@ -67,7 +66,6 @@ public class AppFilesCommand implements Callable<Integer> {
             return 1;
         }
 
-        // 2. Validation for <app-path> input
         if (appPathInput == null) { // appPathInput is the @Parameters File
             CLIHelper.printError("<app-path> parameter is required.", null, effectiveLogFile);
             return 1;
@@ -111,7 +109,6 @@ public class AppFilesCommand implements Callable<Integer> {
             return 1;
         }
 
-        // 3. Core Logic
         try {
             KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDirPathGlobal);
 
@@ -185,7 +182,6 @@ public class AppFilesCommand implements Callable<Integer> {
                             .sorted()
                             .collect(Collectors.toList());
 
-            // 4. Conditional Output
             if (outputFile != null) {
                 Map<String, List<String>> appData = new LinkedHashMap<>();
                 appData.put(finalAppIdentifierKey, relativeDependencyPaths);

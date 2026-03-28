@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ReferenceExtractorsTest {
 
     @TempDir
-    Path baseDir; // This will be the parent for most test files and for 'baseDir' arg
+    Path baseDir;
     @Nested
     @DisplayName("directory() Extractor Tests")
     class DirectoryExtractorTests {
@@ -84,7 +84,6 @@ public class ReferenceExtractorsTest {
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class,
                     () -> extractor.extract(targetDir.getFileName().toString(), baseDir).findFirst());
             assertTrue(ex.getMessage().contains("Expected directory with Kustomization inside"));
-            // Check that the cause is NotAnAppException
             assertNotNull(ex.getCause());
             assertInstanceOf(NotAnAppException.class, ex.getCause());
         }
@@ -92,9 +91,6 @@ public class ReferenceExtractorsTest {
         @Test
         void directory_throwsForSelfReference() {
             ReferenceExtractor extractor = ReferenceExtractors.directory();
-            // Kustomize disallows "." as a kustomization path in 'bases' or 'components'
-            // if it means self-reference that leads to issues.
-            // Your extractKustomization helper handles this.
             assertThrows(InvalidReferenceException.class, () -> extractor.extract(".", baseDir).findFirst());
         }
     }
@@ -128,17 +124,8 @@ public class ReferenceExtractorsTest {
 
         @Test
         void resourceOrDirectory_throwsIfFileIsKustomizationNameButNotKustomizationTarget() throws IOException {
-            // e.g. resources: [kustomization.yaml] where kustomization.yaml is a resource file
-            // KustomizeFileUtil.getKustomizationFileFromAppDirectory would resolve this IF it exists and IS a kustomization.
-            // If it's meant to be a plain resource but named kustomization.yaml, it's tricky.
-            // Your current resourceOrDirectory logic:
-            // 1. Tries KustomizeFileUtil.getKustomizationFileFromAppDirectory(path).
-            // 2. If NotAnAppException, then validateKubernetesResource(path).
-            // KustomizeFileUtil.isValidKubernetesResource returns false for "kustomization.yaml".
-            // So validateKubernetesResource will throw "Not a valid Kubernetes resource".
-
             Path kustomizationAsResource = baseDir.resolve("kustomization.yaml");
-            Files.createFile(kustomizationAsResource); // It exists
+            Files.createFile(kustomizationAsResource);
 
             ReferenceExtractor extractor = ReferenceExtractors.resourceOrDirectory();
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract("kustomization.yaml", baseDir).toList());
@@ -158,9 +145,6 @@ public class ReferenceExtractorsTest {
         @Test
         void resourceOrDirectory_throwsIfNonExistentFile() {
             ReferenceExtractor extractor = ReferenceExtractors.resourceOrDirectory();
-            // KFG.getKustomizationFileFromAppDirectory will throw for non-existent path.
-            // That NotAnAppException is caught, then validateKubernetesResource is called.
-            // validateKubernetesResource will then throw because KustomizeFileUtil.isFile will be false.
             InvalidReferenceException ex = assertThrows(InvalidReferenceException.class, () -> extractor.extract("nonexistent.yaml", baseDir).toList());
             assertTrue(ex.getMessage().contains("Non-existing or non-regular file referenced"));
         }
@@ -215,15 +199,13 @@ public class ReferenceExtractorsTest {
     @Test
     void generatorFiles_extractsEnvsAndFiles() throws InvalidReferenceException, IOException {
         var extractor = ReferenceExtractors.generatorFiles();
-        Path file1 = baseDir.resolve("a.yaml"); // Will be filtered by isNotKustomizationFile if KustomizeFileUtil.isKustomizationFileName matches based on content.
-        // Assuming a.yaml is NOT "kustomization.yaml"
-        Path pathToB = baseDir.resolve("path").resolve("to"); // Intermediate dir
+        Path file1 = baseDir.resolve("a.yaml");
+        Path pathToB = baseDir.resolve("path").resolve("to");
         Files.createDirectories(pathToB);
         Path file2 = pathToB.resolve("b.yaml");
-        Path file3 = baseDir.resolve("env1.env"); // Changed extension for clarity as resource
-        Path file4 = baseDir.resolve("env2.properties"); // Changed extension
+        Path file3 = baseDir.resolve("env1.env");
+        Path file4 = baseDir.resolve("env2.properties");
 
-        // KustomizeFileUtil.isFile needs these to exist
         Files.createFile(file1);
         Files.createFile(file2);
         Files.createFile(file3);
@@ -235,7 +217,7 @@ public class ReferenceExtractorsTest {
         );
 
         List<Path> result = extractor.extract(input, baseDir)
-                .map(p -> p.toAbsolutePath().normalize()) // Normalize for comparison
+                .map(p -> p.toAbsolutePath().normalize())
                 .toList();
 
 

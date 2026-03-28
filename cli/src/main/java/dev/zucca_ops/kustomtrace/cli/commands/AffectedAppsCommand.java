@@ -55,7 +55,6 @@ public class AffectedAppsCommand implements Callable<Integer> {
         File effectiveLogFile = parentCLI.getLogFile();
         File outputFile = parentCLI.getOutputFile();
 
-        // 1. Validations for appsDir (from parent)
         if (effectiveAppsDir == null) {
             CLIHelper.printError(
                     "Critical: --apps-dir was not properly configured.", null, effectiveLogFile);
@@ -69,7 +68,6 @@ public class AffectedAppsCommand implements Callable<Integer> {
             return 1;
         }
 
-        // 2. Gather all modified files
         List<File> allModifiedFiles = new ArrayList<>();
         if (this.modifiedFilesArray != null && this.modifiedFilesArray.length > 0) {
             allModifiedFiles.addAll(Arrays.asList(this.modifiedFilesArray));
@@ -112,7 +110,6 @@ public class AffectedAppsCommand implements Callable<Integer> {
             return 0; // Not an error, just no input to process.
         }
 
-        // 3. Core Logic & Data Preparation
         try {
             Path appsDirPath = effectiveAppsDir.toPath();
             KustomTrace kustomTrace = KustomTrace.fromDirectory(appsDirPath);
@@ -197,7 +194,6 @@ public class AffectedAppsCommand implements Callable<Integer> {
                         yamlKeyForModifiedFile, relativeAffectedAppPathsForCurrentFile);
             }
 
-            // 4. Conditional Output
             if (outputFile != null) {
                 Map<String, Object> yamlRoot = new LinkedHashMap<>();
                 yamlRoot.put("affected-apps", affectedAppsDataForYaml);
