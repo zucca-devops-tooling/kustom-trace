@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NativeCliLoggingSmokeTest extends NativeCliSmokeTestSupport {
 
-    private final OutputResourceAssesor appFilesOutputResourceAssesor =
-            new OutputResourceAssesor("app-files");
+    private final OutputResourceAssesor basicTestOutputResourceAssesor =
+            new OutputResourceAssesor("basic-test");
     private final OutputResourceAssesor rootAppsOutputResourceAssesor =
             new OutputResourceAssesor("root-apps");
 
@@ -51,60 +51,69 @@ class NativeCliLoggingSmokeTest extends NativeCliSmokeTestSupport {
     }
 
     @Test
-    void testAppFilesWritesCircularDependencyDiagnosticsToLogFile() throws IOException {
-        Path actualOutputFile = tempDir.resolve("app-files-native-output.yaml");
-        Path logFile = tempDir.resolve("app-files-native.log");
-        Path appPath = resourcesDir.resolve("complex-apps").resolve("subset-with-circular");
+    void testAffectedAppsWritesUnreferencedFileWarningsToLogFile() throws IOException {
+        Path emptyAppsDir = resourcesDir.resolve("app-with-no-kustomization");
+        Path modifiedFile = emptyAppsDir.resolve("deployment.yml");
+        Path actualOutputFile = tempDir.resolve("empty-apps-affected-native-output.yaml");
+        Path logFile = tempDir.resolve("affected-apps-native.log");
 
         NativeCliResult result =
                 nativeCliExecutor.execute(
                         "--apps-dir",
-                        resourcesDir.toString(),
+                        emptyAppsDir.toString(),
                         "--log-file",
                         logFile.toString(),
                         "--output",
                         actualOutputFile.toString(),
-                        "app-files",
-                        appPath.toString());
+                        "affected-apps",
+                        modifiedFile.toString());
 
         assertEquals(0, result.exitCode());
         assertTrue(Files.exists(logFile));
 
         String logFileContent = Files.readString(logFile);
-        assertTrue(logFileContent.contains("Circular dependency detected"));
-        assertTrue(result.stderr().isEmpty(), "stderr should be empty when diagnostics go to the log file.");
+        assertTrue(logFileContent.contains("Warning: File with path"));
+        assertTrue(logFileContent.contains("is not referenced by any app"));
+        assertTrue(result.stderr().isEmpty(), "stderr should be empty when warnings go to the log file.");
         assertFalse(
-                result.stdout().contains("Circular dependency detected"),
-                "stdout should not carry circular dependency diagnostics when --log-file is set.");
+                result.stdout().contains("Warning:"),
+                "stdout should not carry unreferenced file warnings when --log-file is set.");
 
-        appFilesOutputResourceAssesor.assertYamlOutputMatchesResource(
-                actualOutputFile, "subset-with-circular.yaml");
+        basicTestOutputResourceAssesor.assertYamlOutputMatchesResource(
+                actualOutputFile, "unreferenced-file.yaml");
     }
 
     @Test
-    void testDebugLogLevelEnablesDebugEntriesInLogFile() throws IOException {
-        Path actualOutputFile = tempDir.resolve("root-apps-native-output.yaml");
-        Path logFile = tempDir.resolve("list-root-apps-native-debug.log");
+    void testLogLevelOptionDoesNotBreakDedicatedLogFileWarnings() throws IOException {
+        Path emptyAppsDir = resourcesDir.resolve("app-with-no-kustomization");
+        Path modifiedFile = emptyAppsDir.resolve("deployment.yml");
+        Path actualOutputFile = tempDir.resolve("empty-apps-affected-native-output.yaml");
+        Path logFile = tempDir.resolve("affected-apps-native-debug.log");
 
         NativeCliResult result =
                 nativeCliExecutor.execute(
                         "--apps-dir",
-                        resourcesDir.toString(),
+                        emptyAppsDir.toString(),
                         "--log-file",
                         logFile.toString(),
                         "--log-level",
                         "DEBUG",
                         "--output",
                         actualOutputFile.toString(),
-                        "list-root-apps");
+                        "affected-apps",
+                        modifiedFile.toString());
 
         assertEquals(0, result.exitCode());
         assertTrue(Files.exists(logFile));
 
         String logFileContent = Files.readString(logFile);
-        assertTrue(logFileContent.contains("Building Kustomization for:"));
-        assertTrue(result.stderr().isEmpty(), "stderr should be empty when diagnostics go to the log file.");
+        assertTrue(logFileContent.contains("Warning: File with path"));
+        assertTrue(logFileContent.contains("is not referenced by any app"));
+        assertTrue(
+                result.stderr().isEmpty(),
+                "stderr should remain empty when warnings go to the dedicated log file.");
 
-        rootAppsOutputResourceAssesor.assertYamlOutputMatchesResource(actualOutputFile, "overall.yaml");
+        basicTestOutputResourceAssesor.assertYamlOutputMatchesResource(
+                actualOutputFile, "unreferenced-file.yaml");
     }
 }
