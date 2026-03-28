@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Added
+- Linux native CLI build and release support via GraalVM Community 21 on GitHub Actions.
+- Pre-release validation for the Linux native CLI binary in CI.
+
+### Changed
+- Upgraded the Gradle wrapper to 8.14.4.
+
+### Security
+- Upgraded `logback-classic` to 1.5.32.
+
 ## [1.0.1] - 2025-05-27
 ### 🐞 Fixed
 - resources, bases and components reference validations were too flexible allowing to reference Kustomization files

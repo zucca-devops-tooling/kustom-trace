@@ -16,10 +16,10 @@
 package dev.zucca_ops.kustomtrace.model;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 public abstract class GraphNode {
     protected Path path; // Path to the file system entity this node represents.
-    protected List<Kustomization> dependents = new ArrayList<>();
+    protected final CopyOnWriteArrayList<Kustomization> dependents = new CopyOnWriteArrayList<>();
 
     /**
      * Constructor to set the path for the graph node.
@@ -67,8 +67,8 @@ public abstract class GraphNode {
      * @param dependent The Kustomization that depends on this node.
      */
     public void addDependent(Kustomization dependent) {
-        if (dependent != null && !this.dependents.contains(dependent)) { // Avoid duplicates
-            this.dependents.add(dependent);
+        if (dependent != null) {
+            dependents.addIfAbsent(dependent);
         }
     }
 

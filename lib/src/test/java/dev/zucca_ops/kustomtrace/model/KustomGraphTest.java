@@ -58,7 +58,6 @@ public class KustomGraphTest {
     @Test
     void getAppsWith_returnsAppList_forReferencedFile() throws Exception {
         Kustomization app = new Kustomization(tempDir.resolve("app/kustomization.yaml"), Map.of());
-        app.dependents = List.of(); // root
 
         KustomGraph graph = new KustomGraph();
         graph.addNode(app);
