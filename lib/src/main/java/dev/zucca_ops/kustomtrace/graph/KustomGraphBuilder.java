@@ -25,6 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ public class KustomGraphBuilder {
     private final Path appsDir;
     private final KustomGraph graph;
     private final ResourceReferenceResolver dependencyResolver;
+    private final Map<Path, Object> nodeLocks = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(KustomGraphBuilder.class);
 
     /**
@@ -119,24 +122,29 @@ public class KustomGraphBuilder {
     Kustomization buildKustomization(Path path)
             throws InvalidContentException, FileNotFoundException {
         logger.debug("Building Kustomization for: {}", path);
+        Path normalizedPath = normalizePath(path);
+        Kustomization kustomization;
 
-        if (graph.containsNode(path)) {
-            logger.debug("Kustomization node already exists in graph for: {}", path);
-            return graph.getKustomization(path);
+        synchronized (lockFor(normalizedPath)) {
+            if (graph.containsNode(normalizedPath)) {
+                logger.debug("Kustomization node already exists in graph for: {}", normalizedPath);
+                return graph.getKustomization(normalizedPath);
+            }
+
+            logger.debug("Resolving Kustomization using GraphNodeResolver for: {}", path);
+            kustomization = GraphNodeResolver.resolveKustomization(path);
+
+            logger.debug("Adding Kustomization node to graph: {}", kustomization.getPath());
+            graph.addNode(
+                    kustomization); // Add to graph before resolving dependencies to handle cycles
         }
 
-        logger.debug("Resolving Kustomization using GraphNodeResolver for: {}", path);
-        Kustomization k = GraphNodeResolver.resolveKustomization(path);
-
-        logger.debug("Adding Kustomization node to graph: {}", k.getPath());
-        graph.addNode(k); // Add to graph *before* resolving dependencies to handle cycles
-
-        logger.debug("Resolving dependencies for Kustomization: {}", k.getPath());
+        logger.debug("Resolving dependencies for Kustomization: {}", kustomization.getPath());
         dependencyResolver
-                .resolveDependencies(k)
-                .forEach(reference -> setMutualReference(k, reference));
+                .resolveDependencies(kustomization)
+                .forEach(reference -> setMutualReference(kustomization, reference));
 
-        return k;
+        return kustomization;
     }
 
     /**
@@ -151,17 +159,21 @@ public class KustomGraphBuilder {
      */
     KustomFile buildKustomFile(Path path) throws InvalidContentException, FileNotFoundException {
         logger.debug("Building KustomFile for: {}", path);
+        Path normalizedPath = normalizePath(path);
+        KustomFile file;
 
-        if (graph.containsNode(path)) {
-            logger.debug("KustomFile node already exists in graph for: {}", path);
-            return graph.getKustomFile(path);
+        synchronized (lockFor(normalizedPath)) {
+            if (graph.containsNode(normalizedPath)) {
+                logger.debug("KustomFile node already exists in graph for: {}", normalizedPath);
+                return graph.getKustomFile(normalizedPath);
+            }
+
+            logger.debug("Resolving KustomFile using GraphNodeResolver for: {}", path);
+            file = GraphNodeResolver.resolveKustomFile(path);
+
+            logger.debug("Adding KustomFile node to graph: {}", file.getPath());
+            graph.addNode(file);
         }
-
-        logger.debug("Resolving KustomFile using GraphNodeResolver for: {}", path);
-        KustomFile file = GraphNodeResolver.resolveKustomFile(path);
-
-        logger.debug("Adding KustomFile node to graph: {}", file.getPath());
-        graph.addNode(file);
 
         return file;
     }
@@ -180,5 +192,13 @@ public class KustomGraphBuilder {
                 reference.resource().getPath());
         dependent.addReference(reference);
         reference.resource().addDependent(dependent);
+    }
+
+    private Path normalizePath(Path path) {
+        return path.toAbsolutePath().normalize();
+    }
+
+    private Object lockFor(Path path) {
+        return nodeLocks.computeIfAbsent(path, ignored -> new Object());
     }
 }

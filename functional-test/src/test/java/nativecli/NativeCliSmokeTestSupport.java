@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 abstract class NativeCliSmokeTestSupport {
 
-    protected final Path resourcesDir = Paths.get("src", "test", "resources").toAbsolutePath().normalize();
+    protected final Path resourcesDir = Paths.get("src", "test", "resources");
     protected NativeCliExecutor nativeCliExecutor;
 
     @BeforeEach
