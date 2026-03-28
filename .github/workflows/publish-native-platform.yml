@@ -66,11 +66,17 @@ jobs:
       - name: Build native image
         shell: pwsh
         run: |
+          $nativeTempDir = Join-Path $PWD ".native-image-tmp"
+          New-Item -ItemType Directory -Force -Path $nativeTempDir | Out-Null
+          $env:JAVA_TOOL_OPTIONS = "-Djava.io.tmpdir=""$nativeTempDir"""
           & $env:GRADLE_COMMAND ":kustomtrace-cli:nativeCompile" "--info" "--no-daemon"
 
       - name: Run native CLI smoke tests
         shell: pwsh
         run: |
+          $nativeTempDir = Join-Path $PWD ".native-image-tmp"
+          New-Item -ItemType Directory -Force -Path $nativeTempDir | Out-Null
+          $env:JAVA_TOOL_OPTIONS = "-Djava.io.tmpdir=""$nativeTempDir"""
           $nativeCliPath = Join-Path $PWD $env:NATIVE_BINARY_PATH
           & $env:GRADLE_COMMAND ":functional-test:nativeSmokeTest" "--info" "--no-daemon" "-DnativeCliPath=$nativeCliPath"
 
