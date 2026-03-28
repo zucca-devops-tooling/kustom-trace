@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 ### Added
-- Linux native CLI build and release support via GraalVM Community 21 on GitHub Actions.
-- Pre-release validation for the Linux native CLI binary in CI.
+- Native CLI build and release support for Linux, Windows, and macOS via GraalVM Community 21 on GitHub Actions.
+- Pre-release validation for the native CLI binaries in CI across Linux, Windows, and macOS.
+- Concurrency regression coverage for graph node dependent registration.
 
 ### Changed
 - Upgraded the Gradle wrapper to 8.14.4.
+
+### Fixed
+- Replaced the previous concurrent graph-building approach with safer per-path locking and thread-safe dependent tracking.
 
 ### Security
 - Upgraded `logback-classic` to 1.5.32.
