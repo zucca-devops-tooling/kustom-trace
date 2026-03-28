@@ -8,11 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 ### Added
 - Linux native CLI build and release support via GraalVM Community 21 on GitHub Actions.
-- Native CLI smoke tests in CI for `app-files`, `affected-apps`, `list-root-apps`, and key CLI error/output scenarios.
+- Pre-release validation for the Linux native CLI binary in CI.
 
 ### Changed
-- Split the Linux native build into a dedicated reusable GitHub Actions workflow.
-- Gate Linux native artifact publication on native smoke-test success.
 - Upgraded the Gradle wrapper to 8.14.4.
 
 ### Security
