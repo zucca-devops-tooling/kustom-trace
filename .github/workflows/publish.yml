@@ -14,6 +14,10 @@ jobs:
     if: >-
       contains(github.event.head_commit.message || '', 'publishLib') ||
       contains(github.event.head_commit.message || '', 'publishCli') ||
+      contains(github.event.head_commit.message || '', 'publishJarCli') ||
+      contains(github.event.head_commit.message || '', 'publishLinCli') ||
+      contains(github.event.head_commit.message || '', 'publishWinCli') ||
+      contains(github.event.head_commit.message || '', 'publishMacCli') ||
       contains(github.event.head_commit.message || '', 'publishAll') ||
       (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
     runs-on: ubuntu-latest
@@ -96,13 +100,14 @@ jobs:
             -PmavenCentralUsername="${OSSRH_USERNAME}" \
             -PmavenCentralPassword="${OSSRH_PASSWORD}"
 
-  publish-cli:
-    name: Publish CLI
+  publish-cli-jar:
+    name: Publish CLI JAR
     needs: verify
     if: >-
       needs.verify.result == 'success' &&
       (
         contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishJarCli') ||
         contains(github.event.head_commit.message || '', 'publishAll') ||
         (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
       )
@@ -129,7 +134,7 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Publish CLI
+      - name: Publish CLI JAR
         run: |
           ./gradlew :kustomtrace-cli:publish --info --no-daemon \
             -PgithubPackagesUsername="${GH_PACKAGES_USERNAME}" \
@@ -142,23 +147,61 @@ jobs:
       needs.verify.result == 'success' &&
       (
         contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishLinCli') ||
         contains(github.event.head_commit.message || '', 'publishAll') ||
         (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
       )
     permissions:
       contents: read
     uses: ./.github/workflows/publish-native-linux.yml
+    secrets: inherit
+
+  publish-cli-native-windows:
+    name: Publish CLI Native Windows
+    needs: verify
+    if: >-
+      needs.verify.result == 'success' &&
+      (
+        contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishWinCli') ||
+        contains(github.event.head_commit.message || '', 'publishAll') ||
+        (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
+      )
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish-native-windows.yml
+    secrets: inherit
+
+  publish-cli-native-macos:
+    name: Publish CLI Native macOS
+    needs: verify
+    if: >-
+      needs.verify.result == 'success' &&
+      (
+        contains(github.event.head_commit.message || '', 'publishCli') ||
+        contains(github.event.head_commit.message || '', 'publishMacCli') ||
+        contains(github.event.head_commit.message || '', 'publishAll') ||
+        (github.ref_name == 'main' && contains(github.event.head_commit.message || '', 'release'))
+      )
+    permissions:
+      contents: read
+    uses: ./.github/workflows/publish-native-macos.yml
+    secrets: inherit
 
   release:
     name: Tag and Release
     needs:
       - publish-library
-      - publish-cli
+      - publish-cli-jar
       - publish-cli-native-linux
+      - publish-cli-native-windows
+      - publish-cli-native-macos
     if: >-
       needs.publish-library.result == 'success' &&
-      needs.publish-cli.result == 'success' &&
+      needs.publish-cli-jar.result == 'success' &&
       needs.publish-cli-native-linux.result == 'success' &&
+      needs.publish-cli-native-windows.result == 'success' &&
+      needs.publish-cli-native-macos.result == 'success' &&
       github.ref_name == 'main' &&
       contains(github.event.head_commit.message || '', 'release')
     runs-on: ubuntu-latest
@@ -187,6 +230,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kustomtrace-cli-linux-x64
+          path: release-assets
+
+      - name: Download Windows native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kustomtrace-cli-windows-x64
+          path: release-assets
+
+      - name: Download macOS native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kustomtrace-cli-macos-x64
           path: release-assets
 
       - name: Tag release
@@ -224,6 +279,30 @@ jobs:
             exit 1
           fi
 
+          native_windows_archive="release-assets/kustomtrace-windows-x64.zip"
+          if [[ ! -f "$native_windows_archive" ]]; then
+            echo "Windows native archive not found after artifact download." >&2
+            exit 1
+          fi
+
+          native_windows_checksum="release-assets/kustomtrace-windows-x64.zip.sha256"
+          if [[ ! -f "$native_windows_checksum" ]]; then
+            echo "Windows native checksum not found after artifact download." >&2
+            exit 1
+          fi
+
+          native_macos_archive="release-assets/kustomtrace-macos-x64.tar.gz"
+          if [[ ! -f "$native_macos_archive" ]]; then
+            echo "macOS native archive not found after artifact download." >&2
+            exit 1
+          fi
+
+          native_macos_checksum="release-assets/kustomtrace-macos-x64.tar.gz.sha256"
+          if [[ ! -f "$native_macos_checksum" ]]; then
+            echo "macOS native checksum not found after artifact download." >&2
+            exit 1
+          fi
+
           notes_file="$RUNNER_TEMP/release-notes.md"
           printf '%s\n' "$changelog_notes" > "$notes_file"
 
@@ -232,6 +311,10 @@ jobs:
             echo "shadow_jar_path=$shadow_jar_path"
             echo "native_linux_archive=$native_linux_archive"
             echo "native_linux_checksum=$native_linux_checksum"
+            echo "native_windows_archive=$native_windows_archive"
+            echo "native_windows_checksum=$native_windows_checksum"
+            echo "native_macos_archive=$native_macos_archive"
+            echo "native_macos_checksum=$native_macos_checksum"
             echo "notes_file=$notes_file"
           } >> "$GITHUB_OUTPUT"
 
@@ -250,11 +333,19 @@ jobs:
           SHADOW_JAR_PATH: ${{ steps.release.outputs.shadow_jar_path }}
           NATIVE_LINUX_ARCHIVE: ${{ steps.release.outputs.native_linux_archive }}
           NATIVE_LINUX_CHECKSUM: ${{ steps.release.outputs.native_linux_checksum }}
+          NATIVE_WINDOWS_ARCHIVE: ${{ steps.release.outputs.native_windows_archive }}
+          NATIVE_WINDOWS_CHECKSUM: ${{ steps.release.outputs.native_windows_checksum }}
+          NATIVE_MACOS_ARCHIVE: ${{ steps.release.outputs.native_macos_archive }}
+          NATIVE_MACOS_CHECKSUM: ${{ steps.release.outputs.native_macos_checksum }}
           NOTES_FILE: ${{ steps.release.outputs.notes_file }}
         run: |
           gh release create "${TAG_NAME}" \
             "${SHADOW_JAR_PATH}" \
             "${NATIVE_LINUX_ARCHIVE}" \
             "${NATIVE_LINUX_CHECKSUM}" \
+            "${NATIVE_WINDOWS_ARCHIVE}" \
+            "${NATIVE_WINDOWS_CHECKSUM}" \
+            "${NATIVE_MACOS_ARCHIVE}" \
+            "${NATIVE_MACOS_CHECKSUM}" \
             --title "Release ${TAG_NAME}" \
             --notes-file "${NOTES_FILE}"

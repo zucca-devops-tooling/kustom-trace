@@ -1,0 +1,18 @@
+name: Publish Native macOS
+
+on:
+  workflow_call:
+
+jobs:
+  build-macos-native:
+    uses: ./.github/workflows/publish-native-platform.yml
+    with:
+      platform_name: macOS
+      runs_on: macos-15-intel
+      artifact_name: kustomtrace-cli-macos-x64
+      archive_name: kustomtrace-macos-x64.tar.gz
+      archive_format: tar.gz
+      release_binary_name: kustomtrace-macos-x64
+      binary_name: kustomtrace
+      gradle_command: ./gradlew
+    secrets: inherit

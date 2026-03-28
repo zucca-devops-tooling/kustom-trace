@@ -1,0 +1,121 @@
+name: Publish Native Platform
+
+on:
+  workflow_call:
+    inputs:
+      platform_name:
+        required: true
+        type: string
+      runs_on:
+        required: true
+        type: string
+      artifact_name:
+        required: true
+        type: string
+      archive_name:
+        required: true
+        type: string
+      archive_format:
+        required: true
+        type: string
+      release_binary_name:
+        required: true
+        type: string
+      binary_name:
+        required: true
+        type: string
+      gradle_command:
+        required: true
+        type: string
+
+jobs:
+  build-native:
+    name: Build ${{ inputs.platform_name }} Native Image
+    runs-on: ${{ inputs.runs_on }}
+    permissions:
+      contents: read
+    env:
+      NATIVE_BINARY_PATH: cli/build/native/nativeCompile/${{ inputs.binary_name }}
+      RELEASE_BINARY_NAME: ${{ inputs.release_binary_name }}
+      ARCHIVE_NAME: ${{ inputs.archive_name }}
+      ARCHIVE_FORMAT: ${{ inputs.archive_format }}
+      GRADLE_COMMAND: ${{ inputs.gradle_command }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: graalvm-community
+          java-version: "21"
+          components: native-image
+          cache: gradle
+          github-token: ${{ github.token }}
+          native-image-job-reports: "true"
+
+      - name: Make Gradle wrapper executable
+        shell: pwsh
+        run: |
+          if (-not $IsWindows) {
+            & chmod +x gradlew
+          }
+
+      - name: Build native image
+        shell: pwsh
+        run: |
+          $nativeTempDir = Join-Path $PWD ".native-image-tmp"
+          New-Item -ItemType Directory -Force -Path $nativeTempDir | Out-Null
+          $env:JAVA_TOOL_OPTIONS = "-Djava.io.tmpdir=""$nativeTempDir"""
+          & $env:GRADLE_COMMAND ":kustomtrace-cli:nativeCompile" "--info" "--no-daemon"
+
+      - name: Run native CLI smoke tests
+        shell: pwsh
+        run: |
+          $nativeTempDir = Join-Path $PWD ".native-image-tmp"
+          New-Item -ItemType Directory -Force -Path $nativeTempDir | Out-Null
+          $env:JAVA_TOOL_OPTIONS = "-Djava.io.tmpdir=""$nativeTempDir"""
+          $nativeCliPath = Join-Path $PWD $env:NATIVE_BINARY_PATH
+          & $env:GRADLE_COMMAND ":functional-test:nativeSmokeTest" "--info" "--no-daemon" "-DnativeCliPath=$nativeCliPath"
+
+      - name: Package native artifact
+        shell: pwsh
+        run: |
+          $distDir = Join-Path $PWD "dist"
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+
+          $binaryPath = Join-Path $PWD $env:NATIVE_BINARY_PATH
+          if (-not (Test-Path -Path $binaryPath -PathType Leaf)) {
+            throw "${{ inputs.platform_name }} native binary not found at $binaryPath"
+          }
+
+          $releaseBinaryPath = Join-Path $distDir $env:RELEASE_BINARY_NAME
+          Copy-Item -Path $binaryPath -Destination $releaseBinaryPath -Force
+
+          if (-not $IsWindows) {
+            & chmod +x $releaseBinaryPath
+          }
+
+          $archivePath = Join-Path $distDir $env:ARCHIVE_NAME
+          if ($env:ARCHIVE_FORMAT -eq "tar.gz") {
+            & tar -C $distDir -czf $archivePath $env:RELEASE_BINARY_NAME
+          } elseif ($env:ARCHIVE_FORMAT -eq "zip") {
+            Compress-Archive -Path $releaseBinaryPath -DestinationPath $archivePath -Force
+          } else {
+            throw "Unsupported archive format: $($env:ARCHIVE_FORMAT)"
+          }
+
+          $checksum = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLowerInvariant()
+          $checksumFile = "$archivePath.sha256"
+          $checksumLine = "$checksum  $(Split-Path -Leaf $archivePath)"
+          Set-Content -Path $checksumFile -Value $checksumLine -NoNewline
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            dist/${{ inputs.archive_name }}
+            dist/${{ inputs.archive_name }}.sha256
