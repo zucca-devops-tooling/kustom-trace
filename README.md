@@ -1,103 +1,131 @@
 # KustomTrace
 
-KustomTrace is a tool designed to analyze Kustomize directory structures, build a dependency graph of your Kustomize applications and resources, and provide insights into their relationships. It offers both a Java library for programmatic access and a command-line interface (CLI) for direct use.
+KustomTrace analyzes a local Kustomize repository, builds a dependency graph, and answers three practical questions:
 
-## Key Features
+- Which directories are root applications?
+- Which files does an application depend on?
+- Which applications are affected by a changed file?
 
-* **Kustomize Graph Building:** Parses Kustomize files (`kustomization.yaml`, `kustomization.yml`, `Kustomization`) and resource files (`.yaml`, `.yml`, `.json`) to construct a comprehensive dependency graph.
-* **Dependency Analysis:** Understand which applications depend on specific base kustomizations or resource files.
-* **Impact Analysis:** Identify which applications are affected by changes to a given file.
-* **Root Application Discovery:** Find Kustomize entry points (root applications) within your structure.
-* **Java Library:** Integrate Kustomize analysis directly into your Java projects.
-* **Command-Line Interface (CLI):** Perform analysis and get formatted output (human-readable or YAML) directly from your terminal or scripts.
+It is available as a Java library and as a CLI.
 
 ## Modules
 
-KustomTrace is composed of two main modules:
+- [CLI documentation](./cli/README.md)
+- [Library documentation](./lib/README.md)
+- [Javadoc](https://zucca-devops-tooling.github.io/kustom-trace/javadoc)
 
-* **[KustomTrace Library (`lib/README.md`)](./lib/README.md):** For developers looking to use KustomTrace programmatically within their Java applications.
-* **[KustomTrace CLI (`cli/README.md`)](./cli/README.md):** For users who want to use KustomTrace as a standalone command-line tool.
+## What KustomTrace Understands
 
-## High-Level Use Cases
+KustomTrace scans local Kustomize trees and recognizes:
 
-* **CI/CD Integration:** Automatically determine which applications are impacted by code changes in a pull request to trigger targeted builds, tests, or deployments.
-* **Repository Auditing:** Understand the structure and inter-dependencies of your Kustomize-managed applications.
-* **Impact Assessment:** Before making changes to shared bases or resources, identify all potentially affected applications.
-* **Code Cleanup:** Identify orphaned Kustomizations or unused resources.
+- Kustomization files: `kustomization.yaml`, `kustomization.yml`, `Kustomization`
+- Resource files: `.yaml`, `.yml`, `.json`
+- Reference fields: `resources`, `bases`, `components`, `patches[].path`, `patchesStrategicMerge`, `configMapGenerator.{envs,files}`, `secretGenerator.{envs,files}`
 
-## Real-World Demonstration: Solving CI/CD Bottlenecks
+The focus is local filesystem analysis. If a reference is not represented by one of the fields above, it is not included in the graph.
 
-This tool was designed to solve common performance and complexity challenges in large-scale GitOps repositories. Its power is best demonstrated when combined with other tools to create intelligent CI/CD pipelines.
+## CLI Quick Start
 
-➡️ **[Kustomize and Kyverno at Scale: A CI/CD Demonstration](https://github.com/zucca-devops-tooling/kustomize-at-scale-demo)**
+The CLI is distributed as:
 
-This demo repository showcases how `kustom-trace` can be used to:
-* **Reliably Discover Build Targets:** Use the `list-root-apps` command to automatically find all buildable applications, eliminating manual lists.
-* **Enable Efficient PR Validation:** Use the `affected-apps` command to find the exact set of applications impacted by a pull request's file changes.
-* **Dramatically Speed Up Policy Enforcement:** By identifying only the affected applications, `kustom-trace` provides the precise input needed for tools like Kyverno, preventing slow "apply all" validation steps and enabling high-performance, parallel policy checks. The demo shows a **55% reduction** in policy enforcement time by moving from a monolithic to a targeted, parallel approach.
+- A shaded JAR: `kustomtrace-cli-<version>-all.jar`
+- Linux native archive: `kustomtrace-linux-x64.tar.gz`
+- Windows native archive: `kustomtrace-windows-x64.zip`
+- macOS native archive: `kustomtrace-macos-x64.tar.gz`
 
-## Getting Started
+The native binaries run without a local Java installation. Older releases may only include the JAR, so check the assets on the release you want to use.
 
-### Using the CLI
+Example with a native binary:
 
-The recommended way to use the KustomTrace CLI is to download the executable JAR from our official **[GitHub Releases page](https://github.com/zucca-devops-tooling/kustom-trace/releases)**.
+```bash
+./kustomtrace-linux-x64 --apps-dir ./apps list-root-apps
+./kustomtrace-linux-x64 --apps-dir ./apps affected-apps ./apps/base/common.yaml
+```
 
-Once there:
-1.  Choose the version you want to use (e.g., the latest stable release).
-2.  Download the `kustomtrace-cli-VERSION-all.jar` (or similarly named JAR that includes all dependencies).
-3.  You can then run the CLI from your terminal.
+Example with the shaded JAR:
 
-**Currently, an executable JAR is provided (requires Java 17+). Native binaries for direct execution without needing a Java installation are planned for future releases.**
+```bash
+java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps list-root-apps
+java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps affected-apps ./apps/base/common.yaml
+```
 
-See the [KustomTrace CLI README](./cli/README.md) for detailed command usage.
+See [cli/README.md](./cli/README.md) for installation details, command examples, YAML output, logging, and native build instructions.
 
-### Using the Library
+## Library Quick Start
 
-To use KustomTrace as a Java library, add it as a dependency to your project.
+Maven:
 
-**(Example - Maven)**
 ```xml
 <dependency>
-    <groupId>dev.zucca-ops</groupId>
-    <artifactId>kustomtrace</artifactId> <version>1.0.1</version>
+  <groupId>dev.zucca-ops</groupId>
+  <artifactId>kustomtrace</artifactId>
+  <version>1.0.1</version>
 </dependency>
 ```
 
+Gradle:
 
-**(Example - Gradle)**
 ```gradle
-implementation 'dev.zucca-ops:kustomtrace:1.0.1'
+implementation("dev.zucca-ops:kustomtrace:1.0.1")
 ```
 
+Basic usage:
 
-See the [KustomTrace Library README](./lib/README.md) for more details on programmatic usage.
+```java
+import dev.zucca_ops.kustomtrace.KustomTrace;
+import dev.zucca_ops.kustomtrace.exceptions.KustomException;
+import java.io.IOException;
+import java.nio.file.Path;
 
-## Limitations and Future Work
+Path appsDir = Path.of("apps");
 
-### Current Limitations
-* **Supported Kustomize Fields for Reference Extraction:** KustomTrace currently parses and resolves dependencies from the following standard Kustomize fields:
-    * `resources`
-    * `bases` (treated as kustomizations)
-    * `components` (treated as kustomizations)
-    * `patches` (expecting a `path` key within list items for patch files)
-    * `patchesStrategicMerge` (values are paths to resource files)
-    * `configMapGenerator` (parsing `envs` and `files` sub-fields for file references)
-    Support for additional Kustomize fields that can reference other files (e.g., `crds`, `openapi`, certain generator options pointing to files, Helm chart values files) may be added in future versions.
+try {
+    KustomTrace trace = KustomTrace.fromDirectory(appsDir);
 
-### Future Development Ideas
-* **User-Selectable App Path Representation (CLI):** Introduce an option (e.g., `--represent-app-as <folder|file>`) to allow users to choose whether application paths in CLI output refer to the application's directory (folder) or its specific kustomization file.
-* **Bulk Queries (CLI):** Enable users to execute multiple query types in a single invocation, with results consolidated into a single output file.
-* **Chained Queries / Pipelined Processing (CLI):** Allow the output of one KustomTrace command to be used as (potentially filtered) input for subsequent commands, leveraging the already built graph to avoid re-parsing the filesystem multiple times.
+    System.out.println(trace.getRootApps());
+    System.out.println(trace.getAppsWith(appsDir.resolve("base/common.yaml")));
+    System.out.println(trace.getDependenciesFor(appsDir.resolve("payments/prod")));
+} catch (IOException | KustomException e) {
+    e.printStackTrace();
+}
+```
 
-## Contribution
+See [lib/README.md](./lib/README.md) for the API surface and graph model.
 
-Contributions to KustomTrace are welcome!
+## Native Binaries
 
-- Found a bug or have a suggestion? Please [open an issue](https://github.com/zucca-devops-tooling/kustom-trace/issues/new).
-- Want to contribute code? See our detailed [Contribution Guidelines](CONTRIBUTING.md).
+The native CLI packages are built with GraalVM Native Image and published for:
 
-Thank you for helping improve KustomTrace!
+- Linux x64
+- Windows x64
+- macOS x64
+
+Release assets also include SHA-256 checksum files next to each archive.
+
+If you build locally, the relevant tasks are:
+
+```bash
+./gradlew :kustomtrace-cli:shadowJar
+./gradlew :kustomtrace-cli:nativeCompile
+```
+
+On Windows, use `gradlew.bat` instead of `./gradlew`.
+
+## Typical Uses
+
+- CI and pull request automation: detect only the applications touched by a change
+- Repository audits: discover entry points and transitive dependencies
+- Safer refactors: understand blast radius before changing shared bases or generator inputs
+
+There is also a working demo repository here:
+
+- [Kustomize and Kyverno at Scale: A CI/CD Demonstration](https://github.com/zucca-devops-tooling/kustomize-at-scale-demo)
+
+## Contributing
+
+- Issues and ideas: [open an issue](https://github.com/zucca-devops-tooling/kustom-trace/issues/new)
+- Contributions: see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the `LICENSE` file for details.
+Apache License 2.0. See [LICENSE](./LICENSE).

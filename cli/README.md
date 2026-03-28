@@ -1,164 +1,177 @@
 # KustomTrace CLI
 
-The KustomTrace Command-Line Interface (CLI) allows you to analyze Kustomize directory structures and dependencies directly from your terminal or in scripts.
+The CLI analyzes a Kustomize repository from the command line and can be used in local scripts, CI jobs, and release pipelines.
 
-## Installation
+## Install
 
-1.  Go to the **[KustomTrace GitHub Releases page](https://github.com/zucca-devops-tooling/kustom-trace/releases)**.
-2.  Select the desired release version (e.g., the latest stable release).
-3.  From the "Assets" section of that release, download the `kustomtrace-cli-VERSION-all.jar` file.
+Download assets from the project's [GitHub Releases](https://github.com/zucca-devops-tooling/kustom-trace/releases).
 
-**Requirements:**
-* Java 17 (or newer) is required to run the JAR.
+Available CLI artifacts:
 
-*(Native binaries for direct execution without needing a Java installation are planned for future releases.)*
+- Shaded JAR: `kustomtrace-cli-<version>-all.jar`
+- Linux native archive: `kustomtrace-linux-x64.tar.gz`
+- Windows native archive: `kustomtrace-windows-x64.zip`
+- macOS native archive: `kustomtrace-macos-x64.tar.gz`
+
+The native archives contain a single executable:
+
+- Linux: `kustomtrace-linux-x64`
+- Windows: `kustomtrace-windows-x64.exe`
+- macOS: `kustomtrace-macos-x64`
+
+Use the native binary when you want a standalone executable with no local Java dependency. Use the JAR when you already have Java 17+ available or when you are on a release that predates the native packages.
 
 ## Basic Invocation
 
-The general way to run the CLI is:
+Examples below assume the executable is available as `kustomtrace`. If you run the release asset directly, use the extracted filename instead.
 
 ```bash
-java -jar kustomtrace-cli-VERSION.jar [GLOBAL_OPTIONS] <subcommand> [SUBCOMMAND_OPTIONS_ARGS]
+kustomtrace --apps-dir ./apps list-root-apps
+java -jar kustomtrace-cli-1.0.1-all.jar --apps-dir ./apps list-root-apps
 ```
 
-**Important Note on Option Order:** Global options like `--apps-dir` or `--output` must be placed **before** the subcommand name (e.g., `list-root-apps`).
+Important: global options must appear before the subcommand.
+
+Correct:
+
+```bash
+kustomtrace --apps-dir ./apps --output roots.yaml list-root-apps
+```
+
+Incorrect:
+
+```bash
+kustomtrace list-root-apps --apps-dir ./apps
+```
 
 ## Global Options
 
-These options apply to the `kustomtrace` command itself and must be used before a subcommand:
+- `-a`, `--apps-dir <dir>`: required root directory to scan
+- `-o`, `--output <file>`: write YAML output to a file instead of printing the result list
+- `--log-file <file>`: append warnings, errors, and application logs to a file
+- `--log-level <level>`: set log level for application logging; supported values are `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`
+- `-h`, `--help`: show help
+- `-v`, `--version`: show version
 
-* `-a=<appsDir>`, `--apps-dir=<appsDir>`: **(Required)** Path to the root directory containing your Kustomize applications.
-* `-o=<outputFile.yaml>`, `--output=<outputFile.yaml>`: (Optional) Output the command's results to the specified YAML file.
-* `--log-file=<logFile>`: (Optional) Specify a file to write detailed logs to. If used, console logging will be minimized.
-* `--log-level=<LEVEL>`: (Optional) Set the verbosity of logs. Levels: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`.
-* `-h`, `--help`: Display help information.
-* `-V`, `--version`: Display version information.
+When YAML is written, paths are normalized with forward slashes for stable cross-platform output.
 
-**Note on Path Output:**
-All file paths in the CLI's output use **forward slashes (`/`)** as path separators for cross-platform consistency.
+## Commands
 
-## Available Subcommands
-
-For detailed help on any subcommand, run `java -jar kustomtrace-cli.jar <subcommand> --help`.
-
----
 ### `list-root-apps`
 
-**Description:**
-Lists all "root applications" found. A root application is identified by a `kustomization.yaml` (or `.yml`/`Kustomization`) file that is not referenced by any other kustomization in the scanned structure.
+Lists root applications under `--apps-dir`. A root application is a Kustomization directory that is not referenced by another Kustomization in the scanned graph.
 
-**Usage:**
-`kustomtrace -a=<appsDir> [-o=<outputFile.yaml>] list-root-apps`
-
-**Example Invocation:**
 ```bash
-java -jar kustomtrace-cli.jar -a ./my-k8s-configs -o roots.yaml list-root-apps
+kustomtrace --apps-dir ./apps list-root-apps
+kustomtrace --apps-dir ./apps --output root-apps.yaml list-root-apps
 ```
-**Console Output (if `-o` is not used):**
-```
-Root Applications:
-- path/to/app1-dir
-- another/app/dir
-  ```
-If no root apps are found:
-  ```
-  No root applications found in: <appsDir_path>
-  ```
 
-**YAML Output (e.g., `-o roots.yaml`):**
+Example YAML output:
+
 ```yaml
-root-apps:
-- path/to/app1-dir # Paths are relative to --apps-dir
-- another/app/dir
-  ```
-
 ---
+root-apps:
+  - payments/prod
+  - platform/shared-base
+```
+
 ### `app-files`
 
-**Description:**
-Lists all unique files used by a given application, including its own kustomization file and all transitively resolved resources and bases.
+Lists every unique file used by an application, including the application's own kustomization file and all transitive dependencies.
 
-**Usage:**
-`kustomtrace -a=<appsDir> [-o=<outputFile.yaml>] app-files <appPath>`
+Pass the application directory as the argument.
 
-**Arguments for `app-files`:**
-* `<appPath>`: **(Required)** Path to the application directory or its specific kustomization file.
-
-**Example Invocation:**
 ```bash
-java -jar kustomtrace-cli.jar -a ./all-apps -o my-app-files.yaml app-files path/to/my-app
+kustomtrace --apps-dir ./apps app-files ./apps/payments/prod
+kustomtrace --apps-dir ./apps --output app-files.yaml app-files ./apps/payments/prod
 ```
 
-**Console Output:**
-```
-Files used by application 'my-app':
-- configmap.yaml
-- deployment.yaml
-- kustomization.yaml
-- ../base/service.yaml
-  ```
-**YAML Output (e.g., `-o my-app-files.yaml`):**
+Example YAML output:
+
 ```yaml
+---
 app-files:
-my-app: # Key is the app's directory, relative to --apps-dir
-- configmap.yaml # Paths are relative to the app's own directory
-- deployment.yaml
-- kustomization.yaml
-- ../base/service.yaml
+  payments/prod:
+    - ../../base/common/deployment.yaml
+    - kustomization.yaml
+    - service.yaml
 ```
 
----
+The YAML key is the app path relative to `--apps-dir`. The listed files are relative to the application directory.
+
 ### `affected-apps`
 
-**Description:**
-Finds and lists Kustomize applications that are (directly or indirectly) affected by changes in one or more specified files.
+Lists root applications affected by one or more changed files.
 
-**Usage:**
-`kustomtrace -a=<appsDir> [-o=<outputFile.yaml>] affected-apps [modifiedFile...] [-f=<filesFromFile>]`
+Pass changed files directly:
 
-**Arguments & Options for `affected-apps`:**
-* `[modifiedFile...]`: (Optional) Space-separated paths to one or more modified files.
-* `-f=<filesFromFile>`, `--files-from-file=<filesFromFile>`: (Optional) Path to a text file containing a list of modified file paths (one path per line).
-
-**Example Invocation:**
 ```bash
-java -jar kustomtrace-cli.jar -a ./all-apps -o impact.yaml affected-apps common/base.yaml services/service-patch.yaml
+kustomtrace --apps-dir ./apps affected-apps ./apps/base/common.yaml ./apps/shared/labels.yaml
 ```
 
-**Console Output:**
-```
-Affected Applications:
-Affected apps by common/base.yaml:
-- app1/production
-- app2/staging
-  Affected apps by services/service-patch.yaml:
-- app1/production
-  Affected apps by path/to/unreferenced-file.yaml:
-  Warning: File ... is not referenced by any app
-  Summary: No applications were found to be affected by the specified file(s).
+Or load them from a text file, one path per line:
+
+```bash
+kustomtrace --apps-dir ./apps --output affected.yaml affected-apps --files-from-file changed-files.txt
 ```
 
-**YAML Output (e.g., `-o impact.yaml`):**
+Example YAML output:
+
 ```yaml
+---
 affected-apps:
-common/base.yaml: # Key is the modified file path
-- app1/production
-- app2/staging
-path/to/unreferenced-or-external-file.yaml: [] # If a modified file is unreferenced or affects no apps
+  base/common.yaml:
+    - payments/prod
+    - search/staging
+  shared/labels.yaml:
+    - payments/prod
 ```
 
-## Use Cases & Examples
+If a modified file is inside `--apps-dir`, its YAML key is relative to `--apps-dir`. Otherwise the key is written from the provided path string with normalized separators.
 
-* **CI/CD - Selective Builds/Tests:**
-  In a CI pipeline, when a pull request changes certain files, use `affected-apps` to determine which application folders are impacted. Then, only build, test, or deploy those specific applications.
-  ```bash
-  # Assuming git diff --name-only origin/main...HEAD > changed_files.txt
-  java -jar kustomtrace-cli.jar -a /workspace/kubernetes-config -o impacted_apps.yaml affected-apps -f changed_files.txt
+## Logging and Output
 
-  # Then parse impacted_apps.yaml to trigger downstream jobs
-  ```
+- Without `--output`, results are printed to the console.
+- With `--output`, command results are written as YAML.
+- Without `--log-file`, warnings and application logs go to the console.
+- With `--log-file`, warnings, errors, and application logs are appended to that file.
 
-## Future Development Ideas
-* **User-Selectable App Path Representation:** An option like `--represent-app-as <folder|file>` to control how application paths are displayed in the output.
-* **Bulk Queries:** Combine multiple queries into a single execution and output file.
-* **Chained Queries:** Use the output of one command as input for another, leveraging the pre-built graph for efficiency.
+`--log-level` is case-insensitive and affects both the JAR and the native binaries.
+
+## Native Binaries
+
+The native CLI is built with GraalVM Native Image. It uses the same arguments, output format, and logging behavior as the shaded JAR.
+
+Release packaging:
+
+- Linux x64: `kustomtrace-linux-x64.tar.gz`
+- Windows x64: `kustomtrace-windows-x64.zip`
+- macOS x64: `kustomtrace-macos-x64.tar.gz`
+- Checksums: matching `.sha256` files for each archive
+
+To build a native binary locally:
+
+```bash
+./gradlew :kustomtrace-cli:nativeCompile
+```
+
+Output location:
+
+- Unix-like systems: `cli/build/native/nativeCompile/kustomtrace`
+- Windows: `cli/build/native/nativeCompile/kustomtrace.exe`
+
+CI currently builds the native artifacts with GraalVM Community 21. For local native builds, install GraalVM with the `native-image` component.
+
+## Build from Source
+
+Build the shaded JAR:
+
+```bash
+./gradlew :kustomtrace-cli:shadowJar
+```
+
+Expected output:
+
+- `cli/build/libs/kustomtrace-cli-<version>-all.jar`
+
+On Windows, use `gradlew.bat`.
